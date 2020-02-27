@@ -149,16 +149,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 	 */
 	public function settings_add( $field_group ) {
 
-		/*
-		$e = new Exception;
-		$trace = $e->getTraceAsString();
-		error_log( print_r( array(
-			'method' => __METHOD__,
-			'field_group' => $field_group,
-			//'backtrace' => $trace,
-		), true ) );
-		*/
-
 		// Get the "CiviCRM Contact Type" field.
 		$field = $this->acf->field->civicrm_contact_type_get();
 
@@ -199,24 +189,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 			return $field_group;
 		}
 
-		/*
-		// Bail if field group is not modified.
-		$field_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
-		if ( ! isset( $field_group[$field_key] ) ) {
-			return $field_group;
-		}
-		*/
-
-		/*
-		$e = new Exception;
-		$trace = $e->getTraceAsString();
-		error_log( print_r( array(
-			'method' => __METHOD__,
-			'field_group BEFORE' => $field_group,
-			//'backtrace' => $trace,
-		), true ) );
-		*/
-
 		// Get field key.
 		$field_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
 
@@ -234,16 +206,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 		} else {
 			$field_group[$field_key] = '';
 		}
-
-		/*
-		$e = new Exception;
-		$trace = $e->getTraceAsString();
-		error_log( print_r( array(
-			'method' => __METHOD__,
-			'field_group AFTER' => $field_group,
-			//'backtrace' => $trace,
-		), true ) );
-		*/
 
 		// --<
 		return $field_group;
@@ -281,16 +243,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 	 */
 	public function field_group_updated( $field_group ) {
 
-		/*
-		$e = new Exception;
-		$trace = $e->getTraceAsString();
-		error_log( print_r( array(
-			'method' => __METHOD__,
-			'field_group' => $field_group,
-			//'backtrace' => $trace,
-		), true ) );
-		*/
-
 		// Get field key.
 		$field_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
 
@@ -301,17 +253,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 
 		// Get all the Fields in this Field Group.
 	    $fields = acf_get_fields( $field_group );
-
-		/*
-		$e = new Exception;
-		$trace = $e->getTraceAsString();
-		error_log( print_r( array(
-			'method' => __METHOD__,
-			'field_group' => $field_group,
-			'field_key' => $field_key,
-			//'backtrace' => $trace,
-		), true ) );
-		*/
 
 		// Bail if there aren't any.
 		if ( empty( $fields ) ) {
@@ -335,28 +276,8 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 				continue;
 			}
 
-			/*
-			$e = new Exception;
-			$trace = $e->getTraceAsString();
-			error_log( print_r( array(
-				'method' => __METHOD__,
-				'field-BEFORE' => $field,
-				//'backtrace' => $trace,
-			), true ) );
-			*/
-
 			// Run Field through associated method.
 			$field = $this->acf->field->$method( $field );
-
-			/*
-			$e = new Exception;
-			$trace = $e->getTraceAsString();
-			error_log( print_r( array(
-				'method' => __METHOD__,
-				'field-AFTER' => $field,
-				//'backtrace' => $trace,
-			), true ) );
-			*/
 
 			// Save the Field.
 			acf_update_field( $field );
@@ -379,16 +300,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 	 * @return array $field_group The modified field group data array.
 	 */
 	public function field_group_modify( $field_group ) {
-
-		/*
-		$e = new Exception;
-		$trace = $e->getTraceAsString();
-		error_log( print_r( array(
-			'method' => __METHOD__,
-			'field_group' => $field_group,
-			//'backtrace' => $trace,
-		), true ) );
-		*/
 
 		// Get field key.
 		$field_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
