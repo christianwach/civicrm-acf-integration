@@ -9,7 +9,7 @@ So if, for now, you want to display (or create) a Contact Type on your WordPress
 
 This plugin recommends a minimum of *WordPress 4.9*, *Advanced Custom Fields 5.8* or *Advanced Custom Fields Pro 5.8* and *CiviCRM 5.13*. YMMV.
 
---
+---
 
 ### Preparing for integration ###
 
@@ -17,7 +17,7 @@ In general, think of this plugin as a way to make data in CiviCRM visible in Wor
 
 In addition, given that this plugin is still at an early stage of development, it is highly recommended that you try it out on a test site to gain familiarity with how it works. Test early, test often and make backups. Okay, now that we're clear about that, onwards...
 
---
+---
 
 ### Links between entities ###
 
@@ -30,7 +30,7 @@ To do this, in CiviCRM go to *Administer* —> *Customize Data and Screens* —>
 
 From now on, each time you create a Contact of the Contact Type that you have linked, a new WordPress Post will be created. The "Display Name" of the Contact will become the WordPress Post Title. And - in the reverse direction - each time you create a WordPress Post which is of the Post Type you have linked to a Contact Type, a new Contact will be created with their "Display Name" set to the Title of the new Post.
 
---
+---
 
 ### Links between fields ###
 
@@ -76,11 +76,11 @@ When creating a Custom Field in CiviCRM, you need to specify the kind of Data Ty
 
 The *CiviCRM ACF Integration* plugin also provides three custom ACF Fields which you will see as choices in the "Field Type" dropdown when you add a new ACF Field to a Field Group. These are:
 
-* "CiviCRM Contact" -- syncs with either a CiviCRM "Contact Reference" Custom Field or the "Current Employer" Contact Field
-* "CiviCRM Relationship" -- syncs between the ACF Field and a CiviCRM Relationship
-* "CiviCRM Yes/No" -- syncs between the ACF Field and a CiviCRM Yes/No Custom Field (necessary because a CiviCRM Yes/No Custom Field is actually a Yes/No/Unknown field and the ACF True-False Field does not allow Unknown)
+* "CiviCRM Contact" - syncs with either a CiviCRM "Contact Reference" Custom Field or the "Current Employer" Contact Field
+* "CiviCRM Relationship" - syncs between the ACF Field and a CiviCRM Relationship
+* "CiviCRM Yes/No" - syncs between the ACF Field and a CiviCRM Yes/No Custom Field (necessary because a CiviCRM Yes/No Custom Field is actually a Yes/No/Unknown field and the ACF True-False Field does not allow Unknown)
 
---
+---
 
 ### Outstanding Issues ###
 
@@ -118,13 +118,13 @@ Since CiviCRM Contacts do not have a WYSIWYG field attached to them by default, 
 
 Unless you disable the CiviCRM Shortcode on a Post Type (via the settings page in CiviCRM Admin Utilities) then the CiviCRM Stylesheets load on the edit screen for that Post Type and interfere with the styling of ACF Select2 elements. It seems unlikely that the CiviCRM Shortcode would be useful in the Post Content of a linked Post Type, so disable it unless it's absolutely necessary.
 
---
+---
 
 #### Credits ####
 
 Many thanks to [Ryan Waterbury](https://github.com/onedogsolutions) of [One Dog Solutions](https://onedog.solutions/) for funding the initial development of this plugin.
 
---
+---
 
 #### Installation ####
 
