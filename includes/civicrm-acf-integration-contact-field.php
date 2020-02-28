@@ -43,7 +43,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		//'display_name' => 'text',
 		'nick_name' => 'text',
 		'email' => 'text',
-		'source' => 'text',
+		'source' => 'text', // Source is not in the API Household data by default.
 	];
 
 	/**
@@ -177,36 +177,26 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		}
 
 		// Let's look at each ACF Field in turn.
-		foreach( $acf_fields AS $field_type => $fields_in_post ) {
+		foreach( $acf_fields['contact'] AS $selector => $contact_field ) {
 
-			// Loop through ACF Fields attached to the Post.
-			foreach( $fields_in_post AS $selector => $contact_field ) {
+			// Skip if it's not a public Contact Field.
+			if ( ! array_key_exists( $contact_field, $public_fields ) ) {
+				continue;
+			}
 
-				// If it's the Contact Fields.
-				if ( $field_type == 'contact' ) {
+			// Does the mapped Contact Field exist?
+			if ( isset( $args['objectRef']->$contact_field ) ) {
 
-					// Skip if it's not a public Contact Field.
-					if ( ! array_key_exists( $contact_field, $public_fields ) ) {
-						continue;
-					}
+				// Modify value for ACF prior to update.
+				$value = $this->value_get_for_acf(
+					$args['objectRef']->$contact_field,
+					$contact_field,
+					$selector,
+					$args['post_id']
+				);
 
-					// Does the mapped Contact Field exist?
-					if ( isset( $args['objectRef']->$contact_field ) ) {
-
-						// Modify value for ACF prior to update.
-						$value = $this->value_get_for_acf(
-							$args['objectRef']->$contact_field,
-							$contact_field,
-							$selector,
-							$args['post_id']
-						);
-
-						// Update it.
-						$this->plugin->acf->field->value_update( $selector, $value, $args['post_id'] );
-
-					}
-
-				}
+				// Update it.
+				$this->plugin->acf->field->value_update( $selector, $value, $args['post_id'] );
 
 			}
 

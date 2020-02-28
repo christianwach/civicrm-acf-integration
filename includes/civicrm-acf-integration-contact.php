@@ -464,8 +464,15 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		// Get the Contact Type hierarchy for this Contact.
 		$contact_type = $this->civicrm->contact_type->hierarchy_get_for_contact( $contact );
 
+		// Check if it's a top level Contact Type.
+		if ( empty( $contact_type['subtype'] ) ) {
+			$contact_type = $contact_type['type'];
+		} else {
+			$contact_type = $contact_type['subtype'];
+		}
+
 		// Get the data for this Contact Type.
-		$contact_type_data = $this->civicrm->contact_type->get_data( $contact_type['subtype'], 'name' );
+		$contact_type_data = $this->civicrm->contact_type->get_data( $contact_type, 'name' );
 
 		// Bail if we didn't get any.
 		if ( $contact_type_data === false ) {
@@ -473,7 +480,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		}
 
 		// Bail if Contact Type not a mapped to a Post Type.
-		$mapped = $this->civicrm->contact_type->is_mapped( $contact_type_data['id'], 'id' );
+		$mapped = $this->civicrm->contact_type->is_mapped( $contact_type_data['id'] );
 		if ( $mapped === false ) {
 			return $is_mapped;
 		}

@@ -488,20 +488,39 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 	 *
 	 * @since 0.2
 	 *
-	 * @param int|str $contact_type The "name" or "ID" of the Contact Type.
-	 * @param str $mode The param to query by: 'name' or 'id'.
+	 * @param int|str|array $contact_type The "ID", "name" or "hierarchy" of the Contact Type.
 	 * @return str|bool $is_linked The name of the Post Type, or false otherwise.
 	 */
-	public function is_mapped( $contact_type, $mode = 'name' ) {
+	public function is_mapped( $contact_type ) {
 
 		// Assume not.
 		$is_mapped = false;
 
-		// Overwrite with ID when passing in a name.
-		if ( $mode == 'name' ) {
+		// Parse the input when it's an array.
+		if ( is_array( $contact_type ) ) {
+
+			// Check if it's a top level Contact Type.
+			if ( empty( $contact_type['subtype'] ) ) {
+				$contact_type = $contact_type['type'];
+			} else {
+				$contact_type = $contact_type['subtype'];
+			}
+
+		}
+
+		// Parse the input when it's an integer.
+		if ( is_numeric( $contact_type ) ) {
+
+			// Assign the numeric ID.
+			$contact_type_id = $contact_type = intval( $contact_type );
+
+		}
+
+		// Parse the input when it's a string.
+		if ( is_string( $contact_type ) ) {
 
 			// Get data for the queried Contact Type.
-			$contact_type_data = $this->get_data( $contact_type, $mode );
+			$contact_type_data = $this->get_data( $contact_type, 'name' );
 
 			// Bail if we didn't get any.
 			if ( $contact_type_data === false ) {
@@ -511,8 +530,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 			// Assign the numeric ID.
 			$contact_type_id = $contact_type_data['id'];
 
-		} else {
-			$contact_type_id = $contact_type;
 		}
 
 		// Get mapped Post Types.

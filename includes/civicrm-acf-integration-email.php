@@ -304,7 +304,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 
 		// Bail if this Contact's Contact Type is not mapped.
 		$contact_types = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $contact );
-		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types['subtype'], 'name' );
+		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types );
 		if ( $post_type === false ) {
 			return;
 		}

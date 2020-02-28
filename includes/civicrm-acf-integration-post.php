@@ -104,7 +104,7 @@ class CiviCRM_ACF_Integration_Post {
 
 		// Bail if this Contact's Contact Type is not mapped.
 		$contact_types = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $args['objectRef'] );
-		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types['subtype'], 'name' );
+		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types );
 		if ( $post_type === false ) {
 			return;
 		}
@@ -149,9 +149,20 @@ class CiviCRM_ACF_Integration_Post {
 			return;
 		}
 
+		// Get the full Contact data.
+		$contact = $this->plugin->civicrm->contact->get_by_id( $args['objectId'] );
+
+		// Bail if something went wrong.
+		if ( $contact === false ) {
+			return;
+		}
+
+		// Overwrite args with full Contact data.
+		$args['objectRef'] = (object) $contact;
+
 		// Bail if this Contact's Contact Type is not mapped.
 		$contact_types = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $args['objectRef'] );
-		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types['subtype'], 'name' );
+		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types );
 		if ( $post_type === false ) {
 			return;
 		}
@@ -419,6 +430,20 @@ class CiviCRM_ACF_Integration_Post {
 
 		// Save correspondence.
 		$this->contact_id_set( $post_id, $contact_id );
+
+		// We need to force ACF to create Fields for the Post.
+
+		// Get the ACF Fields for this Post.
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
+
+		// If there are some, prime them with an empty string.
+		if ( ! empty( $acf_fields ) ) {
+			foreach( $acf_fields AS $field_group ) {
+				foreach( $field_group AS $selector => $contact_field ) {
+					$this->plugin->acf->field->value_update( $selector, '', $post_id );
+				}
+			}
+		}
 
 		// --<
 		return $post_id;

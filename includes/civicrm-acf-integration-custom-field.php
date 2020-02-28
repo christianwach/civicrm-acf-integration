@@ -107,9 +107,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 */
 	public function register_hooks() {
 
-		// Intercept Custom Field save procedure.
-		//add_action( 'civicrm_post', [ $this, 'saved' ], 10, 4 );
-
 		// Intercept when the content of a set of CiviCRM Custom Fields has been updated.
 		add_action( 'civicrm_acf_integration_mapper_custom_edited', [ $this, 'custom_edited' ], 10 );
 
@@ -414,54 +411,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 
 		// --<
 		return $value;
-
-	}
-
-
-
-	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * Intercept Custom Field save procedure.
-	 *
-	 * @since 0.3
-	 *
-	 * @param string $op The type of database operation.
-	 * @param string $objectName The type of object.
-	 * @param integer $objectId The ID of the object.
-	 * @param object $objectRef The object.
-	 */
-	public function saved( $op, $objectName, $objectId, $objectRef ) {
-
-		// Bail if not a Custom Field.
-		if ( $objectName != 'CustomField' ) {
-			return;
-		}
-
-		// Bail if it's not Date.
-		if ( $objectRef->data_type !== 'Date' ) {
-			return $field;
-		}
-
-		// Bail if it's not "Select Date".
-		if ( $objectRef->html_type !== 'Select Date' ) {
-			return $field;
-		}
-
-		/*
-		$e = new Exception;
-		$trace = $e->getTraceAsString();
-		error_log( print_r( array(
-			'method' => __METHOD__,
-			'op' => $op,
-			'objectName' => $objectName,
-			'objectId' => $objectId,
-			'objectRef' => $objectRef,
-			//'backtrace' => $trace,
-		), true ) );
-		*/
 
 	}
 

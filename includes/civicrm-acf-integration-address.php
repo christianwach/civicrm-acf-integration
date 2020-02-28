@@ -45,7 +45,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 */
 	public $fields_handled = [
 		'google_map',
-		//'address_id',
 	];
 
 
@@ -114,6 +113,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		// Add any Address Fields attached to a Post.
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
+		// Intercept Post updated (or created) from Contact events.
+		add_action( 'civicrm_acf_integration_post_created', [ $this, 'post_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_post_edited', [ $this, 'post_edited' ], 10 );
+
 	}
 
 
@@ -135,6 +138,57 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 * @return bool True if updates were successful, or false on failure.
 	 */
 	public function fields_handled_update( $contact, $post, $fields ) {
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Intercept when a Post has been updated from a Contact via the Mapper.
+	 *
+	 * Sync any associated ACF Fields mapped to built-in Contact Fields.
+	 *
+	 * @since 0.4.5
+	 *
+	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
+	 */
+	public function post_edited( $args ) {
+
+		// Get the ACF Fields for this Post.
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $args['post_id'] );
+
+		// Bail if there are no Address Fields.
+		if ( empty( $acf_fields['address'] ) ) {
+			return;
+		}
+
+		// Convert Contact data into an Address.
+		$address = $this->address_get_by_id( $args['objectRef']->address_id );
+
+		// Cast Address as an object.
+		if ( ! is_object( $address ) ) {
+			$address = (object) $address;
+		}
+
+		// Update the Address.
+		$this->address_update( $address );
+
+		// If this address has no "Master Address" then it might be one itself.
+		$addresses_shared = $this->addresses_shared_get_by_id( $address->id );
+
+		// Bail if there are none.
+		if ( empty( $addresses_shared ) ) {
+			return;
+		}
+
+		// Update all of them.
+		foreach( $addresses_shared AS $address_shared ) {
+			$this->address_update( $address_shared );
+		}
 
 	}
 
@@ -167,11 +221,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 
 		// Do the Address update.
 		$this->address_update( $address );
-
-		// Bail if this address has a "Master Address".
-		if ( empty( $address->master_id ) ) {
-			return;
-		}
 
 		// If this address has no "Master Address" then it might be one itself.
 		$addresses_shared = $this->addresses_shared_get_by_id( $address->id );
@@ -263,11 +312,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		// Do the Address update.
 		$this->address_update( $address );
 
-		// Bail if this address has a "Master Address".
-		if ( empty( $address->master_id ) ) {
-			return;
-		}
-
 		// If this address has no "Master Address" then it might be one itself.
 		$addresses_shared = $this->addresses_shared_get_by_id( $address->id );
 
@@ -311,11 +355,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 
 		// Clear the Address.
 		$this->address_update( $address );
-
-		// Bail if this address has a "Master Address".
-		if ( empty( $address->master_id ) ) {
-			return;
-		}
 
 		// If this address has no "Master Address" then it might be one itself.
 		$addresses_shared = $this->addresses_shared_get_by_id( $address->id );

@@ -253,7 +253,7 @@ class CiviCRM_ACF_Integration_Mapper {
 
 		// Bail if this Contact's Contact Type is not mapped.
 		$contact_types = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $objectRef );
-		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types['subtype'], 'name' );
+		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types );
 		if ( $post_type === false ) {
 			return;
 		}
