@@ -43,7 +43,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		//'display_name' => 'text',
 		'nick_name' => 'text',
 		'email' => 'text',
-		'source' => 'text', // Source is not in the API Household data by default.
 	];
 
 	/**
