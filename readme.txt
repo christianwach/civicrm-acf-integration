@@ -40,7 +40,7 @@ In addition, given that this plugin is still at an early stage of development, i
 
 At present the *CiviCRM ACF Integration* plugin allows you to specify links between:
 
-* WordPress Custom Post Types and CiviCRM Contact Types. (For now, it's recommended to link only Contact Sub-types — e.g. "Student" — instead of the top-level "Individual" Contact Type)
+* WordPress Custom Post Types and CiviCRM Contact Types. It's recommended to link only Contact Sub-types — e.g. "Student" — instead of the top-level "Individual" Contact Type.
 * More entity links to follow...
 
 To do this, in CiviCRM go to *Administer* —> *Customize Data and Screens* —> *Contact Types* and edit a Contact Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Contact Type you are editing. Choose one and save the Contact Type.
@@ -75,8 +75,8 @@ The following are the Contact Fields and the kind of ACF Field needed to map the
 
 * Prefix & Suffix — ACF Select
 * First Name, Middle Name, Last Name — ACF Text
-* Primary Email — ACF Text (this will be enhanced in a future version)
-* Website — ACF Link (this will be enhanced in a future version)
+* Email — ACF Email
+* Website — ACF Link
 * Address - ACF Google Map (only available in ACF Pro)
 * Gender — ACF Radio Button
 * Date of Birth & Date of Death - ACF Date Picker
