@@ -68,6 +68,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		add_action( 'acf/render_field_settings/type=wysiwyg', [ $this, 'wysiwyg_setting_add' ] );
 		add_action( 'acf/render_field_settings/type=textarea', [ $this, 'textarea_setting_add' ] );
 		add_action( 'acf/render_field_settings/type=url', [ $this, 'url_setting_add' ] );
+		add_action( 'acf/render_field_settings/type=email', [ $this, 'email_setting_add' ] );
 
 		// Customise "Google Map" Fields.
 		add_action( 'acf/render_field_settings/type=google_map', [ $this, 'google_map_setting_add' ] );
@@ -1076,6 +1077,37 @@ class CiviCRM_ACF_Integration_ACF_Field {
 
 		// Get Setting field.
 		$setting = $this->plugin->civicrm->website->acf_field_get( $filtered_fields, $website_fields );
+
+		// Now add it.
+		acf_render_field_setting( $field, $setting );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Add Setting to "Email" Field Settings.
+	 *
+	 * @since 0.5
+	 *
+	 * @param array $field The field data array.
+	 */
+	public function email_setting_add( $field ) {
+
+		// Get the Email Fields for this CiviCRM Contact Type.
+		$email_fields = $this->plugin->civicrm->email->get_for_acf_field( $field );
+
+		// Bail if there are no fields.
+		if ( empty( $email_fields ) ) {
+			return;
+		}
+
+		// Get Setting field.
+		$setting = $this->plugin->civicrm->email->acf_field_get( $email_fields );
 
 		// Now add it.
 		acf_render_field_setting( $field, $setting );

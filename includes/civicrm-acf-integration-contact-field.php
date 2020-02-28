@@ -40,9 +40,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 	 * @var array $contact_fields_common The common public Contact Fields.
 	 */
 	public $contact_fields_common = [
-		//'display_name' => 'text',
 		'nick_name' => 'text',
-		'email' => 'text',
 	];
 
 	/**

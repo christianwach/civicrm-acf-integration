@@ -169,13 +169,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 	 */
 	public function field_handled_update( $field, $value, $contact_id, $settings ) {
 
-		// Get the "CiviCRM Website" key.
-		$website_key = $this->acf_field_key_get();
-
 		// Skip if it's not an ACF Field Type that this class handles.
 		if ( ! in_array( $settings['type'], $this->fields_handled ) ) {
 			return true;
 		}
+
+		// Get the "CiviCRM Website" key.
+		$website_key = $this->acf_field_key_get();
 
 		// Skip if we don't have a synced Website.
 		if ( empty( $settings[$website_key] ) ) {
@@ -440,6 +440,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 
 		// Get the Post ID for this Contact.
 		$post_id = $this->plugin->civicrm->contact->is_mapped( $contact );
+
+		// Skip if not mapped.
+		if ( $post_id === false ) {
+			return;
+		}
 
 		// Get the ACF Fields for this Post.
 		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
