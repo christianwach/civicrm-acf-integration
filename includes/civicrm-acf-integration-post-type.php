@@ -113,12 +113,12 @@ class CiviCRM_ACF_Integration_Post_Type {
 		$post_types = $this->post_types_get_all();
 
 		// Get all used Post Types.
-		$used_post_types = $this->plugin->mapping->mappings_get();
+		$used_post_types = $this->plugin->mapping->mappings_for_contact_types_get();
 
 		// Get existing Post Type.
 		$existing_post_type = '';
 		if ( $contact_type_id !== 0 ) {
-			$existing_post_type = $this->plugin->mapping->mapping_get( $contact_type_id );
+			$existing_post_type = $this->plugin->mapping->mapping_for_contact_type_get( $contact_type_id );
 		}
 
 		// Retain only those which are unused, plus the existing one.
@@ -150,7 +150,7 @@ class CiviCRM_ACF_Integration_Post_Type {
 	public function get_for_contact_type( $contact_type_id ) {
 
 		// --<
-		return $this->plugin->mapping->mapping_get( $contact_type_id );
+		return $this->plugin->mapping->mapping_for_contact_type_get( $contact_type_id );
 
 	}
 
@@ -170,7 +170,12 @@ class CiviCRM_ACF_Integration_Post_Type {
 		$is_linked = false;
 
 		// Get mapped Post Types.
-		$mapped_post_types = $this->plugin->mapping->mappings_get();
+		$mapped_post_types = $this->plugin->mapping->mappings_for_contact_types_get();
+
+		// Bail if there are no mappings.
+		if ( empty( $mapped_post_types ) ) {
+			return $is_linked;
+		}
 
 		// Override if this Post Type is mapped.
 		if ( in_array( $post_type, $mapped_post_types ) ) {

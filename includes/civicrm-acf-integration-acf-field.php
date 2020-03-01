@@ -248,7 +248,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		$contact_types = $this->plugin->civicrm->contact_type->types_get_nested();
 
 		// Get mappings.
-		$mappings = $this->plugin->mapping->mappings_get();
+		$mappings = $this->plugin->mapping->mappings_for_contact_types_get();
 
 		/*
 		 * Do we want to allow top-level Contact Types to be synced?

@@ -26,6 +26,9 @@ class CiviCRM_ACF_Integration_Mapping {
 	/**
 	 * Sync mappings.
 	 *
+	 * At present, this plugin only maps Contacts to Posts, but the data array
+	 * allows for other mappings to take place.
+	 *
 	 * Sync between CiviCRM Contact Types and WordPress Custom Post Types can
 	 * only really be made on a site-by-site basis in Multisite, since CPTs are
 	 * defined per-site and may not be available network-wide.
@@ -33,9 +36,9 @@ class CiviCRM_ACF_Integration_Mapping {
 	 * The option for the sync mappings is therefore stored via `get_option()`
 	 * family of functions rather than `get_site_option()` etc.
 	 *
-	 * Example array (key is Contact Type ID, value is CPT name):
+	 * Example array (nested array key is Contact Type ID, value is CPT name):
 	 *
-	 * [ 3 => 'post', 8 => 'student' ]
+	 * [ 'contact-post' => [ 3 => 'post', 8 => 'student' ] ]
 	 *
 	 * @since 0.2
 	 * @access public
@@ -274,7 +277,7 @@ class CiviCRM_ACF_Integration_Mapping {
 		if ( $mode === 'edit' ) {
 
 			// Get existing CPT.
-			$cpt_name = $this->mapping_get( $contact_type['id'] );
+			$cpt_name = $this->mapping_for_contact_type_get( $contact_type['id'] );
 
 			// If we have a mapped CPT.
 			if ( $cpt_name !== false ) {
@@ -369,7 +372,7 @@ class CiviCRM_ACF_Integration_Mapping {
 		if ( empty( $values['civicrm_acf_integration_cpt'] ) ) {
 
 			// Remove (or ignore) linkage.
-			$this->mapping_remove( $contact_type_id );
+			$this->mapping_for_contact_type_remove( $contact_type_id );
 
 			/**
 			 * Broadcast that the mapping has been removed.
@@ -387,7 +390,7 @@ class CiviCRM_ACF_Integration_Mapping {
 			$post_type = trim( $values['civicrm_acf_integration_cpt'] );
 
 			// Add/Update linkage.
-			$this->mapping_update( $contact_type_id, $post_type );
+			$this->mapping_for_contact_type_update( $contact_type_id, $post_type );
 
 			/**
 			 * Broadcast that the mapping has been updated.
@@ -411,16 +414,58 @@ class CiviCRM_ACF_Integration_Mapping {
 
 
 	/**
+	 * Upgrade the mappings array.
+	 *
+	 * @since 0.5.1
+	 */
+	public function mappings_upgrade() {
+
+		// Load mappings array.
+		$mappings = $this->option_get( $this->mappings_key, [] );
+
+		// Maybe upgrade the array.
+		if ( ! empty( $mappings ) AND ! isset( $mappings['contact-post'] ) ) {
+
+			// Make legacy array a sub-array.
+			$mappings_new = [ 'contact-post' => $mappings ];
+			$this->option_set( $this->mappings_key, $mappings_new );
+			$this->mappings = $mappings_new;
+
+		}
+
+	}
+
+
+
+	/**
+	 * Delete the mappings array.
+	 *
+	 * @since 0.5.1
+	 */
+	public function mappings_delete() {
+
+		// Delete the mappings option.
+		$this->option_delete( $this->mappings_key );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
 	 * Get all Contact Type to Post Type mappings.
 	 *
 	 * @since 0.2
 	 *
 	 * @return array $mappings The array of mappings.
 	 */
-	public function mappings_get() {
+	public function mappings_for_contact_types_get() {
 
 		// --<
-		return $this->mappings;
+		return $this->mappings['contact-post'];
 
 	}
 
@@ -434,14 +479,14 @@ class CiviCRM_ACF_Integration_Mapping {
 	 * @param int $contact_type_id The numeric ID of the Contact Type.
 	 * @return str|bool $cpt_name The name of the Post Type or false if none exists.
 	 */
-	public function mapping_get( $contact_type_id ) {
+	public function mapping_for_contact_type_get( $contact_type_id ) {
 
 		// Init as false.
 		$cpt_name = false;
 
 		// Overwrite if a mapping exists.
-		if ( isset( $this->mappings[$contact_type_id] ) ) {
-			$cpt_name = $this->mappings[$contact_type_id];
+		if ( isset( $this->mappings['contact-post'][$contact_type_id] ) ) {
+			$cpt_name = $this->mappings['contact-post'][$contact_type_id];
 		}
 
 		// --<
@@ -460,10 +505,10 @@ class CiviCRM_ACF_Integration_Mapping {
 	 * @param str $cpt_name The name of the WordPress Post Type.
 	 * @return bool $success Whether or not the operation was successful.
 	 */
-	public function mapping_update( $contact_type_id, $cpt_name ) {
+	public function mapping_for_contact_type_update( $contact_type_id, $cpt_name ) {
 
 		// Overwrite (or create) mapping.
-		$this->mappings[$contact_type_id] = $cpt_name;
+		$this->mappings['contact-post'][$contact_type_id] = $cpt_name;
 
 		// Update option.
 		$this->option_set( $this->mappings_key, $this->mappings );
@@ -480,16 +525,16 @@ class CiviCRM_ACF_Integration_Mapping {
 	 * @param int $contact_type_id The numeric ID of the Contact Type.
 	 * @return bool $success Whether or not the operation was successful.
 	 */
-	public function mapping_remove( $contact_type_id ) {
+	public function mapping_for_contact_type_remove( $contact_type_id ) {
 
 		// If a mapping exists.
-		if ( isset( $this->mappings[$contact_type_id] ) ) {
+		if ( isset( $this->mappings['contact-post'][$contact_type_id] ) ) {
 
 			// We also need to remove the setting.
-			$this->setting_remove( $this->mappings[$contact_type_id] );
+			$this->setting_remove( $this->mappings['contact-post'][$contact_type_id] );
 
 			// Finally, remove mapping.
-			unset( $this->mappings[$contact_type_id] );
+			unset( $this->mappings['contact-post'][$contact_type_id] );
 
 		}
 
@@ -515,6 +560,20 @@ class CiviCRM_ACF_Integration_Mapping {
 
 		// --<
 		return $this->settings;
+
+	}
+
+
+
+	/**
+	 * Delete the settings array.
+	 *
+	 * @since 0.5.1
+	 */
+	public function settings_delete() {
+
+		// Delete the settings option.
+		$this->option_delete( $this->settings_key );
 
 	}
 

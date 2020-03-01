@@ -468,7 +468,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 		$contact_type_id = false;
 
 		// Get mappings and flip.
-		$mappings = $this->plugin->mapping->mappings_get();
+		$mappings = $this->plugin->mapping->mappings_for_contact_types_get();
 		$mappings = array_flip( $mappings );
 
 		// Overwrite the Contact Type ID if there is a value.
@@ -533,7 +533,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 		}
 
 		// Get mapped Post Types.
-		$mapped_post_types = $this->plugin->mapping->mappings_get();
+		$mapped_post_types = $this->plugin->mapping->mappings_for_contact_types_get();
 
 		// Check presence in mappings.
 		if ( isset( $mapped_post_types[$contact_type_id] ) ) {
