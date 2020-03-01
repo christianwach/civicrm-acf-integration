@@ -89,6 +89,16 @@ class CiviCRM_ACF_Integration_Post_Type {
 		// Get Post Types.
 		$post_types = get_post_types( $args, $output, $operator );
 
+		/**
+		 * Filter the Post Types.
+		 *
+		 * This filter can be used, for example, to exclude certain Post Types.
+		 *
+		 * @param array $post_types The existing Post Types.
+		 * @param array $post_types The existing Post Types.
+		 */
+		$post_types = apply_filters( 'civicrm_acf_integration_post_types_get_all', $post_types );
+
 		// --<
 		return $post_types;
 
