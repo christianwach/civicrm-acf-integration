@@ -434,44 +434,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 
 		}
 
-		// Update all Relationships that must be activated.
-		foreach( $existing['activate'] AS $current_relationship ) {
-
-			// Copy minimum values.
-			$params = [
-				'id' => $current_relationship['id'],
-				'contact_id_a' => $current_relationship['contact_id_a'],
-				'contact_id_b' => $current_relationship['contact_id_b'],
-				'relationship_type_id' => $current_relationship['relationship_type_id'],
-			];
-
-			// Just update active status.
-			$params['is_active'] = '1';
-
-			// Do update.
-			$success = $this->relationship_update( $params );
-
-			// Continue on failure.
-			if ( $success === false ) {
-				continue;
-			}
-
-			// Add to return.
-			$relationships[] = $success;
-
-			/**
-			 * The corresponding Contact's mapped Post also needs to be updated.
-			 *
-			 * @since 0.4.3
-			 *
-			 * @param array $current_relationship The updated Relationship.
-			 * @param str $relationship_direction The Relationship direction.
-			 */
-			do_action( 'civicrm_acf_integration_relationship_activated', $current_relationship, $relationship_direction );
-
-		}
-
-		// Update all Relationships that must be deactivated.
+		// First update all Relationships that must be deactivated.
 		foreach( $existing['deactivate'] AS $current_relationship ) {
 
 			// Copy minimum values.
@@ -508,7 +471,44 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 
 		}
 
-		// Create a Relationship for each unhandled target.
+		// Next update all Relationships that must be activated.
+		foreach( $existing['activate'] AS $current_relationship ) {
+
+			// Copy minimum values.
+			$params = [
+				'id' => $current_relationship['id'],
+				'contact_id_a' => $current_relationship['contact_id_a'],
+				'contact_id_b' => $current_relationship['contact_id_b'],
+				'relationship_type_id' => $current_relationship['relationship_type_id'],
+			];
+
+			// Just update active status.
+			$params['is_active'] = '1';
+
+			// Do update.
+			$success = $this->relationship_update( $params );
+
+			// Continue on failure.
+			if ( $success === false ) {
+				continue;
+			}
+
+			// Add to return.
+			$relationships[] = $success;
+
+			/**
+			 * The corresponding Contact's mapped Post also needs to be updated.
+			 *
+			 * @since 0.4.3
+			 *
+			 * @param array $current_relationship The updated Relationship.
+			 * @param str $relationship_direction The Relationship direction.
+			 */
+			do_action( 'civicrm_acf_integration_relationship_activated', $current_relationship, $relationship_direction );
+
+		}
+
+		// Finally create a Relationship for each unhandled target.
 		if ( ! empty( $unhandled_contact_ids ) ) {
 			foreach( $unhandled_contact_ids AS $target_contact_id ) {
 
