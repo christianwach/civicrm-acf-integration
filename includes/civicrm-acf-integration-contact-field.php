@@ -499,15 +499,28 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 			return $contact_fields;
 		}
 
-		// Get the Contact Type.
-		$contact_type_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
-		$contact_type_id = $field_group[$contact_type_key];
+		// Bail if this is not a Contact Field Group.
+		$is_contact_field_group = $this->civicrm->contact->is_contact_field_group( $field_group );
+		if ( $is_contact_field_group === false ) {
+			return $contact_fields;
+		}
 
-		// Get Contact Type hierarchy.
-		$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
+		// Loop through the Post Types.
+		foreach( $is_contact_field_group AS $post_type_name ) {
 
-		// Get public fields of this type.
-		$contact_fields = $this->data_get( $contact_types['type'], $field['type'], 'public' );
+			// Get the Contact Type ID.
+			$contact_type_id = $this->civicrm->contact_type->id_get_for_post_type( $post_type_name );
+
+			// Get Contact Type hierarchy.
+			$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
+
+			// Get public fields of this type.
+			$contact_fields_for_type = $this->data_get( $contact_types['type'], $field['type'], 'public' );
+
+			// Merge with return array.
+			$contact_fields = array_merge( $contact_fields, $contact_fields_for_type );
+
+		}
 
 		// --<
 		return $contact_fields;

@@ -58,11 +58,6 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 */
 	public function register_hooks() {
 
-		// Add fields.
-		//add_action( 'acf/init', [ $this, 'fields_add' ] );
-
-		// TODO: Add constant that toggles between "acf/load_field" and "acf/update_field_group" methods.
-
 		// Add setting to various Fields.
 		add_action( 'acf/render_field_settings/type=true_false', [ $this, 'true_false_setting_add' ] );
 		add_action( 'acf/render_field_settings/type=wysiwyg', [ $this, 'wysiwyg_setting_add' ] );
@@ -76,36 +71,26 @@ class CiviCRM_ACF_Integration_ACF_Field {
 
 		// Customise "Select" Fields.
 		add_action( 'acf/render_field_settings/type=select', [ $this, 'select_setting_add' ] );
-		//add_filter( 'acf/load_field/type=select', [ $this, 'select_setting_modify' ] );
-		//add_filter( 'acf/update_field/type=select', [ $this, 'select_field_update' ] );
 		add_filter( 'acf/validate_value/type=select', [ $this, 'value_validate' ], 10, 4 );
 
 		// Customise "Radio" Fields.
 		add_action( 'acf/render_field_settings/type=radio', [ $this, 'radio_setting_add' ] );
-		//add_filter( 'acf/load_field/type=radio', [ $this, 'radio_setting_modify' ] );
 		add_filter( 'acf/validate_value/type=radio', [ $this, 'value_validate' ], 10, 4 );
 
 		// Customise "CheckBox" Fields.
 		add_action( 'acf/render_field_settings/type=checkbox', [ $this, 'checkbox_setting_add' ] );
-		//add_filter( 'acf/load_field/type=checkbox', [ $this, 'checkbox_setting_modify' ] );
 
 		// Customise "Date" Fields.
 		add_action( 'acf/render_field_settings/type=date_picker', [ $this, 'date_picker_setting_add' ] );
-		//add_filter( 'acf/load_field/type=date_picker', [ $this, 'date_picker_setting_modify' ] );
 		add_filter( 'acf/load_value/type=date_picker', [ $this, 'date_picker_value_modify' ], 10, 3 );
 
 		// Customise "Date Time" Fields.
 		add_action( 'acf/render_field_settings/type=date_time_picker', [ $this, 'date_time_picker_setting_add' ] );
-		//add_filter( 'acf/load_field/type=date_time_picker', [ $this, 'date_time_picker_setting_modify' ] );
 		add_filter( 'acf/load_value/type=date_time_picker', [ $this, 'date_time_picker_value_modify' ], 10, 3 );
 
 		// Customise "Text" Fields.
 		add_action( 'acf/render_field_settings/type=text', [ $this, 'text_setting_add' ] );
-		//add_filter( 'acf/load_field/type=text', [ $this, 'text_setting_modify' ] );
 		add_filter( 'acf/validate_value/type=text', [ $this, 'value_validate' ], 10, 4 );
-
-		// Intercept prepare Field event.
-		//add_action( 'acf/prepare_field', [ $this, 'prepare' ] );
 
 	}
 
@@ -176,6 +161,8 @@ class CiviCRM_ACF_Integration_ACF_Field {
 				 *
 				 * - Relationship
 				 * - Address
+				 * - Email
+				 * - Website
 				 *
 				 * @since 0.4.5
 				 *
@@ -197,110 +184,6 @@ class CiviCRM_ACF_Integration_ACF_Field {
 
 		// --<
 		return $acf_fields;
-
-	}
-
-
-
-	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * Add Fields.
-	 *
-	 * @since 0.3
-	 */
-	public function fields_add() {
-
-		/*
-		// Add the "CiviCRM Contact Type" field.
-		$contact_type = $this->civicrm_contact_type_get();
-		acf_add_local_field( $contact_type );
-		*/
-
-		/*
-		// Add the "CiviCRM Contact Field" field.
-		$contact_field = $this->field_civicrm_contact_field_get();
-		acf_add_local_field( $contact_field );
-		*/
-
-		/*
-		// Add the "CiviCRM Custom Field" field.
-		$custom_field = $this->plugin->civicrm->contact->acf_field_get();
-		acf_add_local_field( $custom_field );
-		*/
-
-	}
-
-
-
-	/**
-	 * Return the "CiviCRM Contact Type" Field.
-	 *
-	 * @since 0.3
-	 *
-	 * @return array $field The Field data array.
-	 */
-	public function civicrm_contact_type_get() {
-
-		// Get Contact Types.
-		$contact_types = $this->plugin->civicrm->contact_type->types_get_nested();
-
-		// Get mappings.
-		$mappings = $this->plugin->mapping->mappings_for_contact_types_get();
-
-		/*
-		 * Do we want to allow top-level Contact Types to be synced?
-		 *
-		 * It would probably be sensible to restrict mappable Contact Types to
-		 * subtypes, but there's no way to make select options "disabled" in ACF
-		 * so it would be hard to show the Contact Type hierarchy.
-		 */
-
-		// TODO: Use OptGroups?
-
-		// Build choices array for dropdown.
-		$choices = [];
-		foreach( $contact_types AS $contact_type ) {
-
-			// Always add top-level Contact Types.
-			$choices[$contact_type['id']] = $contact_type['name'];
-
-			// Add subtypes if they are mapped.
-			if ( ! empty( $contact_type['children'] ) ) {
-				foreach( $contact_type['children'] AS $child ) {
-					if ( isset( $mappings[$child['id']] ) ) {
-						$choices[$child['id']] = '-- ' . $child['label'];
-					}
-				}
-			}
-
-		}
-
-		// Get Contact Type key.
-		$contact_type_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
-
-		// Define field.
-		$field = [
-			'key' => $contact_type_key,
-			'label' => __( 'CiviCRM Contact Type', 'civicrm-acf-integration' ),
-			'name' => $contact_type_key,
-			'type' => 'select',
-			'instructions' => __( 'Choose the CiviCRM Contact Type that Fields in this Field Group should refer to. (Optional)', 'civicrm-acf-integration' ),
-			'default_value' => '',
-			'placeholder' => '',
-			'allow_null' => 1,
-			'multiple' => 0,
-			'ui' => 0,
-			'required' => 0,
-			'return_format' => 'value',
-			'parent' => $this->acf->field_group->placeholder_group_get(),
-			'choices' => $choices,
-		];
-
-		// --<
-		return $field;
 
 	}
 
@@ -606,23 +489,6 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		if ( ! empty( $choices ) ) {
 			$field['choices'] = $choices;
 		}
-
-		// --<
-		return $field;
-
-	}
-
-
-
-	/**
-	 * Maybe modify the Setting of a "Select" Field.
-	 *
-	 * @since 0.3
-	 *
-	 * @param array $field The existing field data array.
-	 * @return array $field The modified field data array.
-	 */
-	public function select_field_update( $field ) {
 
 		// --<
 		return $field;
@@ -1245,37 +1111,6 @@ class CiviCRM_ACF_Integration_ACF_Field {
 			// Apply settings.
 			$field = $this->plugin->civicrm->custom_field->text_settings_get( $field, $custom_field_id );
 
-		}
-
-		// --<
-		return $field;
-
-	}
-
-
-
-	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * Prepare a Field based on our Settings.
-	 *
-	 * @since 0.3
-	 *
-	 * @param array $field The existing field data array.
-	 * @return array $field The modified field data array.
-	 */
-	public function prepare( $field ) {
-
-		// Bail early if no 'admin_only' setting.
-		if ( empty( $field['admin_only'] ) ) {
-			return $field;
-		}
-
-		// Return false if is not admin (removes field)
-		if ( ! current_user_can( 'administrator' ) ) {
-			return false;
 		}
 
 		// --<

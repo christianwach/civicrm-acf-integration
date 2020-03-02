@@ -67,13 +67,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 	 */
 	public function register_hooks() {
 
-		// Add Field Groups.
-		//add_action( 'acf/init', [ $this, 'field_groups_add' ] );
-
-		// Add "CiviCRM Contact Type" Field to Field Group settings.
-		add_action( 'acf/render_field_group_settings', [ $this, 'settings_add' ] );
-		add_action( 'acf/validate_field_group', [ $this, 'setting_validate' ] );
-
 		// Update mapped Fields when Field Group is saved.
 		add_action( 'acf/update_field_group', [ $this, 'field_group_updated' ] );
 
@@ -95,120 +88,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 
 		// --<
 		return $this->placeholder_group;
-
-	}
-
-
-
-	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * Add ACF Field Groups.
-	 *
-	 * @since 0.3
-	 */
-	public function field_groups_add() {
-
-		/*
-		// Attach the field group to the built-in 'post' Post Type.
-		$field_group_location = [[[
-			'param' => 'post_type',
-			'operator' => '==',
-			'value' => 'post',
-		]]];
-
-		// Define field group.
-		$field_group = [
-			'active' => false,
-			'key' => $this->placeholder_group_get(),
-			'title' => __( 'Placeholder Field Group', 'civicrm-acf-integration' ),
-			'fields' => [],
-			'location' => $field_group_location,
-		];
-
-		// Now add the group.
-		acf_add_local_field_group( $field_group );
-		*/
-
-	}
-
-
-
-	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * Add Setting to Field Group Settings.
-	 *
-	 * @since 0.3
-	 *
-	 * @param array $field_group The field group data array.
-	 */
-	public function settings_add( $field_group ) {
-
-		// Get the "CiviCRM Contact Type" field.
-		$field = $this->acf->field->civicrm_contact_type_get();
-
-		// Get field key.
-		$field_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
-
-		// Add setting.
-		if ( isset( $field_group[$field_key] ) ) {
-			$field['value'] = $field_group[$field_key];
-		} else {
-			$field['value'] = '';
-		}
-
-		// Now add it.
-		acf_render_field_wrap( $field );
-
-	}
-
-
-
-	/**
-	 * Validate Field Group Settings.
-	 *
-	 * @since 0.3
-	 *
-	 * @param array $field_group The existing field group data array.
-	 * @return array $field_group The modified field group data array.
-	 */
-	public function setting_validate( $field_group ) {
-
-		// Bail if already invalid.
-		if ( ! $field_group['_valid'] ) {
-			return $field_group;
-		}
-
-		// Bail if it's our placeholder field group.
-		if ( $field_group['key'] == $this->placeholder_group_get() ) {
-			return $field_group;
-		}
-
-		// Get field key.
-		$field_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
-
-		// Get our setting value.
-		$setting = acf_maybe_get_POST( $field_key );
-
-		// Maybe apply setting from POST to Field Group.
-		if ( ! empty( $setting ) ) {
-			$field_group[$field_key] = trim( $setting );
-		}
-
-		// Validate our setting.
-		if ( ! empty( $field_group[$field_key] ) ) {
-			$field_group[$field_key] = $field_group[$field_key];
-		} else {
-			$field_group[$field_key] = '';
-		}
-
-		// --<
-		return $field_group;
 
 	}
 
@@ -243,11 +122,30 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 	 */
 	public function field_group_updated( $field_group ) {
 
-		// Get field key.
-		$field_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
+		// Init mapped flag.
+		$mapped = false;
+
+		/**
+		 * Query if this Field Group is mapped.
+		 *
+		 * This filter sends out a request for other classes to respond with a
+		 * Boolean if they detect that this Field Group maps to an Entity Type
+		 * that they are responsible for.
+		 *
+		 * Internally, this is used by:
+		 *
+		 * @see CiviCRM_ACF_Integration_CiviCRM_Contact::query_field_group_mapped()
+		 *
+		 * @since 0.5.1
+		 *
+		 * @param bool $mapped False, since we're asking for a mapping.
+		 * @param array $field_group The array of ACF Field Group data.
+		 * @param bool $mapped True if the Field Group is mapped, or false if not mapped.
+		 */
+		$mapped = apply_filters( 'civicrm_acf_integration_query_field_group_mapped', $mapped, $field_group );
 
 		// Bail if this Field Group is not mapped.
-		if ( empty( $field_group[$field_key] ) ) {
+		if ( $mapped === false ) {
 			return $field_group;
 		}
 
@@ -378,6 +276,69 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 
 		// --<
 		return $field_group;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Check if a Field Group has been mapped to a WordPress Entity.
+	 *
+	 * This method is an adapted version of acf_get_field_group_visibility().
+	 * At present, we just send an array of params containing the Post Type to
+	 * check if the Field Group is visible on that Post Type. For example:
+	 *
+	 * $params = [ 'post_type' => 'student' ]
+	 *
+	 * The params match those passed to acf_get_field_groups() in ACF. Search
+	 * the ACF code to see what kinds of keys and values are possible.
+	 *
+	 * @see acf_get_field_groups()
+	 * @see acf_get_field_group_visibility()
+	 *
+	 * @since 0.5.1
+	 *
+	 * @param array $field_group The Field Group to check.
+	 * @param array $params The params to query by.
+	 * @return bool True if the Field Group has been mapped to the Event Post Type, or false otherwise.
+	 */
+	public function is_visible( $field_group, $params ) {
+
+		// Bail if no location rules exist.
+		if ( empty( $field_group['location'] ) ) {
+			return false;
+		}
+
+		// Loop through location groups.
+		foreach( $field_group['location'] AS $group ) {
+
+			// Skip group if it has no rules.
+			if ( empty( $group ) ) {
+				continue;
+			}
+
+			// Loop over the rules and determine if all rules match.
+			$match_group = true;
+			foreach( $group AS $rule ) {
+				if ( ! acf_match_location_rule( $rule, $params, $field_group ) ) {
+					$match_group = false;
+					break;
+				}
+			}
+
+			// If this group matches, it is a visible Field Group.
+			if ( $match_group ) {
+				return true;
+			}
+
+		}
+
+		// Fallback.
+		return false;
 
 	}
 

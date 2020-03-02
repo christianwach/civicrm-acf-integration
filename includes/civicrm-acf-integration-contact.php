@@ -85,6 +85,15 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		add_action( 'civicrm_acf_integration_mapper_post_saved', [ $this, 'post_saved' ], 10, 1 );
 		add_action( 'civicrm_acf_integration_mapper_acf_fields_saved', [ $this, 'acf_fields_saved' ], 10, 1 );
 
+		// Listen for queries from our Field Group class.
+		add_action( 'civicrm_acf_integration_query_field_group_mapped', [ $this, 'query_field_group_mapped' ], 10, 2 );
+
+		// Listen for queries from our Custom Field class.
+		add_action( 'civicrm_acf_integration_query_custom_fields', [ $this, 'query_custom_fields' ], 10, 2 );
+
+		// Listen for queries from our Custom Field class.
+		add_action( 'civicrm_acf_integration_query_post_id', [ $this, 'query_post_id' ], 10, 2 );
+
 	}
 
 
@@ -540,30 +549,38 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			return $contact_data;
 		}
 
-		// Buld params to create Contact.
+		// Build params to create Contact.
 		$params = [
 			'version' => 3,
 		] + $contact;
 
 		/*
-
-		// Minimum array to create a Contact:
-		$params = [
-			'version' => 3,
-			'contact_type' => "Individual",
-			'contact_sub_type' => "Dog",
-			'display_name' => "Rover",
-		];
-
-		// Updates are triggered by:
-		$params['id'] = 255;
-
-		// Custom Fields are addressed by ID:
-		$params['custom_9'] = "Blah"; // Dog Story
-		$params['custom_7'] = 1; // House Broken
-		$params['custom_8'] = 0; // Crate Trained
-
-		*/
+		 * Minimum array to create a Contact:
+		 *
+		 * $params = [
+		 *   'version' => 3,
+		 *   'contact_type' => "Individual",
+		 *   'contact_sub_type' => "Dog",
+		 *   'display_name' => "Rover",
+		 * ];
+		 *
+		 * Updates are triggered by:
+		 *
+		 * $params['id'] = 255;
+		 *
+		 * Custom Fields are addressed by ID:
+		 *
+		 * $params['custom_9'] = "Blah";
+		 * $params['custom_7'] = 1;
+		 * $params['custom_8'] = 0;
+		 *
+		 * CiviCRM kindly ignores any Custom Fields which are passed to it that
+		 * aren't attached to the Entity. This is of significance when a Field
+		 * Group is attached to multiple Post Types (for example) and the Fields
+		 * refer to different Entities (e.g. "Dog" and "Student").
+		 *
+		 * Nice.
+		 */
 
 		// Call the API.
 		$result = civicrm_api( 'Contact', 'create', $params );
@@ -652,7 +669,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			return false;
 		}
 
-		// Buld params to delete Contact.
+		// Build params to delete Contact.
 		$params = [
 			'version' => 3,
 		] + $contact;
@@ -997,7 +1014,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			'label' => __( 'CiviCRM Field', 'civicrm-acf-integration' ),
 			'name' => $this->acf_field_key_get(),
 			'type' => 'select',
-			'instructions' => __( 'Choose the CiviCRM Custom Field or Contact Field that this ACF Field should sync with. (Optional)', 'civicrm-acf-integration' ),
+			'instructions' => __( 'Choose the CiviCRM Field that this ACF Field should sync with. (Optional)', 'civicrm-acf-integration' ),
 			'default_value' => '',
 			'placeholder' => '',
 			'allow_null' => 1,
@@ -1018,6 +1035,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 	/**
 	 * Get the mapped Custom Field ID if present.
+	 *
+	 * This method should probably be moved elsewhere.
 	 *
 	 * @since 0.3.1
 	 *
@@ -1151,6 +1170,210 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		 * @return bool $permitted True if allowed, false otherwise.
 		 */
 		return apply_filters( 'civicrm_acf_integration_user_can_view_contact', $permitted, $contact_id );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Listen for queries from the Field Group class.
+	 *
+	 * This method responds with a Boolean if it detects that this Field Group
+	 * maps to a Contact Type.
+	 *
+	 * @since 0.5.1
+	 *
+	 * @param bool $mapped The existing mapping flag.
+	 * @param array $field_group The array of ACF Field Group data.
+	 * @param bool $mapped True if the Field Group is mapped, or pass through if not mapped.
+	 */
+	public function query_field_group_mapped( $mapped, $field_group ) {
+
+		// Bail if a Mapping has already been found.
+		if ( $mapped !== false ) {
+			return $mapped;
+		}
+
+		// Bail if this is not a Contact Field Group.
+		$is_contact_field_group = $this->is_contact_field_group( $field_group );
+		if ( $is_contact_field_group === false ) {
+			return $mapped;
+		}
+
+		// --<
+		return true;
+
+	}
+
+
+
+	/**
+	 * Listen for queries from the Custom Field class.
+	 *
+	 * @since 0.5.1
+	 *
+	 * @param array $custom_fields The existing Custom Fields.
+	 * @param array $field_group The array of ACF Field Group data.
+	 * @param array $custom_fields The populated array of CiviCRM Custom Fields params.
+	 */
+	public function query_custom_fields( $custom_fields, $field_group ) {
+
+		// Bail if this is not a Contact Field Group.
+		$is_contact_field_group = $this->is_contact_field_group( $field_group );
+		if ( $is_contact_field_group === false OR empty( $is_contact_field_group ) ) {
+			return $custom_fields;
+		}
+
+		// Loop through the Post Types.
+		foreach( $is_contact_field_group AS $post_type_name ) {
+
+			// Get the Contact Type ID.
+			$contact_type_id = $this->civicrm->contact_type->id_get_for_post_type( $post_type_name );
+
+			// Get Contact Type hierarchy.
+			$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
+
+			// Get the Custom Fields for this CiviCRM Contact Type.
+			$custom_fields_for_type = $this->civicrm->custom_field->get_for_entity_type(
+				$contact_types['type'],
+				$contact_types['subtype']
+			);
+
+			// Merge with return array.
+			$custom_fields = array_merge( $custom_fields, $custom_fields_for_type );
+
+		}
+
+		// --<
+		return $custom_fields;
+
+	}
+
+
+
+	/**
+	 * Listen for queries from the Custom Field class.
+	 *
+	 * This method responds with a Post ID if it detects that the set of Custom
+	 * Fields maps to a Contact.
+	 *
+	 * @since 0.4.5
+	 *
+	 * @param bool $post_id False, since we're asking for a Post ID.
+	 * @param array $args The array of CiviCRM Custom Fields params.
+	 * @param bool|int $post_id The mapped Post ID, or false if not mapped.
+	 */
+	public function query_post_id( $post_id, $args ) {
+
+		// Bail early if a Post ID has been found.
+		if ( $post_id !== false ) {
+			return $post_id;
+		}
+
+		// Init Contact.
+		$contact = false;
+
+		// Let's tease out the context from the Custom Field data.
+		foreach( $args['custom_fields'] AS $field ) {
+
+			// Skip if it is not attached to a Contact.
+			if ( $field['entity_table'] != 'civicrm_contact' ) {
+				continue;
+			}
+
+			// Grab the Contact.
+			$contact = $this->get_by_id( $field['entity_id'] );
+
+			// We can bail now that we know.
+			break;
+
+		}
+
+		// Bail if there's no Contact.
+		if ( $contact === false ) {
+			return false;
+		}
+
+		// Get the Post ID that this Contact is mapped to.
+		$post_id = $this->is_mapped( $contact );
+
+		// Skip if not mapped.
+		if ( $post_id === false ) {
+			return false;
+		}
+
+		// --<
+		return $post_id;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Check if a Field Group has been mapped to one or more Contact Post Types.
+	 *
+	 * @since 0.4.4
+	 *
+	 * @param array $field_group The Field Group to check.
+	 * @return bool|array The array of Post Types if the Field Group has been mapped, or false otherwise.
+	 */
+	public function is_contact_field_group( $field_group ) {
+
+		// Only do this once per Field Group.
+		static $pseudocache;
+		if ( isset( $pseudocache[$field_group['ID']] ) ) {
+			return $pseudocache[$field_group['ID']];
+		}
+
+		// Assume not a Contact Field Group.
+		$is_contact_field_group = false;
+
+		// If location rules exist.
+		if ( ! empty( $field_group['location'] ) ) {
+
+			// Get mapped Post Types.
+			$post_types = $this->plugin->mapping->mappings_for_contact_types_get();
+
+			// Bail if there are no mappings.
+			if ( ! empty( $post_types ) ) {
+
+				// Loop through them.
+				foreach( $post_types AS $post_type ) {
+
+					// Define params to test for a mapped Post Type.
+					$params = [
+						'post_type' => $post_type,
+					];
+
+					// Do the check.
+					$is_visible = $this->plugin->acf->field_group->is_visible( $field_group, $params );
+
+					// If it is, then add to return array.
+					if ( $is_visible ) {
+						$is_contact_field_group[] = $post_type;
+					}
+
+				}
+
+			}
+
+		}
+
+		// Maybe add to pseudo-cache.
+		if ( ! isset( $pseudocache[$field_group['ID']] ) ) {
+			$pseudocache[$field_group['ID']] = $is_contact_field_group;
+		}
+
+		// --<
+		return $is_contact_field_group;
 
 	}
 
