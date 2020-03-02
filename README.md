@@ -23,23 +23,28 @@ In addition, given that this plugin is still at an early stage of development, i
 
 At present the *CiviCRM ACF Integration* plugin allows you to specify links between:
 
-* WordPress Custom Post Types and CiviCRM Contact Types. It's recommended to link only Contact Sub-types — e.g. "Student" — instead of the top-level "Individual" Contact Type.
+* CiviCRM Contact Types and WordPress Custom Post Types
+* CiviCRM Events and Event Organiser Events
 * More entity links to follow...
 
-To do this, in CiviCRM go to *Administer* —> *Customize Data and Screens* —> *Contact Types* and edit a Contact Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Contact Type you are editing. Choose one and save the Contact Type.
+#### CiviCRM Contact Types and WordPress Custom Post Types ####
+
+To link these together, in CiviCRM go to *Administer* —> *Customize Data and Screens* —> *Contact Types* and edit a Contact Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Contact Type you are editing. Choose one and save the Contact Type.
 
 From now on, each time you create a Contact of the Contact Type that you have linked, a new WordPress Post will be created. The "Display Name" of the Contact will become the WordPress Post Title. And - in the reverse direction - each time you create a WordPress Post which is of the Post Type you have linked to a Contact Type, a new Contact will be created with their "Display Name" set to the Title of the new Post.
+
+#### CiviCRM Events and Event Organiser Events ####
+
+If you want to make the same kind of links between Events in WordPress and CiviCRM, this plugin is compatible with [CiviCRM Event Organiser](https://github.com/christianwach/civicrm-event-organiser) and enables integration of Custom Fields on CiviCRM Events with ACF Fields attached to the Event Organiser "Event" Post Type.
 
 ---
 
 ### Links between fields ###
 
-Once the link between a Contact Type and a Post Type has been made, go to the edit screen of an ACF Field Group whose Location Rule places it on the edit screen of your linked Post Type. Scroll to the "Settings" section and you will see a dropdown which allows you to choose the CiviCRM Contact Type that ACF Fields in the Field Group should refer to. Choose one and save the Field Group.
-
-Now you can edit your ACF Fields themselves to integrate them with the Contact's data fields. These are split into two kinds:
+Once the link between a Contact Type and a Post Type has been made, go to the edit screen of an ACF Field Group. Create a Location Rule that places it on the edit screen of your linked Post Type. Now you can edit your ACF Fields themselves to integrate them with the Contact's data fields. These are split into two kinds:
 
 * "Contact Fields" are those fields that are associated with a Contact by default, e.g. "First Name", "Last Name", "Gender", "Date of Birth" etc
-* "Custom Fields" are part of a Custom Group that has been associated with the Contact Type, e.g. "Most Important Issue", "Marital Status" and "Marriage Date" in the "Constituent Information" Custom Group that is part of the CiviCRM sample data. These Fields are listed under the name of Custom Group to which they belong.
+* "Custom Fields" are part of a Custom Group that has been associated with a Contact Type (or other CiviCRM Entity), e.g. "Most Important Issue", "Marital Status" and "Marriage Date" in the "Constituent Information" Custom Group that is part of the CiviCRM sample data. These Fields are listed under the name of Custom Group to which they belong.
 
 ACF Fields of type Select, Radio Button and Checkbox will have their CiviCRM values ported across to the ACF Field "choices" when the Field Group is saved. To link to a Multi-Select CiviCRM Field, you must enable "Select multiple values?" in the ACF Field's settings. If you make changes to the Option Values for a CiviCRM Custom Field mapped to one of these ACF Field Types, you will have to re-save the ACF Field Group(s) that contain the mapped ACF Fields.
 
@@ -84,7 +89,7 @@ The *CiviCRM ACF Integration* plugin also provides three custom ACF Fields which
 
 ### Outstanding Issues ###
 
-##### Changes to Custom Field settings #####
+#### Changes to Custom Field settings #####
 
 If you alter the settings of a CiviCRM Custom Field then the ACF Field(s) that are mapped to it will not automatically pick up those changes. For the time being, you will need to manually check that the settings on both sides are what you would expect them to be.
 
