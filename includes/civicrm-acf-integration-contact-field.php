@@ -255,10 +255,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 				$acf_setting = get_field_object( $selector, $post_id );
 
 				// Convert to ACF format.
-				$datetime = DateTime::createFromFormat( 'YmdHis', $value );
 				if ( $acf_setting['type'] == 'date_picker' ) {
+					$datetime = DateTime::createFromFormat( 'Y-m-d', $value );
 					$value = $datetime->format( 'Ymd' );
 				} elseif ( $acf_setting['type'] == 'date_time_picker' ) {
+					$datetime = DateTime::createFromFormat( 'YmdHis', $value );
 					$value = $datetime->format( 'Y-m-d H:i:s' );
 				}
 
