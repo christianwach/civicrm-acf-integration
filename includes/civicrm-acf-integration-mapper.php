@@ -159,7 +159,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	public function hooks_civicrm_add() {
 
 		// Intercept Contact updates in CiviCRM.
-		//add_action( 'civicrm_pre', [ $this, 'contact_pre' ], 10, 4 );
+		add_action( 'civicrm_pre', [ $this, 'contact_pre_edit' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'contact_created' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'contact_edited' ], 10, 4 );
 
@@ -197,7 +197,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	public function hooks_civicrm_remove() {
 
 		// Remove Contact update hooks.
-		//remove_action( 'civicrm_pre', [ $this, 'contact_pre' ], 10 );
+		remove_action( 'civicrm_pre', [ $this, 'contact_pre_edit' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'contact_created' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'contact_edited' ], 10 );
 
@@ -243,7 +243,12 @@ class CiviCRM_ACF_Integration_Mapper {
 	 * @param integer $objectId The ID of the object.
 	 * @param object $objectRef The object.
 	 */
-	public function contact_pre( $op, $objectName, $objectId, $objectRef ) {
+	public function contact_pre_edit( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if not the context we want.
+		if ( $op != 'edit' ) {
+			return;
+		}
 
 		// Bail if this is not a Contact.
 		$top_level_types = $this->plugin->civicrm->contact_type->types_get_top_level();
