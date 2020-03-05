@@ -310,7 +310,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 			$existing_data = array_pop( $existing_website['values'] );
 
 			// Bail if it hasn't changed.
-			if ( $existing_data['url'] == $value ) {
+			if ( !empty( $existing_data['url'] ) AND $existing_data['url'] == $value ) {
 				return $existing_data;
 			}
 
