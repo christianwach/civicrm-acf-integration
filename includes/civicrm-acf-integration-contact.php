@@ -513,7 +513,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		$post = $this->plugin->post->get_by_contact_id( $contact_id );
 
 		// Bail if no Post is found.
-		if ( ! ( $post instanceOf WP_Post ) ) {
+		if ( ! ( $post instanceof WP_Post ) ) {
 			return $is_mapped;
 		}
 
