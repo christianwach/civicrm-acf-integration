@@ -810,6 +810,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 
 		// Get the Contact Type.
 		$contact_type_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
+
+		// Bail if there's no Contact Type.
+		if ( empty( $field_group[$contact_type_key] ) ) {
+			return $relationships;
+		}
+
+		// The Contact Type is the Field Group setting.
 		$contact_type_id = $field_group[$contact_type_key];
 
 		// Get Contact Type hierarchy.
