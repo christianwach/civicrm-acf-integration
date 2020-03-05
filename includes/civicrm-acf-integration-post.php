@@ -459,9 +459,10 @@ class CiviCRM_ACF_Integration_Post {
 	 *
 	 * @param array $contact The CiviCRM Contact data.
 	 * @param int $existing_id The numeric ID of the Post.
+	 * @param WP_Post $post The WordPress Post object if it exists.
 	 * @return int|bool $post_id The WordPress Post ID, or false on failure.
 	 */
-	public function update_from_contact( $contact, $existing_id ) {
+	public function update_from_contact( $contact, $existing_id, $post = null ) {
 
 		// Maybe cast Contact data as array.
 		if ( is_object( $contact ) ) {
@@ -473,6 +474,13 @@ class CiviCRM_ACF_Integration_Post {
 			'ID' => $existing_id,
 			'post_title' => $contact['display_name'],
 		];
+
+		// Overwrite Permalink if the current Post Title is empty.
+		if ( ! is_null( $post ) AND $post instanceof WP_Post ) {
+			if ( empty( $post->post_title ) ) {
+				$args['post_name'] = sanitize_title( $contact['display_name'] );
+			}
+		}
 
 		// Update the Post.
 		$post_id = wp_update_post( $args, true );
@@ -574,8 +582,8 @@ class CiviCRM_ACF_Integration_Post {
 		// Remove WordPress callbacks to prevent recursion.
 		$this->plugin->mapper->hooks_wordpress_remove();
 
-		// Update the Post Title.
-		$this->update_from_contact( $contact, $post->ID );
+		// Update the Post Title (and maybe the Post Permalink).
+		$this->update_from_contact( $contact, $post->ID, $post );
 
 		// Reinstate WordPress callbacks.
 		$this->plugin->mapper->hooks_wordpress_add();
