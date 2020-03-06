@@ -173,6 +173,15 @@ Many thanks to [Ryan Waterbury](https://github.com/onedogsolutions) of [One Dog 
 
 == Changelog ==
 
+= 0.6 =
+
+* Handle bulk Address updates via Contact Edit screen
+* Fix rendering of Custom ACF Field Settings
+
+= 0.5.1 =
+
+* Improve flexibility of Field-Entity mappings
+
 = 0.5 =
 
-Initial release.
+* Initial release.
