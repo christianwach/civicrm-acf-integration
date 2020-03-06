@@ -511,34 +511,36 @@ class CiviCRM_ACF_Integration_Post {
 	 */
 	public function should_be_synced( $post_obj ) {
 
+		// Init return.
+		$post = false;
+
 		// Bail if no Post object.
 		if ( ! $post_obj ) {
-			return false;
-		}
-
-		// Bail if this is an auto save routine.
-		if ( defined( 'DOING_AUTOSAVE' ) AND DOING_AUTOSAVE ) {
-			return false;
+			return $post;
 		}
 
 		// Check permissions.
 		if ( ! current_user_can( 'edit_post', $post_obj->ID ) ) {
-			return false;
+			return $post;
 		}
 
-		// Check for revision or auto-draft.
-		if ( $post_obj->post_type == 'revision' ) {
-
-			// Get parent.
-			if ( $post_obj->post_parent != 0 ) {
-				$post = get_post( $post_obj->post_parent );
-			} else {
-				$post = $post_obj;
-			}
-
-		} else {
-			$post = $post_obj;
+		// Bail if this is an auto-draft.
+		if ( $post_obj->post_status == 'auto-draft' ) {
+			return $post;
 		}
+
+		// Bail if this is an autosave routine.
+		if ( wp_is_post_autosave( $post_obj ) ) {
+			return $post;
+		}
+
+		// Bail if this is a revision.
+        if ( wp_is_post_revision( $post_obj ) ) {
+			return $post;
+		}
+
+		// The Post it should be synced.
+		$post = $post_obj;
 
 		// --<
 		return $post;
