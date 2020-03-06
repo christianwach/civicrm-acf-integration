@@ -180,10 +180,12 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 
 		// Filter fields to include only "Yes/No".
 		$filtered_fields = [];
-		foreach( $custom_fields AS $custom_field ) {
-			if ( ! empty( $custom_field['data_type'] ) AND $custom_field['data_type'] == 'Boolean' ) {
-				if ( ! empty( $custom_field['html_type'] ) AND $custom_field['html_type'] == 'Radio' ) {
-					$filtered_fields[] = $custom_field;
+		foreach( $custom_fields AS $custom_group_name => $custom_group ) {
+			foreach( $custom_group AS $custom_field ) {
+				if ( ! empty( $custom_field['data_type'] ) AND $custom_field['data_type'] == 'Boolean' ) {
+					if ( ! empty( $custom_field['html_type'] ) AND $custom_field['html_type'] == 'Radio' ) {
+						$filtered_fields[$custom_group_name][] = $custom_field;
+					}
 				}
 			}
 		}
