@@ -150,7 +150,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		} else {
 
 			// Yes - update the Contact.
-			$success = $this->update_from_post( $post, $contact_id );
+			$contact = $this->update_from_post( $post, $contact_id );
 
 		}
 

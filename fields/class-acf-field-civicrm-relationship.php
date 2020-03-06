@@ -692,6 +692,11 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 		// Init return.
 		$filtered = [];
 
+		// Bail if there aren't any relationships.
+		if ( empty( $relationships ) ) {
+			return $filtered;
+		}
+
 		// Filter fields to include each Relationship in both directions when possible.
 		foreach( $relationships AS $relationship ) {
 

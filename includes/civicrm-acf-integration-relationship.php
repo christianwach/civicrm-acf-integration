@@ -808,19 +808,65 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 			return $relationships;
 		}
 
-		// Get the Contact Type.
-		$contact_type_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
-
-		// Bail if there's no Contact Type.
-		if ( empty( $field_group[$contact_type_key] ) ) {
+		// Bail if this is not a Contact Field Group.
+		$is_contact_field_group = $this->civicrm->contact->is_contact_field_group( $field_group );
+		if ( $is_contact_field_group === false ) {
 			return $relationships;
 		}
 
-		// The Contact Type is the Field Group setting.
-		$contact_type_id = $field_group[$contact_type_key];
+		// Loop through the Post Types.
+		foreach( $is_contact_field_group AS $post_type_name ) {
 
-		// Get Contact Type hierarchy.
-		$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
+			// Get the Contact Type ID.
+			$contact_type_id = $this->civicrm->contact_type->id_get_for_post_type( $post_type_name );
+
+			// Get Contact Type hierarchy.
+			$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
+
+			// Get relationships for the top-level Contact Type.
+			$relationships_for_type = $this->relationships_get_for_contact_type( $contact_types['type'] );
+
+			/**
+			 * Filter the retrieved relationships.
+			 *
+			 * Used internally by the custom ACF "CiviCRM Relationship" Field.
+			 *
+			 * @since 0.4.3
+			 *
+			 * @param array $relationships The retrieved array of Relationship Types.
+			 * @param array $contact_types The array of Contact Types.
+			 * @param array $field The ACF Field data array.
+			 * @return array $relationships The modified array of Relationship Types.
+			 */
+			$relationships_for_type = apply_filters(
+				'civicrm_acf_integration_relationships_get_for_acf_field',
+				$relationships_for_type, $contact_types, $field
+			);
+
+			// Merge with return array.
+			$relationships = array_merge( $relationships, $relationships_for_type );
+
+		}
+
+		// --<
+		return $relationships;
+
+	}
+
+
+
+	/**
+	 * Get all Relationship Types for a top-level Contact Type.
+	 *
+	 * @since 0.6
+	 *
+	 * @param int $contact_type The top-level Contact Type.
+	 * @return array $relationships The array of Relationships.
+	 */
+	public function relationships_get_for_contact_type( $contact_type ) {
+
+		// Init return.
+		$relationships = [];
 
 		// Try and init CiviCRM.
 		if ( ! $this->civicrm->is_initialised() ) {
@@ -832,8 +878,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		$params = [
 			'version' => 3,
 			'sequential' => 1,
-			'contact_type_a' => $contact_types['type'],
-			'contact_type_b' => $contact_types['type'],
+			'contact_type_a' => $contact_type,
+			'contact_type_b' => $contact_type,
 			'options' => [
 				'limit' => 0,
 				'or' => [
@@ -855,22 +901,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 			return $relationships;
 		}
 
-		/**
-		 * Filter the retrieved relationships.
-		 *
-		 * Used internally by the custom ACF "CiviCRM Relationship" Field.
-		 *
-		 * @since 0.4.3
-		 *
-		 * @param array $relationships The retrieved array of Relationship Types.
-		 * @param array $contact_types The array of Contact Types.
-		 * @param array $field The ACF Field data array.
-		 * @return array $relationships The modified array of Relationship Types.
-		 */
-		$relationships = apply_filters(
-			'civicrm_acf_integration_relationships_get_for_acf_field',
-			$result['values'], $contact_types, $field
-		);
+ 		// Extract the result set.
+		$relationships = $result['values'];
 
 		// --<
 		return $relationships;
