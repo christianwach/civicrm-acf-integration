@@ -91,7 +91,7 @@ The *CiviCRM ACF Integration* plugin also provides three custom ACF Fields which
 
 #### Bulk changes via the CiviCRM Contact Edit screen #####
 
-Wholesale changes via the CiviCRM Contact Edit screen are not yet fully supported. Try to stick to changes via the Contact View screen for the time being.
+Wholesale changes via the CiviCRM Contact Edit screen may not yet be fully supported. Try to stick to changes via the Contact View screen for the time being.
 
 #### Changes to Custom Field settings #####
 

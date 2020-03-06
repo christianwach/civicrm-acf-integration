@@ -1060,6 +1060,7 @@ class CiviCRM_ACF_Integration_Mapper {
 		 * Broadcast that ACF Fields have been saved for a Post.
 		 *
 		 * @since 0.4.5
+		 * @since 0.6.1 Params reduced to array.
 		 *
 		 * @param array $args The array of CiviCRM params.
 		 */
