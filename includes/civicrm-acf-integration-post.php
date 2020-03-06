@@ -77,7 +77,7 @@ class CiviCRM_ACF_Integration_Post {
 		add_action( 'civicrm_acf_integration_mapper_contact_edited', [ $this, 'contact_edited' ], 10, 1 );
 
 		// Maybe sync the Contact "Display Name" to the WordPress Post Title.
-		add_action( 'civicrm_acf_integration_contact_acf_fields_saved', [ $this, 'maybe_sync_title' ], 10, 3 );
+		add_action( 'civicrm_acf_integration_contact_acf_fields_saved', [ $this, 'maybe_sync_title' ], 10, 1 );
 
 	}
 
@@ -552,16 +552,16 @@ class CiviCRM_ACF_Integration_Post {
 	 *
 	 * @since 0.4.5
 	 *
-	 * @param array $contact The CiviCRM Contact data.
-	 * @param WP_Post $post The WordPress Post object.
-	 * @param array $fields The array of ACF Field values, keyed by Field selector.
+	 * @param array $args The array of WordPress params.
 	 * @return bool True if updates were successful, or false on failure.
 	 */
-	public function maybe_sync_title( $contact, $post, $fields ) {
+	public function maybe_sync_title( $args ) {
 
 		// Maybe cast Contact data as array.
-		if ( is_object( $contact ) ) {
-			$contact = (array) $contact;
+		if ( is_object( $args['contact'] ) ) {
+			$contact = (array) $args['contact'];
+		} else {
+			$contact = $args['contact'];
 		}
 
 		// Bail if no Display Name.
@@ -570,12 +570,12 @@ class CiviCRM_ACF_Integration_Post {
 		}
 
 		// Check permissions.
-		if ( ! current_user_can( 'edit_post', $post->ID ) ) {
+		if ( ! current_user_can( 'edit_post', $args['post']->ID ) ) {
 			return;
 		}
 
 		// Bail if the Display Name and the Title match.
-		if ( $post->post_title == $contact['display_name'] ) {
+		if ( $args['post']->post_title == $contact['display_name'] ) {
 			return;
 		}
 
@@ -583,7 +583,7 @@ class CiviCRM_ACF_Integration_Post {
 		$this->plugin->mapper->hooks_wordpress_remove();
 
 		// Update the Post Title (and maybe the Post Permalink).
-		$this->update_from_contact( $contact, $post->ID, $post );
+		$this->update_from_contact( $args['contact'], $args['post']->ID, $args['post'] );
 
 		// Reinstate WordPress callbacks.
 		$this->plugin->mapper->hooks_wordpress_add();

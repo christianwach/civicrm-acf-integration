@@ -203,15 +203,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		// Update the Contact with this data.
 		$contact = $this->update_from_fields( $contact_id, $fields );
 
-		// TODO: Maybe pass params as array?
-
-		/*
 		// Add our data to the params.
-		$args['contact'] = $contact;
 		$args['contact_id'] = $contact_id;
+		$args['contact'] = $contact;
 		$args['post'] = $post;
 		$args['fields'] = $fields;
-		*/
 
 		/**
 		 * Broadcast that a Contact has been updated when ACF Fields were saved.
@@ -226,11 +222,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		 *
 		 * @since 0.4.3
 		 *
-		 * @param array $contact The CiviCRM Contact data.
-		 * @param WP_Post $post The WordPress Post object.
-		 * @param array $fields The array of ACF Field values, keyed by Field selector.
+		 * @param array $args The updated array of WordPress params.
 		 */
-		do_action( 'civicrm_acf_integration_contact_acf_fields_saved', $contact, $post, $fields );
+		do_action( 'civicrm_acf_integration_contact_acf_fields_saved', $args );
 
 	}
 

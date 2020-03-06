@@ -114,15 +114,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 	 *
 	 * @since 0.4.1
 	 *
-	 * @param array $contact The CiviCRM Contact data.
-	 * @param WP_Post $post The WordPress Post object.
-	 * @param array $fields The array of ACF Field values, keyed by Field selector.
+	 * @param array $args The array of WordPress params.
 	 * @return bool True if updates were successful, or false on failure.
 	 */
-	public function fields_handled_update( $contact, $post, $fields ) {
+	public function fields_handled_update( $args ) {
 
 		// Bail if we have no field data to save.
-		if ( empty( $fields ) ) {
+		if ( empty( $args['fields'] ) ) {
 			return true;
 		}
 
@@ -130,13 +128,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 		$success = true;
 
 		// Loop through the field data.
-		foreach( $fields AS $field => $value ) {
+		foreach( $args['fields'] AS $field => $value ) {
 
 			// Get the field settings.
 			$settings = get_field_object( $field );
 
 			// Maybe update a Contact Field.
-			$this->field_handled_update( $field, $value, $contact['id'], $settings );
+			$this->field_handled_update( $field, $value, $args['contact']['id'], $settings );
 
 		}
 
