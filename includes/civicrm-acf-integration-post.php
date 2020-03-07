@@ -72,6 +72,12 @@ class CiviCRM_ACF_Integration_Post {
 		// Add our meta boxes.
 		add_action( 'add_meta_boxes', [ $this, 'meta_boxes_add' ], 11, 2 );
 
+		// Maybe add a Menu Item to CiviCRM Admin Utilities menu.
+		add_action( 'civicrm_admin_utilities_menu_top', [ $this, 'menu_item_add_to_cau' ], 10, 2 );
+
+		// Maybe add a Menu Item to CiviCRM CiviCRM Contact "Action" menu.
+		add_action( 'civicrm_summaryActions', [ $this, 'menu_item_add_to_civi_actions' ], 10, 2 );
+
 		// Listen for events from our Mapper that require Post updates.
 		add_action( 'civicrm_acf_integration_mapper_contact_created', [ $this, 'contact_created' ], 10, 1 );
 		add_action( 'civicrm_acf_integration_mapper_contact_edited', [ $this, 'contact_edited' ], 10, 1 );
@@ -279,6 +285,128 @@ class CiviCRM_ACF_Integration_Post {
 
 		// Show it.
 		echo '<p>' . $link . '</p>';
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Add a add a Menu Item to the CiviCRM Contact's "Actions" menu.
+	 *
+	 * @since 0.6.2
+	 *
+	 * @param array $actions The array of actions from which the menu is rendered.
+	 * @param int $contact_id The numeric ID of the CiviCRM Contact.
+	 */
+	public function menu_item_add_to_civi_actions( &$actions, $contact_id ) {
+
+		// Bail if there's no Contact ID.
+		if ( empty( $contact_id ) ) {
+			return;
+		}
+
+		// Bail if there's no sub-menu.
+		if ( empty( $actions['otherActions'] ) ) {
+			// Maybe create one?
+			return;
+		}
+
+		// Grab Contact.
+		$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
+		if ( $contact === false ) {
+			return;
+		}
+
+		// Get the Post ID that this Contact is mapped to.
+		$post_id = $this->plugin->civicrm->contact->is_mapped( $contact );
+		if ( $post_id === false ) {
+			return;
+		}
+
+		// Build "view" link.
+		$actions['otherActions']['wp-view'] = [
+			'title' => __( 'View in WordPress', 'civicrm-acf-integration' ),
+			'ref' => 'civicrm-wp-view',
+			'weight' => 30,
+			'href' => get_permalink( $post_id ),
+			'tab' => 'wp-view',
+			'class' => 'wp-view',
+			'icon' => 'crm-i fa-eye',
+			'key' => 'wp-view',
+		];
+
+		// Check User can edit.
+		if ( current_user_can( 'edit_post', $post_id ) ) {
+
+			// Build "edit" link.
+			$actions['otherActions']['wp-edit'] = [
+				'title' => __( 'Edit in WordPress', 'civicrm-acf-integration' ),
+				'ref' => 'civicrm-wp-edit',
+				'weight' => 40,
+				'href' => get_edit_post_link( $post_id ),
+				'tab' => 'wp-edit',
+				'class' => 'wp-edit',
+				'icon' => 'crm-i fa-edit',
+				'key' => 'wp-edit',
+			];
+
+		}
+
+	}
+
+
+
+	/**
+	 * Add a add a Menu Item to the CiviCRM Admin Utilities menu.
+	 *
+	 * @since 0.6.2
+	 *
+	 * @param str $id The menu parent ID.
+	 * @param array $components The active CiviCRM Conponents.
+	 */
+	public function menu_item_add_to_cau( $id, $components ) {
+
+		// Access WordPress admin bar.
+		global $wp_admin_bar, $post;
+
+		// Bail if there's no Post.
+		if ( empty( $post ) ) {
+			return;
+		}
+
+		// Bail if there's no Post and it's WordPress admin.
+		if ( empty( $post ) AND is_admin() ) {
+			return;
+		}
+
+		// Get Contact ID.
+		$contact_id = $this->contact_id_get( $post->ID );
+
+		// Bail if we don't get one for some reason.
+		if ( $contact_id === false ) {
+			return;
+		}
+
+		// Check permission to view this Contact.
+		if ( ! $this->plugin->civicrm->contact->user_can_view( $contact_id ) ) {
+			return;
+		}
+
+		// Get the URL for this Contact.
+		$url = $this->plugin->civicrm->get_link( 'civicrm/contact/view', 'reset=1&cid=' . $contact_id );
+
+		// Add item to menu.
+		$wp_admin_bar->add_node( array(
+			'id' => 'cau-0',
+			'parent' => $id,
+			//'parent' => 'edit',
+			'title' => __( 'View in CiviCRM', 'civicrm-acf-integration' ),
+			'href' => $url,
+		) );
 
 	}
 
