@@ -75,8 +75,12 @@ class CiviCRM_ACF_Integration_Post {
 		// Maybe add a Menu Item to CiviCRM Admin Utilities menu.
 		add_action( 'civicrm_admin_utilities_menu_top', [ $this, 'menu_item_add_to_cau' ], 10, 2 );
 
-		// Maybe add a Menu Item to CiviCRM CiviCRM Contact "Action" menu.
+		// Maybe add a Menu Item to CiviCRM Contact "Action" menu.
 		add_action( 'civicrm_summaryActions', [ $this, 'menu_item_add_to_civi_actions' ], 10, 2 );
+
+		// Maybe add a link to action links on the Pages and Posts list tables.
+		add_action( 'page_row_actions', [ $this, 'menu_item_add_to_row_actions' ], 10, 2 );
+		add_action( 'post_row_actions', [ $this, 'menu_item_add_to_row_actions' ], 10, 2 );
 
 		// Listen for events from our Mapper that require Post updates.
 		add_action( 'civicrm_acf_integration_mapper_contact_created', [ $this, 'contact_created' ], 10, 1 );
@@ -407,6 +411,55 @@ class CiviCRM_ACF_Integration_Post {
 			'title' => __( 'View in CiviCRM', 'civicrm-acf-integration' ),
 			'href' => $url,
 		) );
+
+	}
+
+
+
+	/**
+	 * Add a link to action links on the Pages and Posts list tables.
+	 *
+	 * @since 0.6.2
+	 *
+	 * @param array $actions The array of row action links.
+	 * @param WP_Post $post The WordPress Post object.
+	 */
+	public function menu_item_add_to_row_actions( $actions, $post ) {
+
+		// Bail if there's no Post object.
+		if ( empty( $post ) ) {
+			return $actions;
+		}
+
+		// Do we need to know?
+		if ( is_post_type_hierarchical( $post->post_type ) ) {
+		}
+
+		// Get Contact ID.
+		$contact_id = $this->contact_id_get( $post->ID );
+
+		// Bail if we don't get one for some reason.
+		if ( $contact_id === false ) {
+			return $actions;
+		}
+
+		// Check permission to view this Contact.
+		if ( ! $this->plugin->civicrm->contact->user_can_view( $contact_id ) ) {
+			return $actions;
+		}
+
+		// Get the URL for this Contact.
+		$url = $this->plugin->civicrm->get_link( 'civicrm/contact/view', 'reset=1&cid=' . $contact_id );
+
+		// Add link to actions.
+		$actions['civicrm'] = sprintf(
+			'<a href="%1$s">%2$s</a>',
+			esc_url( $url ),
+			esc_html__( 'CiviCRM', 'civicrm-acf-integration' )
+		);
+
+		// --<
+		return $actions;
 
 	}
 
