@@ -158,7 +158,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 		];
 
 		// Call parent.
-    	parent::__construct();
+		parent::__construct();
 
 	}
 

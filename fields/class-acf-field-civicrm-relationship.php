@@ -146,7 +146,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 		];
 
 		// Call parent.
-    	parent::__construct();
+		parent::__construct();
 
 		// Define AJAX callbacks.
 		add_action( 'wp_ajax_acf/fields/' . $this->name . '/query', [ $this, 'ajax_query' ] );

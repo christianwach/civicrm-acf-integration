@@ -150,7 +150,7 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 		}
 
 		// Get all the Fields in this Field Group.
-	    $fields = acf_get_fields( $field_group );
+		$fields = acf_get_fields( $field_group );
 
 		// Bail if there aren't any.
 		if ( empty( $fields ) ) {

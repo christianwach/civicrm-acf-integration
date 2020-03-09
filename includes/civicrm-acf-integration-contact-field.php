@@ -346,7 +346,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		$age_string = '';
 
 		// CiviCRM has handy methods for this.
-        $age_date = CRM_Utils_Date::customFormat( $date, '%Y%m%d' );
+		$age_date = CRM_Utils_Date::customFormat( $date, '%Y%m%d' );
 		$age = CRM_Utils_Date::calculateAge( $age_date );
 		$years = CRM_Utils_Array::value( 'years', $age );
 		$months = CRM_Utils_Array::value( 'months', $age );

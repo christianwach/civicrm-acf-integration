@@ -716,7 +716,7 @@ class CiviCRM_ACF_Integration_Post {
 		}
 
 		// Bail if this is a revision.
-        if ( wp_is_post_revision( $post_obj ) ) {
+		if ( wp_is_post_revision( $post_obj ) ) {
 			return $post;
 		}
 
