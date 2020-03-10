@@ -1,19 +1,20 @@
 <?php
 /**
- * CiviCRM ACF Integration Custom ACF Field Type - CiviCRM Relationship Field.
+ * ACF "CiviCRM Relationship Field" Class.
+ *
+ * Provides a "CiviCRM Relationship Field" Custom ACF Field in ACF 5+.
  *
  * @package CiviCRM_ACF_Integration
+ * @since 0.4.2
  */
 
-
-
 // Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) exit;
+defined( 'ABSPATH' ) || exit;
 
 
 
 /**
- * ACF "CiviCRM Relationship Field" Class.
+ * CiviCRM ACF Integration Custom ACF Field Type - CiviCRM Relationship Field.
  *
  * A class that encapsulates a "CiviCRM Relationship" Custom ACF Field in ACF 5+.
  *

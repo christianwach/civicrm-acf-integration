@@ -1,7 +1,20 @@
 <?php
+/**
+ * CiviCRM Base Class.
+ *
+ * A class that holds methods common to CiviCRM Field classes.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.4.5
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
- * CiviCRM ACF Integration CiviCRM Website Class.
+ * CiviCRM ACF Integration CiviCRM Base Class.
  *
  * A class that is extended by CiviCRM classes that handle Fields separately to
  * the Contact class.
@@ -18,7 +31,7 @@
  *
  * @see CiviCRM_ACF_Integration_CiviCRM_Contact::prepare_from_fields()
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.4.5
  */
 class CiviCRM_ACF_Integration_CiviCRM_Base {
 

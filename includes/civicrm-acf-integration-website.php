@@ -1,11 +1,24 @@
 <?php
+/**
+ * CiviCRM Website Class.
+ *
+ * Handles CiviCRM Website functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.3
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration CiviCRM Website Class.
  *
  * A class that encapsulates CiviCRM Website functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.3
  */
 class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_CiviCRM_Base {
 
@@ -491,7 +504,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 	 *
 	 * @since 0.4.4
 	 *
-	 * @return array $acf_fields The array of ACF Fields in the Post.
+	 * @param array $acf_fields The array of ACF Fields in the Post.
 	 * @param object $website The CiviCRM Website data.
 	 * @param str $op The database operation.
 	 * @return array $fields_to_update The array of ACF Fields to update.
@@ -642,8 +655,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 	 *
 	 * @since 0.4.3
 	 *
-	 * @param array $website_types The Website Types to populate the ACF Field with.
 	 * @param array $custom_fields The Custom Fields to populate the ACF Field with.
+	 * @param array $website_types The Website Types to populate the ACF Field with.
 	 * @return array $field The ACF Field data array.
 	 */
 	public function acf_field_get( $custom_fields = [], $website_types = [] ) {
@@ -717,7 +730,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 	 * @since 0.4.3
 	 *
 	 * @param array $acf_fields The existing ACF Fields array.
-	 * @param array $field_in_group The ACF Field.
+	 * @param array $field The ACF Field.
 	 * @param int $post_id The numeric ID of the WordPress Post.
 	 * @return array $acf_fields The modified ACF Fields array.
 	 */

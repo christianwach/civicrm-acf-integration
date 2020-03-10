@@ -1,11 +1,24 @@
 <?php
+/**
+ * Admin Class.
+ *
+ * Handles general plugin admin functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.2
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration Admin Class
  *
  * A class that encapsulates Admin functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.2
  */
 class CiviCRM_ACF_Integration_Admin {
 

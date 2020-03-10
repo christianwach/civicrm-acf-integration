@@ -1,11 +1,24 @@
 <?php
+/**
+ * WordPress Post Class.
+ *
+ * Handles WordPress Post functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.2
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration WordPress Post Class.
  *
  * A class that encapsulates WordPress Post functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.2
  */
 class CiviCRM_ACF_Integration_Post {
 

@@ -1,4 +1,17 @@
 <?php
+/**
+ * Mapping Class.
+ *
+ * Implements UI elements and data storage for linking Entities.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.2
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration Mapping Class.
@@ -10,7 +23,7 @@
  *
  * More linkages to follow.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.2
  */
 class CiviCRM_ACF_Integration_Mapping {
 

@@ -1,11 +1,24 @@
 <?php
+/**
+ * WordPress Post Type Class.
+ *
+ * Handles WordPress Post Type functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.2
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration WordPress Post Type Class
  *
  * A class that encapsulates WordPress Post Type functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.2
  */
 class CiviCRM_ACF_Integration_Post_Type {
 

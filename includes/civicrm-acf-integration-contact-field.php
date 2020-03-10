@@ -1,11 +1,25 @@
 <?php
+/**
+ * CiviCRM Contact Field Class.
+ *
+ * Handles CiviCRM Contact Field functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.3
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
+
 
 /**
  * CiviCRM ACF Integration CiviCRM Contact Field Class.
  *
  * A class that encapsulates CiviCRM Contact Field functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.3
  */
 class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 
@@ -793,7 +807,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 	 *
 	 * @since 0.4.1
 	 *
-	 * @param array $field The field data array.
 	 * @param str $contact_field_name The CiviCRM Contact Field name.
 	 * @return array $choices The choices for the field.
 	 */

@@ -1,19 +1,20 @@
 <?php
 /**
- * CiviCRM ACF Integration Custom ACF Field Type - CiviCRM Yes/No Field.
+ * ACF "CiviCRM Yes/No Field" Class.
+ *
+ * Provides a "CiviCRM Yes/No Field" Custom ACF Field in ACF 5+.
  *
  * @package CiviCRM_ACF_Integration
+ * @since 0.4.1
  */
 
-
-
 // Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) exit;
+defined( 'ABSPATH' ) || exit;
 
 
 
 /**
- * ACF "CiviCRM Yes/No Field" Class.
+ * CiviCRM ACF Integration Custom ACF Field Type - CiviCRM Yes/No Field.
  *
  * A class that encapsulates a "CiviCRM Yes/No" Custom ACF Field in ACF 5+.
  *

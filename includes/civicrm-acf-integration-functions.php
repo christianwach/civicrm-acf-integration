@@ -1,12 +1,15 @@
 <?php
-
 /**
- * CiviCRM ACF Integration Theme functions.
+ * Theme functions.
  *
  * Global scope functions that are available to the theme can be found here.
  *
  * @package CiviCRM_ACF_Integration
+ * @since 0.1
  */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @param str $selector The ACF field selector.
  * @param int $post_id The numeric ID of the WordPress Post.
- * @return str $age_string The age expressed as a string.
+ * @return str $age The age expressed as a string.
  */
 function cacf_get_age_from_acf_field( $selector, $post_id = null ) {
 

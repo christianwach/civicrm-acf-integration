@@ -1,11 +1,24 @@
 <?php
+/**
+ * CiviCRM Email Class.
+ *
+ * Handles CiviCRM Email functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.3
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration CiviCRM Email Class.
  *
  * A class that encapsulates CiviCRM Email functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.3
  */
 class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_CiviCRM_Base {
 

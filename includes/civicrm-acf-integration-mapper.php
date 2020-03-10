@@ -1,4 +1,17 @@
 <?php
+/**
+ * Mapper Class.
+ *
+ * Keeps a WordPress Entity synced with a CiviCRM Entity via ACF Fields.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.2
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration Mapper Class.
@@ -6,7 +19,7 @@
  * A class that encapsulates methods to keep a WordPress Entity synced with a
  * CiviCRM Entity via ACF Fields.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.2
  */
 class CiviCRM_ACF_Integration_Mapper {
 

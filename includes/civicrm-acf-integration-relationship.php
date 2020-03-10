@@ -1,4 +1,17 @@
 <?php
+/**
+ * CiviCRM Relationships Class.
+ *
+ * Handles CiviCRM Relationships functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.4.3
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration CiviCRM Relationships Class.
@@ -11,7 +24,7 @@
  * "Contact" in the "current_employer" field and can be set via the API by
  * populating the "employer_id" field. I'm not sure how to handle this yet.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.4.3
  */
 class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integration_CiviCRM_Base {
 

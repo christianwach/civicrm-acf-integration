@@ -1,11 +1,24 @@
 <?php
+/**
+ * ACF Class.
+ *
+ * Handles general ACF functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.1
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration ACF Class.
  *
  * A class that encapsulates ACF functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.1
  */
 class CiviCRM_ACF_Integration_ACF {
 

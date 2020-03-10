@@ -1,11 +1,24 @@
 <?php
+/**
+ * CiviCRM Contact Class.
+ *
+ * Handles CiviCRM Contact functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.2.1
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration CiviCRM Contact Class.
  *
  * A class that encapsulates CiviCRM Contact functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.2.1
  */
 class CiviCRM_ACF_Integration_CiviCRM_Contact {
 

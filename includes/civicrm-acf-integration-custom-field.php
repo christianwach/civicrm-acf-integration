@@ -1,11 +1,24 @@
 <?php
+/**
+ * CiviCRM Custom Field Class.
+ *
+ * Handles CiviCRM Custom Field functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.3
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration CiviCRM Custom Field Class.
  *
  * A class that encapsulates CiviCRM Custom Field functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.3
  */
 class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 

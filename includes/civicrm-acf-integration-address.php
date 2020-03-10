@@ -1,11 +1,24 @@
 <?php
+/**
+ * CiviCRM Address Class.
+ *
+ * Handles CiviCRM Address functionality.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.4.4
+ */
+
+// Exit if accessed directly.
+defined( 'ABSPATH' ) || exit;
+
+
 
 /**
  * CiviCRM ACF Integration CiviCRM Address Class.
  *
  * A class that encapsulates CiviCRM Address functionality.
  *
- * @package CiviCRM_ACF_Integration
+ * @since 0.4.4
  */
 class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_CiviCRM_Base {
 
@@ -30,7 +43,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	/**
 	 * "CiviCRM Address" field key in the ACF Field data.
 	 *
-	 * @since 0.4.3
+	 * @since 0.4.4
 	 * @access public
 	 * @var str $acf_field_key The key of the "CiviCRM Address" in the ACF Field data.
 	 */
@@ -1308,7 +1321,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 * @since 0.4.3
 	 *
 	 * @param array $acf_fields The existing ACF Fields array.
-	 * @param array $field_in_group The ACF Field.
+	 * @param array $field The ACF Field.
 	 * @param int $post_id The numeric ID of the WordPress Post.
 	 * @return array $acf_fields The modified ACF Fields array.
 	 */
