@@ -367,6 +367,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 			);
 		}
 
+		// Maybe construct string for less than a month.
+		if ( empty( $years ) AND $months === 0 ) {
+			$age_string = __( 'Under a month', 'civicrm-acf-integration' );
+		}
+
 		// --<
 		return $age_string;
 
