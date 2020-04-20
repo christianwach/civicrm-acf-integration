@@ -478,7 +478,7 @@ class CiviCRM_ACF_Integration_Mapping {
 	public function mappings_for_contact_types_get() {
 
 		// --<
-		return $this->mappings['contact-post'];
+		return ! empty( $this->mappings['contact-post'] ) ? $this->mappings['contact-post'] : [];
 
 	}
 
