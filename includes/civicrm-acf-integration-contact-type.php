@@ -411,14 +411,17 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 		// TODO: Handle Contacts with multiple Contact Sub-types.
 
 		// Find the lowest level Contact Type for this Contact.
-		if ( is_array( $contact['contact_sub_type'] ) ) {
-			$contact_sub_type = array_pop( $contact['contact_sub_type'] );
-		} else {
-			if ( false !== strpos( $contact['contact_sub_type'], CRM_Core_DAO::VALUE_SEPARATOR ) ) {
-				$types = CRM_Utils_Array::explodePadded( $contact['contact_sub_type'] );
-				$contact_sub_type = array_pop( $types );
+		$contact_sub_type = '';
+		if ( ! empty( $contact['contact_sub_type'] ) ) {
+			if ( is_array( $contact['contact_sub_type'] ) ) {
+				$contact_sub_type = array_pop( $contact['contact_sub_type'] );
 			} else {
-				$contact_sub_type = $contact['contact_sub_type'];
+				if ( false !== strpos( $contact['contact_sub_type'], CRM_Core_DAO::VALUE_SEPARATOR ) ) {
+					$types = CRM_Utils_Array::explodePadded( $contact['contact_sub_type'] );
+					$contact_sub_type = array_pop( $types );
+				} else {
+					$contact_sub_type = $contact['contact_sub_type'];
+				}
 			}
 		}
 
