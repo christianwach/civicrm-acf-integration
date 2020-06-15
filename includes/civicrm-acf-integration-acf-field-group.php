@@ -334,13 +334,21 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 				continue;
 			}
 
-			// Loop over the rules and determine if all rules match.
+			// Loop over the rules and determine if "post type" rules match.
 			$match_group = true;
 			foreach( $group AS $rule ) {
+
+				// Skip any rules which do not reference the "post type".
+				if ( $rule['param'] != 'post_type' ) {
+					continue;
+				}
+
+				// Test the "post type" rule.
 				if ( ! acf_match_location_rule( $rule, $params, $field_group ) ) {
 					$match_group = false;
 					break;
 				}
+
 			}
 
 			// If this group matches, it is a visible Field Group.
