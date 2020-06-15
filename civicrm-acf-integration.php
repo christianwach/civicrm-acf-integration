@@ -1,7 +1,7 @@
 <?php /*
 --------------------------------------------------------------------------------
 Plugin Name: CiviCRM ACF Integration
-Plugin URI: https://haystack.co.uk
+Plugin URI: https://github.com/christianwach/civicrm-acf-integration
 Description: Enables integration between CiviCRM Entities and WordPress Entities using Advanced Custom Fields.
 Version: 0.6.3
 Author: Christian Wach
