@@ -2,9 +2,9 @@
 # This file is distributed under the same license as the CiviCRM ACF Integration package.
 msgid ""
 msgstr ""
-"Project-Id-Version: CiviCRM ACF Integration 0.6.2\n"
+"Project-Id-Version: CiviCRM ACF Integration 0.6.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/civicrm-acf-integration\n"
-"POT-Creation-Date: 2020-03-10 09:48:32+00:00\n"
+"POT-Creation-Date: 2020-06-17 09:08:59+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -224,7 +224,7 @@ msgid "CiviCRM ACF Integration"
 msgstr ""
 
 #. Plugin URI of the plugin/theme
-msgid "https://haystack.co.uk"
+msgid "https://github.com/christianwach/civicrm-acf-integration"
 msgstr ""
 
 #. Description of the plugin/theme
