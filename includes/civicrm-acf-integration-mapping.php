@@ -149,6 +149,13 @@ class CiviCRM_ACF_Integration_Mapping {
 		// Register hooks.
 		$this->register_hooks();
 
+		/**
+		 * Broadcast that this class is now loaded.
+		 *
+		 * @since 0.6.4
+		 */
+		do_action( 'civicrm_acf_integration_mapping_loaded' );
+
 	}
 
 

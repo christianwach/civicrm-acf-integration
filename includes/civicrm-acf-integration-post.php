@@ -32,6 +32,15 @@ class CiviCRM_ACF_Integration_Post {
 	public $plugin;
 
 	/**
+	 * Post Taxonomy object.
+	 *
+	 * @since 0.6.4
+	 * @access public
+	 * @var object $tax The Post Taxonomy object.
+	 */
+	public $tax;
+
+	/**
 	 * Post meta Contact ID key.
 	 *
 	 * @since 0.2
@@ -68,8 +77,49 @@ class CiviCRM_ACF_Integration_Post {
 	 */
 	public function initialise() {
 
+		// Include files.
+		$this->include_files();
+
+		// Set up objects and references.
+		$this->setup_objects();
+
 		// Register hooks.
 		$this->register_hooks();
+
+		/**
+		 * Broadcast that this class is now loaded.
+		 *
+		 * @since 0.6.4
+		 */
+		do_action( 'civicrm_acf_integration_post_loaded' );
+
+	}
+
+
+
+	/**
+	 * Include files.
+	 *
+	 * @since 0.6.4
+	 */
+	public function include_files() {
+
+		// Include class files.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-post-tax.php';
+
+	}
+
+
+
+	/**
+	 * Set up the child objects.
+	 *
+	 * @since 0.6.4
+	 */
+	public function setup_objects() {
+
+		// Init Post Taxonomy object.
+		$this->tax = new CiviCRM_ACF_Integration_Post_Tax( $this );
 
 	}
 
@@ -473,6 +523,30 @@ class CiviCRM_ACF_Integration_Post {
 
 		// --<
 		return $actions;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Check if a Post is mapped to a Contact.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return int|bool $is_mapped The ID of the CiviCRM Contact if the Post is mapped, false otherwise.
+	 */
+	public function is_mapped( $post_id ) {
+
+		// Get the Contact ID (or boolean false) from Post meta.
+		$is_mapped = $this->contact_id_get( $post_id );
+
+		// --<
+		return $is_mapped;
 
 	}
 

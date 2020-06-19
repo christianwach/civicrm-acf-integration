@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 
 
 
-
 /**
  * CiviCRM ACF Integration CiviCRM Contact Field Class.
  *

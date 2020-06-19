@@ -167,6 +167,24 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 		}
 
+		// Add our data to the params.
+		$args['contact'] = $contact;
+		$args['contact_id'] = $contact['id'];
+
+		/**
+		 * Broadcast that a Contact has been updated.
+		 *
+		 * Used internally by:
+		 *
+		 * - Groups
+		 * - Post Taxonomies
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The updated array of WordPress params.
+		 */
+		do_action( 'civicrm_acf_integration_contact_post_saved', $args );
+
 	}
 
 
@@ -468,6 +486,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	 * @return int|bool $is_mapped The ID of the WordPress Post if the Contact is mapped, false otherwise.
 	 */
 	public function is_mapped( $contact ) {
+
+		// TODO: Query Posts with Post meta instead? Or pseudo-cache?
 
 		// Assume not.
 		$is_mapped = false;
