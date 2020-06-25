@@ -156,11 +156,13 @@ class CiviCRM_ACF_Integration_ACF {
 	public function include_field_types( $version ) {
 
 		// Include class files.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-contact-id.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-contact.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-yes-no.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-relationship.php';
 
 		// Create fields.
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship( $this );
