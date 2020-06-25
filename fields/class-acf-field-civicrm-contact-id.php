@@ -159,10 +159,21 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 	 */
 	public function render_field( $field ) {
 
+		$e = new Exception;
+		$trace = $e->getTraceAsString();
+		error_log( print_r( [
+			'method' => __METHOD__,
+			'field' => $field,
+			//'backtrace' => $trace,
+		], true ) );
+
 		// Change Field into a simple number field.
 		$field['type'] = 'number';
 		$field['readonly'] = 1;
 		$field['allow_null'] = 0;
+		$field['prepend'] = '';
+		$field['append'] = '';
+		$field['step'] = '';
 
 		// Populate field.
 		if ( ! empty( $field['value'] ) ) {
