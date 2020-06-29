@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CiviCRM ACF Integration 0.6.4\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/civicrm-acf-integration\n"
-"POT-Creation-Date: 2020-06-19 16:48:13+00:00\n"
+"POT-Creation-Date: 2020-06-29 23:33:16+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,6 +14,56 @@ msgstr ""
 
 #: assets/templates/help/settings-help.php:2
 msgid "Settings: For further information about using this plugin, please refer to the readme.txt file that comes with this plugin."
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:4
+msgid "CiviCRM ACF Integration: Manual Sync"
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:14
+msgid "Things can be a little complicated on initial setup because there can be data in WordPress or CiviCRM or both. These utilities should help you get going."
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:18
+msgid "WordPress Post Type Synchronisation"
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:20
+msgid "Select which Post Types you want to sync with CiviCRM."
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:29
+#: assets/templates/wordpress/manual-sync.php:54
+#: assets/templates/wordpress/manual-sync.php:79
+msgid "Sync Now"
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:29
+#: assets/templates/wordpress/manual-sync.php:54
+#: assets/templates/wordpress/manual-sync.php:79
+msgid "Continue Sync"
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:29
+#: assets/templates/wordpress/manual-sync.php:54
+#: assets/templates/wordpress/manual-sync.php:79
+msgid "Stop Sync"
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:43
+msgid "CiviCRM Contact Type Synchronisation"
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:45
+msgid "Select which Contact Types you want to sync with WordPress."
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:68
+msgid "CiviCRM Group Synchronisation"
+msgstr ""
+
+#: assets/templates/wordpress/manual-sync.php:70
+msgid "Select which CiviCRM Groups you want to sync with WordPress Terms."
 msgstr ""
 
 #: assets/templates/wordpress/term-add.php:3
@@ -32,34 +82,38 @@ msgstr ""
 msgid "When a CiviCRM Group is chosen here, then any Post which is given this term will have its synced Contact added to the Group. In CiviCRM, any Contact that is made a member of the chosen Group will have this term assigned to their synced Post."
 msgstr ""
 
-#: fields/class-acf-field-civicrm-contact.php:141
+#: fields/class-acf-field-civicrm-contact-id.php:141
+msgid "CiviCRM Contact ID"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-contact.php:153
 msgid "CiviCRM Contact"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-contact.php:146
-#: fields/class-acf-field-civicrm-relationship.php:146
-#: fields/class-acf-field-civicrm-yes-no.php:151
+#: fields/class-acf-field-civicrm-contact.php:158
+#: fields/class-acf-field-civicrm-relationship.php:158
+#: fields/class-acf-field-civicrm-yes-no.php:163
 msgid "Error! Please enter a higher value."
 msgstr ""
 
-#: fields/class-acf-field-civicrm-relationship.php:141
-#: includes/civicrm-acf-integration-relationship.php:1051
+#: fields/class-acf-field-civicrm-relationship.php:153
+#: includes/civicrm-acf-integration-relationship.php:1151
 msgid "CiviCRM Relationship"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-yes-no.php:146
+#: fields/class-acf-field-civicrm-yes-no.php:158
 msgid "CiviCRM Yes / No"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-yes-no.php:156
+#: fields/class-acf-field-civicrm-yes-no.php:168
 msgid "Yes"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-yes-no.php:157
+#: fields/class-acf-field-civicrm-yes-no.php:169
 msgid "No"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-yes-no.php:158
+#: fields/class-acf-field-civicrm-yes-no.php:170
 msgid "Unknown"
 msgstr ""
 
@@ -79,96 +133,147 @@ msgstr ""
 msgid "Only two decimal places please."
 msgstr ""
 
-#: includes/civicrm-acf-integration-address.php:1267
+#: includes/civicrm-acf-integration-address.php:1280
 msgid "Specific Addresses"
 msgstr ""
 
-#: includes/civicrm-acf-integration-address.php:1268
+#: includes/civicrm-acf-integration-address.php:1281
 msgid "Primary Address"
 msgstr ""
 
-#: includes/civicrm-acf-integration-address.php:1269
+#: includes/civicrm-acf-integration-address.php:1282
 msgid "Billing Address"
 msgstr ""
 
-#: includes/civicrm-acf-integration-address.php:1272
-#: includes/civicrm-acf-integration-email.php:598
+#: includes/civicrm-acf-integration-address.php:1285
+#: includes/civicrm-acf-integration-email.php:815
 msgid "Location Types"
 msgstr ""
 
-#: includes/civicrm-acf-integration-address.php:1280
+#: includes/civicrm-acf-integration-address.php:1293
 msgid "CiviCRM Address"
 msgstr ""
 
-#: includes/civicrm-acf-integration-address.php:1283
+#: includes/civicrm-acf-integration-address.php:1296
 msgid "Choose the CiviCRM Location Type that this ACF Field should sync with. (Optional)"
 msgstr ""
 
-#: includes/civicrm-acf-integration-admin.php:151
+#: includes/civicrm-acf-integration-admin.php:187
+#: includes/civicrm-acf-integration-admin.php:188
+#: includes/civicrm-acf-integration-post.php:380
+msgid "CiviCRM ACF Integration"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:294
+msgid "Posts to sync: {{total}}"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:295
+msgid "Processing posts {{from}} to {{to}}"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:296
+msgid "Processing posts {{from}} to {{to}} complete"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:302
+msgid "Contacts to sync: {{total}}"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:303
+msgid "Processing contacts {{from}} to {{to}}"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:304
+msgid "Processing contacts {{from}} to {{to}} complete"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:310
+msgid "Group members to sync: {{total}}"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:311
+msgid "Processing group members {{from}} to {{to}}"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:312
+msgid "Processing group members {{from}} to {{to}} complete"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:318
+msgid "All done!"
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:374
+#: includes/civicrm-acf-integration-admin.php:379
+msgid "You do not have permission to access this page."
+msgstr ""
+
+#: includes/civicrm-acf-integration-admin.php:979
 msgid "You must supply an option to site_option_exists()"
 msgstr ""
 
-#: includes/civicrm-acf-integration-admin.php:178
+#: includes/civicrm-acf-integration-admin.php:1006
 msgid "You must supply an option to site_option_get()"
 msgstr ""
 
-#: includes/civicrm-acf-integration-admin.php:204
+#: includes/civicrm-acf-integration-admin.php:1032
 msgid "You must supply an option to site_option_set()"
 msgstr ""
 
-#: includes/civicrm-acf-integration-admin.php:226
+#: includes/civicrm-acf-integration-admin.php:1054
 msgid "You must supply an option to site_option_delete()"
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact-field.php:370
+#: includes/civicrm-acf-integration-contact-field.php:397
 msgid "%d year"
 msgid_plural "%d years"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/civicrm-acf-integration-contact-field.php:378
+#: includes/civicrm-acf-integration-contact-field.php:405
 msgid "%d month"
 msgid_plural "%d months"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/civicrm-acf-integration-contact-field.php:385
+#: includes/civicrm-acf-integration-contact-field.php:412
 msgid "Under a month"
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact.php:654
+#: includes/civicrm-acf-integration-contact.php:779
 msgid "A numerical ID must be present to update a Contact."
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact.php:692
+#: includes/civicrm-acf-integration-contact.php:817
 msgid "A numerical ID must be present to delete a Contact."
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact.php:1015
+#: includes/civicrm-acf-integration-contact.php:1142
 msgid "Contact Fields"
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact.php:1041
+#: includes/civicrm-acf-integration-contact.php:1168
 msgid "CiviCRM Field"
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact.php:1044
+#: includes/civicrm-acf-integration-contact.php:1171
 msgid "Choose the CiviCRM Field that this ACF Field should sync with. (Optional)"
 msgstr ""
 
-#: includes/civicrm-acf-integration-email.php:594
+#: includes/civicrm-acf-integration-email.php:811
 msgid "Specific Emails"
 msgstr ""
 
-#: includes/civicrm-acf-integration-email.php:595
+#: includes/civicrm-acf-integration-email.php:812
 msgid "Primary Email"
 msgstr ""
 
-#: includes/civicrm-acf-integration-email.php:606
+#: includes/civicrm-acf-integration-email.php:823
 msgid "CiviCRM Email"
 msgstr ""
 
-#: includes/civicrm-acf-integration-email.php:609
+#: includes/civicrm-acf-integration-email.php:826
 msgid "Choose the CiviCRM Email that this ACF Field should sync with. (Optional)"
 msgstr ""
 
@@ -196,47 +301,43 @@ msgstr ""
 msgid "You must supply an option to option_delete()"
 msgstr ""
 
-#: includes/civicrm-acf-integration-post-tax.php:578
+#: includes/civicrm-acf-integration-post-tax.php:535
 msgid "Could not update term_meta"
 msgstr ""
 
-#: includes/civicrm-acf-integration-post.php:315
-msgid "CiviCRM ACF Integration"
-msgstr ""
-
-#: includes/civicrm-acf-integration-post.php:350
+#: includes/civicrm-acf-integration-post.php:415
 msgid "View this Contact in CiviCRM"
 msgstr ""
 
-#: includes/civicrm-acf-integration-post.php:399
+#: includes/civicrm-acf-integration-post.php:464
 msgid "View in WordPress"
 msgstr ""
 
-#: includes/civicrm-acf-integration-post.php:414
+#: includes/civicrm-acf-integration-post.php:479
 msgid "Edit in WordPress"
 msgstr ""
 
-#: includes/civicrm-acf-integration-post.php:474
+#: includes/civicrm-acf-integration-post.php:539
 msgid "View in CiviCRM"
 msgstr ""
 
-#: includes/civicrm-acf-integration-post.php:521
+#: includes/civicrm-acf-integration-post.php:586
 msgid "CiviCRM"
 msgstr ""
 
-#: includes/civicrm-acf-integration-relationship.php:1054
+#: includes/civicrm-acf-integration-relationship.php:1154
 msgid "Choose the CiviCRM Relationship that this ACF Field should sync with. (Optional)"
 msgstr ""
 
-#: includes/civicrm-acf-integration-website.php:673
+#: includes/civicrm-acf-integration-website.php:888
 msgid "Contact Website Type"
 msgstr ""
 
-#: includes/civicrm-acf-integration-website.php:689
+#: includes/civicrm-acf-integration-website.php:904
 msgid "CiviCRM Website"
 msgstr ""
 
-#: includes/civicrm-acf-integration-website.php:692
+#: includes/civicrm-acf-integration-website.php:907
 msgid "Choose the CiviCRM Website Field that this ACF Field should sync with. (Optional)"
 msgstr ""
 #. Plugin Name of the plugin/theme
