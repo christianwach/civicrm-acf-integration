@@ -515,9 +515,8 @@ class CiviCRM_ACF_Integration_Admin {
 		// Construct args.
 		$args = [
 			'post_type' => $post_type,
-			'orderby' => 'count',
-			'hide_empty' => 0,
-			'number' => $this->step_counts['post_types'],
+			'no_found_rows' => true,
+			'numberposts' => $this->step_counts['post_types'],
 			'offset' => $offset,
 		];
 
