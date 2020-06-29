@@ -49,6 +49,19 @@ class CiviCRM_ACF_Integration_Admin {
 	 */
 	public $settings = [];
 
+	/**
+	 * How many items to process per AJAX request.
+	 *
+	 * @since 0.6.4
+	 * @access public
+	 * @var object $step_counts The array of item counts to process per AJAX request.
+	 */
+	public $step_counts = array(
+		'post_types' => 10, // Number of Posts per WordPress Post Type.
+		'contact_types' => 10, // Number of Contacts per CiviCRM Contact Type.
+		'groups' => 10, // Number of Group Members per CiviCRM Group.
+	);
+
 
 
 	/**
@@ -127,6 +140,825 @@ class CiviCRM_ACF_Integration_Admin {
 	 * @since 0.2
 	 */
 	public function register_hooks() {
+
+		// Is this the back end?
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		// Add AJAX handler.
+		add_action( 'wp_ajax_sync_acf_and_civicrm', [ $this, 'sync_acf_and_civicrm' ] );
+
+		// Add menu item(s) to WordPress admin menu.
+		add_action( 'admin_menu', [ $this, 'admin_menu' ], 1 );
+
+		// Add AJAX handlers.
+		add_action( 'wp_ajax_sync_posts_to_contacts', array( $this, 'stepped_sync_posts_to_contacts' ) );
+		add_action( 'wp_ajax_sync_contacts_to_posts', array( $this, 'stepped_sync_contacts_to_posts' ) );
+		add_action( 'wp_ajax_sync_groups_to_terms', array( $this, 'stepped_sync_groups_to_terms' ) );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Add our admin page(s) to the WordPress admin menu.
+	 *
+	 * @since 0.6.4
+	 */
+	public function admin_menu() {
+
+		// We must be network admin in Multisite.
+		if ( is_multisite() AND ! is_super_admin() ) {
+			return;
+		}
+
+		// Check user permissions.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// Add our "Manual Sync" page to the Settings menu.
+		$this->sync_page = add_options_page(
+			__( 'CiviCRM ACF Integration', 'civicrm-acf-integration' ),
+			__( 'CiviCRM ACF Integration', 'civicrm-acf-integration' ),
+			'manage_options',
+			'civicrm_acf_integration_sync',
+			[ $this, 'page_manual_sync' ]
+		);
+
+		// Add styles and scripts only on our "Manual Sync" page.
+		// @see wp-admin/admin-header.php
+		add_action( 'admin_print_styles-' . $this->sync_page, [ $this, 'admin_styles' ] );
+		add_action( 'admin_print_scripts-' . $this->sync_page, [ $this, 'admin_scripts' ] );
+		//add_action( 'admin_head-' . $this->sync_page, [ $this, 'admin_head' ], 50 );
+
+		// Try and update options.
+		$this->settings_update_router();
+
+	}
+
+
+
+	/**
+	 * Enqueue any styles needed by our Sync page.
+	 *
+	 * @since 0.6.4
+	 */
+	public function admin_styles() {
+
+		// Enqueue CSS.
+		wp_enqueue_style(
+			'cai-admin-style',
+			CIVICRM_ACF_INTEGRATION_URL . 'assets/css/manual-sync.css',
+			null,
+			CIVICRM_ACF_INTEGRATION_VERSION,
+			'all' // Media.
+		);
+
+	}
+
+
+
+	/**
+	 * Enqueue any scripts needed by our Sync page.
+	 *
+	 * @since 0.6.4
+	 */
+	public function admin_scripts() {
+
+		// Enqueue Javascript.
+		wp_enqueue_script(
+			'cai-admin-script',
+			CIVICRM_ACF_INTEGRATION_URL . 'assets/js/manual-sync.js',
+			[ 'jquery', 'jquery-ui-core', 'jquery-ui-progressbar' ],
+			CIVICRM_ACF_INTEGRATION_VERSION
+		);
+
+		// Get all mapped Post Types.
+		$mapped_post_types = $this->plugin->post_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$post_types = [];
+		foreach( $mapped_post_types AS $post_type ) {
+			$post_types[$post_type->name] = [
+				'label' => esc_html( $post_type->label ),
+				'count' => $this->plugin->post_type->post_count( $post_type->name ),
+			];
+		}
+
+		// Get all mapped Contact Types.
+		$mapped_contact_types = $this->plugin->civicrm->contact_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$contact_types = [];
+		foreach( $mapped_contact_types AS $contact_type ) {
+			$contact_types[$contact_type['id']] = [
+				'label' => esc_html( $contact_type['label'] ),
+				'count' => $this->plugin->civicrm->contact_type->contact_count( $contact_type['id'] ),
+			];
+		}
+
+		// Get all mapped Groups.
+		$mapped_groups = $this->plugin->civicrm->group->groups_get_mapped();
+
+		// Loop through them and get the data we want.
+		$groups = [];
+		foreach( $mapped_groups AS $group ) {
+			$groups[$group['id']] = [
+				'label' => esc_html( $group['title'] ),
+				'count' => $this->plugin->civicrm->group->group_contact_count( $group['id'] ),
+			];
+		}
+
+		// Init settings.
+		$settings = [
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'post_types' => $post_types,
+			'contact_types' => $contact_types,
+			'groups' => $groups,
+			'step_post_types' => $this->step_counts['post_types'],
+			'step_contact_types' => $this->step_counts['contact_types'],
+			'step_groups' => $this->step_counts['groups'],
+		];
+
+		// Init localisation.
+		$localisation = [];
+
+		// Add Post Types localisation.
+		$localisation['post_types'] = [
+			'total' => __( 'Posts to sync: {{total}}', 'civicrm-acf-integration' ),
+			'current' => __( 'Processing posts {{from}} to {{to}}', 'civicrm-acf-integration' ),
+			'complete' => __( 'Processing posts {{from}} to {{to}} complete', 'civicrm-acf-integration' ),
+			'count' => count( $post_types ),
+		];
+
+		// Add Contact Types localisation.
+		$localisation['contact_types'] = [
+			'total' => __( 'Contacts to sync: {{total}}', 'civicrm-acf-integration' ),
+			'current' => __( 'Processing contacts {{from}} to {{to}}', 'civicrm-acf-integration' ),
+			'complete' => __( 'Processing contacts {{from}} to {{to}} complete', 'civicrm-acf-integration' ),
+			'count' => count( $post_types ),
+		];
+
+		// Add Groups localisation.
+		$localisation['groups'] = [
+			'total' => __( 'Group members to sync: {{total}}', 'civicrm-acf-integration' ),
+			'current' => __( 'Processing group members {{from}} to {{to}}', 'civicrm-acf-integration' ),
+			'complete' => __( 'Processing group members {{from}} to {{to}} complete', 'civicrm-acf-integration' ),
+			'count' => count( $post_types ),
+		];
+
+		// Add common localisation.
+		$localisation['common'] = [
+			'done' => __( 'All done!', 'civicrm-acf-integration' ),
+		];
+
+		// Localisation array.
+		$vars = [
+			'settings' => $settings,
+			'localisation' => $localisation,
+		];
+
+		// Localise the WordPress way.
+		wp_localize_script(
+			'cai-admin-script',
+			'CiviCRM_ACF_Integration_Sync_Vars',
+			$vars
+		);
+
+	}
+
+
+
+	/**
+	 * Get the URL for the form action.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @return string $target_url The URL for the admin form action.
+	 */
+	public function admin_form_url_get() {
+
+		// Sanitise admin page url.
+		$target_url = $_SERVER['REQUEST_URI'];
+		$url_array = explode( '&', $target_url );
+		if ( $url_array ) {
+			$target_url = htmlentities( $url_array[0] . '&updated=true' );
+		}
+
+		// --<
+		return $target_url;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Show our "Manual Sync" page.
+	 *
+	 * @since 0.6.4
+	 */
+	public function page_manual_sync() {
+
+		// We must be network admin in multisite.
+		if ( is_multisite() AND ! is_super_admin() ) {
+			wp_die( __( 'You do not have permission to access this page.', 'civicrm-acf-integration' ) );
+		}
+
+		// Check user permissions.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( __( 'You do not have permission to access this page.', 'civicrm-acf-integration' ) );
+		}
+
+		// Get all mapped Post Types.
+		$mapped_post_types = $this->plugin->post_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$post_types = [];
+		foreach( $mapped_post_types AS $post_type ) {
+			$post_types[$post_type->name] = $post_type->label;
+		}
+
+		// Get all mapped Contact Types.
+		$mapped_contact_types = $this->plugin->civicrm->contact_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$contact_types = [];
+		foreach( $mapped_contact_types AS $contact_type ) {
+			$contact_types[$contact_type['id']] = $contact_type['label'];
+		}
+
+		// Get all mapped Groups.
+		$mapped_groups = $this->plugin->civicrm->group->groups_get_mapped();
+
+		// Loop through them and get the data we want.
+		$groups = [];
+		foreach( $mapped_groups AS $group ) {
+			$groups[$group['id']] = $group['title'];
+		}
+
+		// Include template file.
+		include( CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/manual-sync.php' );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Route settings updates to relevant methods.
+	 *
+	 * @since 0.6.4
+	 */
+	public function settings_update_router() {
+
+		return;
+
+	 	// Was a Post Type "Stop Sync" button pressed?
+		if ( isset( $_POST['civi_eo_tax_eo_to_civi_stop'] ) ) {
+			delete_option( '_cai_posts_to_contacts_offset' );
+			return;
+		}
+
+	 	// Was a Contact Type "Stop Sync" button pressed?
+		if ( isset( $_POST['civi_eo_venue_eo_to_civi_stop'] ) ) {
+			delete_option( '_civi_eo_venue_eo_to_civi_offset' );
+			return;
+		}
+
+	 	// Was a Group "Stop Sync" button pressed?
+		if ( isset( $_POST['civi_eo_event_eo_to_civi_stop'] ) ) {
+			delete_option( '_civi_eo_event_eo_to_civi_offset' );
+			return;
+		}
+
+		// Was an Post Type "Sync Now" button pressed?
+		if ( isset( $_POST['civi_eo_tax_eo_to_civi'] ) ) {
+			$this->stepped_sync_categories_to_types();
+		}
+
+		// Was a Contact Type "Sync Now" button pressed?
+		if ( isset( $_POST['civi_eo_venue_eo_to_civi'] ) ) {
+			$this->stepped_sync_venues_to_locations();
+		}
+
+		// Was a Group "Sync Now" button pressed?
+		if ( isset( $_POST['civi_eo_event_eo_to_civi'] ) ) {
+			$this->stepped_sync_events_eo_to_civi();
+		}
+
+	}
+
+
+
+	/**
+	 * Stepped synchronisation of WordPress Posts to CiviCRM Contacts.
+	 *
+	 * @since 0.6.4
+	 */
+	public function stepped_sync_posts_to_contacts() {
+
+		// Get all mapped Post Types.
+		$mapped_post_types = $this->plugin->post_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$post_types = [];
+		foreach( $mapped_post_types AS $post_type ) {
+			$post_types[] = $post_type->name;
+		}
+
+		// Sanitise input.
+		$post_type = isset( $_POST['entity_id'] ) ? trim( $_POST['entity_id'] ) : '';
+
+		// Sanity check input.
+		if ( ! in_array( $post_type, $post_types ) ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Send data to browser.
+			$this->send_data( $data );
+			return;
+
+		}
+
+		// Build key.
+		$key = 'posts_to_contacts_' . $post_type;
+
+		// If we get an error.
+		if ( $post_type === '' ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Send data to browser.
+			$this->send_data( $data );
+			return;
+
+		}
+
+		// Get the current offset.
+		$offset = $this->stepped_offset_init( $key );
+
+		// Construct args.
+		$args = [
+			'post_type' => $post_type,
+			'orderby' => 'count',
+			'hide_empty' => 0,
+			'number' => $this->step_counts['post_types'],
+			'offset' => $offset,
+		];
+
+		// Get all terms.
+		$posts = get_posts( $args );
+
+		// If we get results.
+		if ( count( $posts ) > 0 ) {
+
+			// Set finished flag.
+			$data['finished'] = 'false';
+
+			// Are there less items than the step count?
+			if ( count( $posts ) < $this->step_counts['post_types'] ) {
+				$diff = count( $posts );
+			} else {
+				$diff = $this->step_counts['post_types'];
+			}
+
+			// Set from and to flags.
+			$data['from'] = intval( $offset );
+			$data['to'] = $data['from'] + $diff;
+
+			// Remove CiviCRM callbacks to prevent recursion.
+			$this->plugin->mapper->hooks_civicrm_remove();
+
+			// Sync each Post in turn.
+			foreach( $posts AS $post ) {
+
+				// Let's make an array of params.
+				$args = [
+					'post_id' => $post->ID,
+					'post' => $post,
+					'update' => true,
+				];
+
+				/**
+				 * Broadcast that the Post must be synced.
+				 *
+				 * Used internally to:
+				 *
+				 * - Update a CiviCRM Contact
+				 * - Update the CiviCRM Custom Fields
+				 * - Update the CiviCRM Group membershipss
+				 *
+				 * @since 0.6.4
+				 *
+				 * @param array $args The array of WordPress params.
+				 */
+				do_action( 'civicrm_acf_integration_admin_post_sync', $args );
+
+				// Get ACF Fields for this Post.
+				$fields = get_fields( $post->ID, false );
+
+				// Let's make an array of params.
+				$args = [
+					'post_id' => $post->ID,
+				];
+
+				/**
+				 * Broadcast that the ACF Fields must be synced.
+				 *
+				 * Used internally to:
+				 *
+				 * - Update the CiviCRM Custom Fields
+				 *
+				 * @since 0.6.4
+				 *
+				 * @param array $args The array of CiviCRM params.
+				 */
+				do_action( 'civicrm_acf_integration_admin_acf_fields_sync', $args );
+
+			}
+
+			// Reinstate CiviCRM callbacks.
+			$this->plugin->mapper->hooks_civicrm_add();
+
+			// Increment offset option.
+			$this->stepped_offset_update( $key, $data['to'] );
+
+		} else {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Delete the option to start from the beginning.
+			$this->stepped_offset_delete( $key );
+
+		}
+
+		// Send data to browser.
+		$this->send_data( $data );
+
+	}
+
+
+
+	/**
+	 * Stepped synchronisation of CiviCRM Contacts to WordPress Posts.
+	 *
+	 * @since 0.6.4
+	 */
+	public function stepped_sync_contacts_to_posts() {
+
+		// Init AJAX return.
+		$data = array();
+
+		// Sanitise input.
+		$contact_type_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+
+		// Build key.
+		$key = 'contacts_to_posts_' . $contact_type_id;
+
+		// If we get an error.
+		if ( $contact_type_id === 0 ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Send data to browser.
+			$this->send_data( $data );
+			return;
+
+		}
+
+		// Get the current offset.
+		$offset = $this->stepped_offset_init( $key );
+
+		// Init query result.
+		$result = [];
+
+		// Init CiviCRM.
+		if ( $this->plugin->civicrm->is_initialised() ) {
+
+			// Get the Contact data.
+			$result = $this->plugin->civicrm->contact->contacts_chunked_data_get(
+				$contact_type_id,
+				$offset,
+				$this->step_counts['contact_types']
+			);
+
+		} else {
+
+			// Do not allow progress.
+			$result['is_error'] = 1;
+
+		}
+
+		// Did we get an error?
+		$error = false;
+		if ( isset( $result['is_error'] ) AND $result['is_error'] == '1' ) {
+			$error = true;
+		}
+
+		// Finish sync on failure or empty result.
+		if ( $error OR empty( $result['values'] ) ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Delete the option to start from the beginning.
+			$this->stepped_offset_delete( $key );
+
+		} else {
+
+			// Set finished flag.
+			$data['finished'] = 'false';
+
+			// Are there fewer items than the step count?
+			if ( count( $result['values'] ) < $this->step_counts['contact_types'] ) {
+				$diff = count( $result['values'] );
+			} else {
+				$diff = $this->step_counts['contact_types'];
+			}
+
+			// Set "from" and "to" flags.
+			$data['from'] = intval( $offset );
+			$data['to'] = $data['from'] + $diff;
+
+			// Remove WordPress callbacks to prevent recursion.
+			$this->plugin->mapper->hooks_wordpress_remove();
+
+			// Trigger sync for each Contact in turn.
+			foreach( $result['values'] AS $contact ) {
+
+				// Let's make an array of params.
+				$args = [
+					'op' => 'sync',
+					'objectName' => $contact['contact_type'],
+					'objectId' => $contact['contact_id'],
+					'objectRef' => (object) $contact,
+				];
+
+				/**
+				 * Broadcast that the Contact must be synced.
+				 *
+				 * Used internally to:
+				 *
+				 * - Update a WordPress Post
+				 * - Update the WordPress Terms
+				 *
+				 * @since 0.6.4
+				 *
+				 * @param array $args The array of CiviCRM params.
+				 */
+				do_action( 'civicrm_acf_integration_admin_contact_sync', $args );
+
+			}
+
+			// Reinstate WordPress callbacks.
+			$this->plugin->mapper->hooks_wordpress_add();
+
+			// Increment offset option.
+			$this->stepped_offset_update( $key, $data['to'] );
+
+		}
+
+		// Send data to browser.
+		$this->send_data( $data );
+
+	}
+
+
+
+	/**
+	 * Stepped synchronisation of CiviCRM Groups to WordPress Terms.
+	 *
+	 * @since 0.6.4
+	 */
+	public function stepped_sync_groups_to_terms() {
+
+		// Init AJAX return.
+		$data = array();
+
+		// Sanitise input.
+		$group_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+
+		// Build key.
+		$key = 'groups_to_terms_' . $group_id;
+
+		// If we get an error.
+		if ( $group_id === 0 ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Send data to browser.
+			$this->send_data( $data );
+			return;
+
+		}
+
+		// Get the current offset.
+		$offset = $this->stepped_offset_init( $key );
+
+		// Init query result.
+		$result = [];
+
+		// Init CiviCRM.
+		if ( $this->plugin->civicrm->is_initialised() ) {
+
+			// Get the Group Contact data.
+			$result = $this->plugin->civicrm->group->group_contacts_chunked_data_get(
+				$group_id,
+				$offset,
+				$this->step_counts['groups']
+			);
+
+		} else {
+
+			// Do not allow progress.
+			$result['is_error'] = 1;
+
+		}
+
+		// Did we get an error?
+		$error = false;
+		if ( isset( $result['is_error'] ) AND $result['is_error'] == '1' ) {
+			$error = true;
+		}
+
+		// Finish sync on failure or empty result.
+		if ( $error OR empty( $result['values'] ) ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Delete the option to start from the beginning.
+			$this->stepped_offset_delete( $key );
+
+		} else {
+
+			// Set finished flag.
+			$data['finished'] = 'false';
+
+			// Are there fewer items than the step count?
+			if ( count( $result['values'] ) < $this->step_counts['groups'] ) {
+				$diff = count( $result['values'] );
+			} else {
+				$diff = $this->step_counts['groups'];
+			}
+
+			// Set "from" and "to" flags.
+			$data['from'] = intval( $offset );
+			$data['to'] = $data['from'] + $diff;
+
+			// Remove WordPress callbacks to prevent recursion.
+			$this->plugin->mapper->hooks_wordpress_remove();
+
+			// Let's make an array of params.
+			$args = [
+				'op' => 'sync',
+				'objectName' => 'GroupContact',
+				'objectId' => $group_id,
+				'objectRef' => $result['values'],
+			];
+
+			/**
+			 * Broadcast that the Contacts in this Group must be synced.
+			 *
+			 * Used internally to:
+			 *
+			 * - Update the WordPress Terms
+			 *
+			 * @since 0.6.4
+			 *
+			 * @param array $args The array of CiviCRM params.
+			 */
+			do_action( 'civicrm_acf_integration_admin_group_sync', $args );
+
+			// Reinstate WordPress callbacks.
+			$this->plugin->mapper->hooks_wordpress_add();
+
+			// Increment offset option.
+			$this->stepped_offset_update( $key, $data['to'] );
+
+		}
+
+		// Send data to browser.
+		$this->send_data( $data );
+
+	}
+
+
+
+	/**
+	 * Init the synchronisation stepper.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param str $key The unique identifier for the stepper.
+	 */
+	public function stepped_offset_init( $key ) {
+
+		// Construct option name.
+		$option = '_cai_' . $key . '_offset';
+
+		// If the offset value doesn't exist.
+		if ( 'fgffgs' == get_option( $option, 'fgffgs' ) ) {
+
+			// Start at the beginning.
+			$offset = 0;
+			add_option( $option, '0' );
+
+		} else {
+
+			// Use the existing value.
+			$offset = intval( get_option( $option, '0' ) );
+
+		}
+
+		// --<
+		return $offset;
+
+	}
+
+
+
+	/**
+	 * Update the synchronisation stepper.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param str $key The unique identifier for the stepper.
+	 * @param str $to The value for the stepper.
+	 */
+	public function stepped_offset_update( $key, $to ) {
+
+		// Construct option name.
+		$option = '_cai_' . $key . '_offset';
+
+		// Increment offset option.
+		update_option( $option, (string) $to );
+
+	}
+
+
+
+	/**
+	 * Delete the synchronisation stepper.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param str $key The unique identifier for the stepper.
+	 */
+	public function stepped_offset_delete( $key ) {
+
+		// Construct option name.
+		$option = '_cai_' . $key . '_offset';
+
+		// Delete the option to start from the beginning.
+		delete_option( $option );
+
+	}
+
+
+
+	/**
+	 * Send JSON data to the browser.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $data The data to send.
+	 */
+	private function send_data( $data ) {
+
+		// Is this an AJAX request?
+		if ( defined( 'DOING_AJAX' ) AND DOING_AJAX ) {
+
+			// Set reasonable headers.
+			header('Content-type: text/plain');
+			header("Cache-Control: no-cache");
+			header("Expires: -1");
+
+			// Echo.
+			echo json_encode( $data );
+
+			// Die.
+			exit();
+
+		}
 
 	}
 

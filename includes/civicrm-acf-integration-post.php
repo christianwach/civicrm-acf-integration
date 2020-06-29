@@ -152,11 +152,69 @@ class CiviCRM_ACF_Integration_Post {
 		// Maybe sync the Contact "Display Name" to the WordPress Post Title.
 		add_action( 'civicrm_acf_integration_contact_acf_fields_saved', [ $this, 'maybe_sync_title' ], 10, 1 );
 
+		// Intercept calls to sync the Contact.
+		add_action( 'civicrm_acf_integration_admin_contact_sync', [ $this, 'contact_sync' ], 10, 1 );
+
 	}
 
 
 
 	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Create a WordPress Post when a CiviCRM Contact is being synced.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $args The array of CiviCRM Contact data.
+	 */
+	public function contact_sync( $args ) {
+
+		// Bail if this is not a Contact.
+		$top_level_types = $this->plugin->civicrm->contact_type->types_get_top_level();
+		if ( ! in_array( $args['objectName'], $top_level_types ) ) {
+			return;
+		}
+
+		// Bail if this Contact's Contact Type is not mapped.
+		$contact_types = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $args['objectRef'] );
+		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types );
+		if ( $post_type === false ) {
+			return;
+		}
+
+		// Get the Post ID for this Contact.
+		$post_id = $this->plugin->civicrm->contact->is_mapped( $args['objectRef'] );
+
+		// Create the WordPress Post if it doesn't exist, otherwise update.
+		if ( $post_id === false ) {
+			$post_id = $this->create_from_contact( $args['objectRef'], $post_type );
+		} else {
+			$this->update_from_contact( $args['objectRef'], $post_id );
+		}
+
+		// Add our data to the params.
+		$args['contact_types'] = $contact_types;
+		$args['post_type'] = $post_type;
+		$args['post_id'] = $post_id;
+
+		/**
+		 * Broadcast that a WordPress Post has been synced from Contact details.
+		 *
+		 * Used internally to:
+		 *
+		 * - Update the ACF Fields for the WordPress Post.
+		 * - Update the Terms for the WordPress Post.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of CiviCRM and discovered params.
+		 */
+		do_action( 'civicrm_acf_integration_post_contact_sync', $args );
+
+	}
 
 
 
@@ -228,6 +286,13 @@ class CiviCRM_ACF_Integration_Post {
 		// Bail if something went wrong.
 		if ( $contact === false ) {
 			return;
+		}
+
+		// Maybe retrieve "extra data" and reinstate.
+		if ( ! empty( $args['extra'] ) ) {
+			foreach( $args['extra'] AS $property => $value ) {
+				$contact[$property] = $value;
+			}
 		}
 
 		// Overwrite args with full Contact data.

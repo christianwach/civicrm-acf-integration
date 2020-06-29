@@ -32,11 +32,11 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 	public $plugin;
 
 	/**
-	 * Parent (calling) object.
+	 * Advanced Custom Fields object.
 	 *
 	 * @since 0.6.4
 	 * @access public
-	 * @var object $acf The parent object.
+	 * @var object $cpt The Advanced Custom Fields object.
 	 */
 	public $acf;
 
@@ -158,14 +158,6 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 	 * @param array $field The Field being rendered.
 	 */
 	public function render_field( $field ) {
-
-		$e = new Exception;
-		$trace = $e->getTraceAsString();
-		error_log( print_r( [
-			'method' => __METHOD__,
-			'field' => $field,
-			//'backtrace' => $trace,
-		], true ) );
 
 		// Change Field into a simple number field.
 		$field['type'] = 'number';

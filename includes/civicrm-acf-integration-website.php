@@ -120,6 +120,89 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		// Add and Website Fields that are Custom Fields.
 		add_filter( 'civicrm_acf_integration_contact_custom_field_id_get', [ $this, 'custom_field_id_get' ], 10, 2 );
 
+		// Intercept before a Contact is created.
+		add_action( 'civicrm_acf_integration_mapper_contact_pre_create', [ $this, 'contact_pre_create' ], 10 );
+
+		// Intercept Post created from Contact events.
+		add_action( 'civicrm_acf_integration_post_created', [ $this, 'post_created' ], 20 );
+		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'sync_to_post' ], 10 );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * A CiviCRM Contact is about to be created.
+	 *
+	 * Before a Contact is created, we need to set a flag so that we know that
+	 * we need to delay the Custom Field sync process until the synced Post has
+	 * been created.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $args The array of CiviCRM params.
+	 */
+	public function contact_pre_create( $args ) {
+
+		// Bail if not the operation we want.
+		if ( $args['op'] != 'create' ) {
+			return;
+		}
+
+		// Always clear flag if set previously.
+		if ( isset( $this->contact_create ) ){
+			unset( $this->contact_create );
+		}
+
+		// Init flag.
+		$this->contact_create = true;
+
+		// Always clear properties if set previously.
+		if ( isset( $this->data_pre ) ){
+			unset( $this->data_pre );
+		}
+
+		// Init empty property.
+		$this->data_pre = [];
+
+	}
+
+
+
+	/**
+	 * Intercept when a Post has been created from a Contact via the Mapper.
+	 *
+	 * Sync any associated ACF Fields mapped to Custom Fields.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
+	 */
+	public function post_created( $args ) {
+
+		// Only do this when a Contact has been created.
+		if ( $this->contact_create !== true ) {
+			return;
+		}
+
+		// Bail if there's no data.
+		if ( empty( $this->data_pre ) ) {
+			return;
+		}
+
+		// Call the method again, this time with the stored data.
+		foreach( $this->data_pre AS $custom_data ) {
+			$this->website_edited( $custom_data );
+		}
+
+		// Unset our properties.
+		unset( $this->contact_create );
+		unset( $this->data_pre );
+
 	}
 
 
@@ -194,7 +277,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		}
 
 		// Skip if it maps to a Custom Field.
-		if ( false !== strpos( $settings[$website_key], 'caicustom_' ) ) {
+		if ( false !== strpos( $settings[$website_key], $this->civicrm->custom_field_prefix() ) ) {
 			return true;
 		}
 
@@ -263,6 +346,126 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 
 
 	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get the Websites for a given Contact ID.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param int $contact_id The numeric ID of the CiviCRM Contact.
+	 * @return array $website_data The array of Website data for the CiviCRM Contact.
+	 */
+	public function websites_get_for_contact( $contact_id ) {
+
+		// Init return.
+		$website_data = [];
+
+		// Bail if we have no Contact ID.
+		if ( empty( $contact_id ) ) {
+			return $website_data;
+		}
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $website_data;
+		}
+
+		// Define params to get queried Websites.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+			'contact_id' => $contact_id,
+			'options' => [
+				'limit' => 0, // No limit.
+			],
+		];
+
+		// Call the API.
+		$result = civicrm_api( 'Website', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $website_data;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $website_data;
+		}
+
+		// The result set it what we want.
+		$website_data = $result['values'];
+
+		// --<
+		return $website_data;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Intercept when a Post is been synced from a Contact.
+	 *
+	 * Sync any associated ACF Fields mapped to Custom Fields.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
+	 */
+	public function sync_to_post( $args ) {
+
+		// Get all Websites for this Contact.
+		$data = $this->websites_get_for_contact( $args['objectId'] );
+
+		// Bail if there are no Website Fields.
+		if ( empty( $data ) ) {
+			return;
+		}
+
+		// Get the ACF Fields for this Post.
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $args['post_id'] );
+
+		// Bail if there are no Website Fields.
+		if ( empty( $acf_fields['website'] ) ) {
+			return;
+		}
+
+		// Let's look at each ACF Field in turn.
+		foreach( $acf_fields['website'] AS $selector => $website_field ) {
+
+			// Let's look at each Website in turn.
+			foreach( $data AS $website ) {
+
+				// Cast as object.
+				$website = (object) $website;
+
+				// Skip if it's a Custom Field.
+				if ( false !== strpos( $website_field, $this->civicrm->custom_field_prefix() ) ) {
+					continue;
+				}
+
+				// Skip if it's not the right Website Type.
+				if ( $website_field != $website->website_type_id ) {
+					continue;
+				}
+
+				// Get the URL safely.
+				$url = empty( $website->url ) ? '' : $website->url;
+
+				// Update it.
+				$this->plugin->acf->field->value_update( $selector, $url, $args['post_id'] );
+
+			}
+
+		}
+
+	}
 
 
 
@@ -452,9 +655,21 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		// Get the Post ID for this Contact.
 		$post_id = $this->plugin->civicrm->contact->is_mapped( $contact );
 
-		// Skip if not mapped.
+		// Skip if not mapped or Post doesn't yet exist.
 		if ( $post_id === false ) {
+
+			/*
+			 * When using the CiviCRM UI to create a Contact, we have to save the
+			 * data for later use because "civicrm_post" (when the WordPress Post
+			 * is created) doesn't fire until all associated data has been saved.
+			 */
+			if ( $args['op'] == 'create' AND $this->contact_create === true ) {
+				$this->data_pre[$args['objectId']] = $args;
+			}
+
+			// --<
 			return;
+
 		}
 
 		// Get the ACF Fields for this Post.
@@ -472,7 +687,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		foreach( $acf_fields['website'] AS $selector => $website_field ) {
 
 			// Skip if it's a Custom Field.
-			if ( false !== strpos( $website_field, 'caicustom_' ) ) {
+			if ( false !== strpos( $website_field, $this->civicrm->custom_field_prefix() ) ) {
 				continue;
 			}
 
@@ -518,7 +733,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		foreach( $acf_fields['website'] AS $selector => $website_field ) {
 
 			// Skip if it's a Custom Field.
-			if ( false !== strpos( $website_field, 'caicustom_' ) ) {
+			if ( false !== strpos( $website_field, $this->civicrm->custom_field_prefix() ) ) {
 				continue;
 			}
 
@@ -590,8 +805,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 
 		// Return it if the Field has a reference to a Website Custom Field.
 		if ( ! empty( $field[$website_key] ) ) {
-			if ( false !== strpos( $field[$website_key], 'caicustom_' ) ) {
-				$custom_field_id = absint( str_replace( 'caicustom_', '', $field[$website_key] ) );
+			if ( false !== strpos( $field[$website_key], $this->civicrm->custom_field_prefix() ) ) {
+				$custom_field_id = absint( str_replace( $this->civicrm->custom_field_prefix(), '', $field[$website_key] ) );
 			}
 		}
 
@@ -679,7 +894,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		foreach( $custom_fields AS $custom_group_name => $custom_group ) {
 			$custom_fields_label = esc_attr( $custom_group_name );
 			foreach( $custom_group AS $custom_field ) {
-				$choices[$custom_fields_label]['caicustom_' . $custom_field['id']] = $custom_field['label'];
+				$choices[$custom_fields_label][$this->civicrm->custom_field_prefix() . $custom_field['id']] = $custom_field['label'];
 			}
 		}
 

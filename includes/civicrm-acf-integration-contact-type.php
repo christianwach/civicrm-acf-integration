@@ -440,6 +440,65 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 
 
 	/**
+	 * Get the number of Contacts who are of a CiviCRM Contact Type.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param integer $contact_type_id The ID of the CiviCRM Contact Type.
+	 * @return int $count The number of Contacts of that Type.
+	 */
+	public function contact_count( $contact_type_id ) {
+
+		// Get the hierarchy for the Contact Type ID.
+		$hierarchy = $this->hierarchy_get_by_id( $contact_type_id, 'id' );
+
+		// Bail if we didn't get any.
+		if ( $hierarchy === false ) {
+			return 0;
+		}
+
+		// Params to query Contacts.
+		$params = [
+			'version' => 3,
+			'contact_type' => $hierarchy['type'],
+			'contact_sub_type' => $hierarchy['subtype'],
+			'return' => [
+				'id',
+			],
+			'options' => [
+				'limit' => 0,
+			],
+		];
+
+		// Call the API.
+		$result = civicrm_api( 'Contact', 'get', $params );
+
+		// Add log entry on failure.
+		if ( isset( $result['is_error'] ) AND $result['is_error'] == '1' ) {
+			$e = new Exception;
+			$trace = $e->getTraceAsString();
+			error_log( print_r( [
+				'method' => __METHOD__,
+				'contact_type_id' => $contact_type_id,
+				'params' => $params,
+				'result' => $result,
+				'backtrace' => $trace,
+			], true ) );
+			return false;
+		}
+
+		// --<
+		return empty( $result['count'] ) ? 0 : intval( $result['count'] );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
 	 * Get the Contact Type hierarchy that is mapped to a Post Type.
 	 *
 	 * @since 0.2
@@ -494,6 +553,83 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 
 		// --<
 		return $contact_type_id;
+
+	}
+
+
+
+	/**
+	 * Get all Contact Types that are mapped to a Post Type.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @return array $contact_types The array of mapped Contact Types.
+	 */
+	public function get_mapped() {
+
+		/*
+		// Only do this once.
+		static $pseudocache;
+		if ( isset( $pseudocache ) ) {
+			return $pseudocache;
+		}
+		*/
+
+		// Init return.
+		$contact_types = [];
+
+		// Get mapping array.
+		$mappings = $this->plugin->mapping->mappings_for_contact_types_get();
+
+		// Bail on empty.
+		if ( empty( $mappings ) ) {
+			return $contact_types;
+		}
+
+		// Get all Contact Type IDs.
+		$contact_type_ids = array_keys( $mappings );
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $contact_types;
+		}
+
+		// Define params to get queried Contact Types.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+			'id' => [ 'IN' => $contact_type_ids ],
+			'options' => [
+				'sort' => 'label',
+				'limit' => 0, // No limit.
+			],
+		];
+
+		// Call the API.
+		$result = civicrm_api( 'ContactType', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $contact_types;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $contact_types;
+		}
+
+		// The result set is what we're after.
+		$contact_types = $result['values'];
+
+		/*
+		// Maybe add to pseudo-cache.
+		if ( ! isset( $pseudocache ) ) {
+			$pseudocache = $contact_types;
+		}
+		*/
+
+		// --<
+		return $contact_types;
 
 	}
 

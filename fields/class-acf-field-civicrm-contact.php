@@ -32,13 +32,22 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 	public $plugin;
 
 	/**
-	 * Parent (calling) object.
+	 * Advanced Custom Fields object.
 	 *
 	 * @since 0.4
 	 * @access public
-	 * @var object $acf The parent object.
+	 * @var object $cpt The Advanced Custom Fields object.
 	 */
 	public $acf;
+
+	/**
+	 * CiviCRM Utilities object.
+	 *
+	 * @since 0.6.4
+	 * @access public
+	 * @var object $civicrm The CiviCRM Utilities object.
+	 */
+	public $civicrm;
 
 	/**
 	 * Field Type name.
@@ -134,8 +143,11 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 		// Store reference to plugin.
 		$this->plugin = $parent->plugin;
 
-		// Store reference to parent.
+		// Store reference to ACF Utilities.
 		$this->acf = $parent;
+
+		// Store reference to CiviCRM Utilities.
+		$this->civicrm = $this->plugin->civicrm;
 
 		// Define label.
 		$this->label = __( 'CiviCRM Contact', 'civicrm-acf-integration' );
@@ -169,10 +181,10 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 	public function render_field_settings( $field ) {
 
 		// Get the Contact Fields for this CiviCRM Contact Type.
-		$contact_fields = $this->plugin->civicrm->contact_field->get_for_acf_field( $field );
+		$contact_fields = $this->civicrm->contact_field->get_for_acf_field( $field );
 
 		// Get the Custom Fields for this CiviCRM Contact Type.
-		$custom_fields = $this->plugin->civicrm->custom_field->get_for_acf_field( $field );
+		$custom_fields = $this->civicrm->custom_field->get_for_acf_field( $field );
 
 		// Filter fields to include only "Contact Reference".
 		$filtered_fields = [];
@@ -192,7 +204,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 		}
 
 		// Get Setting field.
-		$setting = $this->plugin->civicrm->contact->acf_field_get( $filtered_fields, $contact_fields );
+		$setting = $this->civicrm->contact->acf_field_get( $filtered_fields, $contact_fields );
 
 		// Now add it.
 		acf_render_field_setting( $field, $setting );
@@ -227,7 +239,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 			$contact_ids = array_map( 'intval', acf_array( $field['value'] ) );
 
 			// Get existing Contacts.
-			$contacts = $this->plugin->civicrm->contact->get_by_ids( $contact_ids );
+			$contacts = $this->civicrm->contact->get_by_ids( $contact_ids );
 
 			// Maybe append them.
 			if ( ! empty( $contacts ) ) {
@@ -328,13 +340,13 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 		$args['search'] = wp_unslash( strval( $options['s'] ) );
 
 		// Get the "CiviCRM Field" key.
-		$acf_field_key = $this->plugin->civicrm->contact->acf_field_key_get();
+		$acf_field_key = $this->civicrm->contact->acf_field_key_get();
 
 		// Assume any Contact Type.
 		$args['contact_type'] = '';
 
-		// If this is linked to Employer ID.
-		if ( $field[$acf_field_key] == 'employer_id' ) {
+		// Restrict to target Contact Type if this Field is linked to Employer ID.
+		if ( $field[$acf_field_key] == $this->civicrm->contact_field_prefix() . 'employer_id' ) {
 			$args['contact_type'] = 'Organization';
 		}
 
@@ -352,7 +364,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 		$args = apply_filters( 'acf/fields/' . $this->name . "/query/key={$field['key']}", $args, $field, $post_id );
 
 		// Get Contacts.
-		$contacts = $this->plugin->civicrm->contact->get_by_search_string( $args['search'], $args['contact_type'] );
+		$contacts = $this->civicrm->contact->get_by_search_string( $args['search'], $args['contact_type'] );
 
 		// Maybe append results.
 		$results = [];

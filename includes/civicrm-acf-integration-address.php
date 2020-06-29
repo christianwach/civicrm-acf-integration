@@ -127,11 +127,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
 		// Check Contact prior to Post update.
-		add_action( 'civicrm_acf_integration_mapper_contact_pre', [ $this, 'contact_pre_edit' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_contact_pre_edit', [ $this, 'contact_pre_edit' ], 10 );
 
-		// Intercept Post updated (or created) from Contact events.
+		// Intercept Post created, updated (or synced) from Contact events.
 		add_action( 'civicrm_acf_integration_post_created', [ $this, 'post_edited' ], 10 );
 		add_action( 'civicrm_acf_integration_post_edited', [ $this, 'post_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'post_edited' ], 10 );
 
 	}
 
@@ -175,6 +176,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 * @param array $args The array of CiviCRM params.
 	 */
 	public function contact_pre_edit( $args ) {
+
+		// Bail if not an edit.
+		if ( $args['op'] != 'edit' ) {
+			return;
+		}
 
 		// Always clear properties if set previously.
 		if ( isset( $this->contact_addresses_pre ) ){
@@ -226,9 +232,16 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 			return;
 		}
 
+		// Get the Contact ID depending on the operation.
+		if ( $args['op'] == 'create' ) {
+			$contact_id = $args['objectRef']->id;
+		} else {
+			$contact_id = $args['objectRef']->contact_id;
+		}
+
 		// Get the current Contact Addresses cast as objects.
 		$contact_addresses = [];
-		$current_addresses = $this->addresses_get_by_contact_id( $args['objectRef']->contact_id );
+		$current_addresses = $this->addresses_get_by_contact_id( $contact_id );
 		foreach( $current_addresses AS $current_address ) {
 			$key = $current_address['id'];
 			$contact_addresses[$key] = (object) $current_address;

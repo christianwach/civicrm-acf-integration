@@ -140,6 +140,16 @@ class CiviCRM_ACF_Integration_Mapper {
 		// Intercept ACF fields after save.
 		add_action( 'acf/save_post', [ $this, 'acf_fields_saved' ], 20, 1 );
 
+		// Intercept new term creation.
+		add_action( 'created_term', [ $this, 'term_created' ], 20, 3 );
+
+		// Intercept term updates.
+		add_action( 'edit_terms', [ $this, 'term_pre_edit' ], 20, 2 );
+		add_action( 'edited_term', [ $this, 'term_edited' ], 20, 3 );
+
+		// Intercept term deletion.
+		add_action( 'delete_term', [ $this, 'term_deleted' ], 20, 4 );
+
 	}
 
 
@@ -160,6 +170,12 @@ class CiviCRM_ACF_Integration_Mapper {
 		// Remove ACF fields update hook.
 		remove_action( 'acf/save_post', [ $this, 'acf_fields_saved' ], 20 );
 
+		// Remove all term-related callbacks.
+		remove_action( 'created_term', [ $this, 'intercept_create_term' ], 20 );
+		remove_action( 'edit_terms', [ $this, 'intercept_pre_update_term' ], 20 );
+		remove_action( 'edited_term', [ $this, 'intercept_update_term' ], 20 );
+		remove_action( 'delete_term', [ $this, 'intercept_delete_term' ], 20 );
+
 	}
 
 
@@ -172,6 +188,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	public function hooks_civicrm_add() {
 
 		// Intercept Contact updates in CiviCRM.
+		add_action( 'civicrm_pre', [ $this, 'contact_pre_create' ], 10, 4 );
 		add_action( 'civicrm_pre', [ $this, 'contact_pre_edit' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'contact_created' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'contact_edited' ], 10, 4 );
@@ -198,6 +215,14 @@ class CiviCRM_ACF_Integration_Mapper {
 		// Intercept CiviCRM Custom Table updates.
 		add_action( 'civicrm_custom', [ $this, 'custom_edited' ], 10, 4 );
 
+		// Intercept Group updates in CiviCRM.
+		add_action( 'civicrm_pre', array( $this, 'group_deleted_pre' ), 10, 4 );
+
+		// Intercept Group Membership updates in CiviCRM.
+		add_action( 'civicrm_pre', [ $this, 'group_contacts_created' ], 10, 4 );
+		add_action( 'civicrm_pre', [ $this, 'group_contacts_deleted' ], 10, 4 );
+		add_action( 'civicrm_pre', [ $this, 'group_contacts_rejoined' ], 10, 4 );
+
 	}
 
 
@@ -210,6 +235,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	public function hooks_civicrm_remove() {
 
 		// Remove Contact update hooks.
+		remove_action( 'civicrm_pre', [ $this, 'contact_pre_create' ], 10 );
 		remove_action( 'civicrm_pre', [ $this, 'contact_pre_edit' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'contact_created' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'contact_edited' ], 10 );
@@ -236,11 +262,81 @@ class CiviCRM_ACF_Integration_Mapper {
 		// Remove CiviCRM Custom Table hooks.
 		remove_action( 'civicrm_custom', [ $this, 'custom_edited' ], 10 );
 
+		// Remove Group update hooks.
+		remove_action( 'civicrm_pre', array( $this, 'group_deleted_pre' ), 10 );
+
+		// Intercept Group Membership update hooks.
+		remove_action( 'civicrm_pre', [ $this, 'group_contacts_created' ], 10 );
+		remove_action( 'civicrm_pre', [ $this, 'group_contacts_deleted' ], 10 );
+		remove_action( 'civicrm_pre', [ $this, 'group_contacts_rejoined' ], 10 );
+
 	}
 
 
 
 	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Fires just before a CiviCRM Entity is created, updated or deleted.
+	 *
+	 * We don't use this at present but it's useful for debugging.
+	 *
+	 * @since 0.2.1
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function contact_pre_create( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if not the context we want.
+		if ( $op != 'create' ) {
+			return;
+		}
+
+		// Bail if this is not a Contact.
+		$top_level_types = $this->plugin->civicrm->contact_type->types_get_top_level();
+		if ( ! in_array( $objectName, $top_level_types ) ) {
+			return;
+		}
+
+		// Bail if this Contact's Contact Type is not mapped.
+		$contact_types = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $objectRef );
+		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types );
+		if ( $post_type === false ) {
+			return;
+		}
+
+		// Let's make an array of the CiviCRM params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+			'top_level_types' => $top_level_types,
+			'contact_types' => $contact_types,
+			'post_type' => $post_type,
+		];
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		/**
+		 * Broadcast that a relevant Contact is about to be created.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_contact_pre_create', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
 
 
 
@@ -291,13 +387,13 @@ class CiviCRM_ACF_Integration_Mapper {
 		$this->hooks_wordpress_remove();
 
 		/**
-		 * Broadcast that a relevant Contact is about to be created, updated or deleted.
+		 * Broadcast that a relevant Contact is about to be updated.
 		 *
 		 * @since 0.4.5
 		 *
 		 * @param array $args The array of CiviCRM params.
 		 */
-		do_action( 'civicrm_acf_integration_mapper_contact_pre', $args );
+		do_action( 'civicrm_acf_integration_mapper_contact_pre_edit', $args );
 
 		// Reinstate WordPress callbacks.
 		$this->hooks_wordpress_add();
@@ -383,7 +479,28 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectName' => $objectName,
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
+			'extra' => [],
 		];
+
+		/*
+		 * There are mismatches between the Contact data that is passed in to
+		 * this callback and the Contact data that is retrieved by the API -
+		 * particularly the "employer_id" which may exist in this data but does
+		 * not exist in the data from the API (which has an "employer" field
+		 * whose value is the "Name" of the Employer instead) so we save the
+		 * "extra" data here for use later.
+		 */
+		$extra_data = [
+			'employer_id',
+			//'gender_id',
+		];
+
+		// Maybe save extra data.
+		foreach( $extra_data AS $property ) {
+			if ( isset( $objectRef->$property ) ) {
+				$args['extra'][$property] = $objectRef->$property;
+			}
+		}
 
 		// Remove WordPress callbacks to prevent recursion.
 		$this->hooks_wordpress_remove();
@@ -405,6 +522,10 @@ class CiviCRM_ACF_Integration_Mapper {
 		$this->hooks_wordpress_add();
 
 	}
+
+
+
+	// -------------------------------------------------------------------------
 
 
 
@@ -1006,6 +1127,229 @@ class CiviCRM_ACF_Integration_Mapper {
 
 
 	/**
+	 * Intercept a CiviCRM group prior to it being deleted.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the CiviCRM Group.
+	 * @param array $objectRef The array of CiviCRM Group data.
+	 */
+	public function group_deleted_pre( $op, $objectName, $objectId, &$objectRef ) {
+
+		// Target our operation.
+		if ( $op != 'delete' ) {
+			return;
+		}
+
+		// Target our object type.
+		if ( $objectName != 'Group' ) {
+			return;
+		}
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		/**
+		 * Broadcast that a CiviCRM Group has been deleted.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_group_deleted_pre', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Intercept when a CiviCRM Contact is added to a Group.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the CiviCRM Group.
+	 * @param array $objectRef The array of CiviCRM Contact IDs.
+	 */
+	public function group_contacts_created( $op, $objectName, $objectId, &$objectRef ) {
+
+		// Target our operation.
+		if ( $op != 'create' ) {
+			return;
+		}
+
+		// Target our object type.
+		if ( $objectName != 'GroupContact' ) {
+			return;
+		}
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		// Bail if there are no Contacts.
+		if ( empty( $objectRef ) ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		/**
+		 * Broadcast that Contacts have been added to a CiviCRM Group.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_group_contacts_created', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Contact is deleted (or removed) from a Group.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the CiviCRM Group.
+	 * @param array $objectRef Array of CiviCRM Contact IDs.
+	 */
+	public function group_contacts_deleted( $op, $objectName, $objectId, &$objectRef ) {
+
+		// Target our operation.
+		if ( $op != 'delete' ) {
+			return;
+		}
+
+		// Target our object type.
+		if ( $objectName != 'GroupContact' ) {
+			return;
+		}
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		// Bail if there are no Contacts.
+		if ( empty( $objectRef ) ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		/**
+		 * Broadcast that Contacts have been deleted from a CiviCRM Group.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_group_contacts_deleted', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Contact is re-added to a Group.
+	 *
+	 * The issue here is that CiviCRM fires 'civicrm_pre' with $op = 'delete' regardless
+	 * of whether the Contact is being removed or deleted. If a Contact is later re-added
+	 * to the Group, then $op != 'create', so we need to intercept $op = 'edit'.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the CiviCRM Group.
+	 * @param array $objectRef Array of CiviCRM Contact IDs.
+	 */
+	public function group_contacts_rejoined( $op, $objectName, $objectId, &$objectRef ) {
+
+		// Target our operation.
+		if ( $op != 'edit' ) {
+			return;
+		}
+
+		// Target our object type.
+		if ( $objectName != 'GroupContact' ) {
+			return;
+		}
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		// Bail if there are no Contacts.
+		if ( empty( $objectRef ) ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		/**
+		 * Broadcast that Contacts have rejoined a CiviCRM Group.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_group_contacts_rejoined', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
 	 * Intercept the Post saved operation.
 	 *
 	 * @since 0.2
@@ -1078,6 +1422,178 @@ class CiviCRM_ACF_Integration_Mapper {
 		 * @param array $args The array of CiviCRM params.
 		 */
 		do_action( 'civicrm_acf_integration_mapper_acf_fields_saved', $args );
+
+		// Reinstate CiviCRM callbacks.
+		$this->hooks_civicrm_add();
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Hook into the creation of a term.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $term_id The numeric ID of the new term.
+	 * @param array $tt_id The numeric ID of the new term.
+	 * @param string $taxonomy Should be (an array containing) taxonomy names.
+	 */
+	public function term_created( $term_id, $tt_id, $taxonomy ) {
+
+		// Bail if there was a Multisite switch.
+		if ( is_multisite() AND ms_is_switched() ) {
+			return;
+		}
+
+		// Let's make an array of the params.
+		$args = [
+			'term_id' => $term_id,
+			'tt_id' => $tt_id,
+			'taxonomy' => $taxonomy,
+		];
+
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
+		/**
+		 * Broadcast that a WordPress Term has been created.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of WordPress params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_term_created', $args );
+
+		// Reinstate CiviCRM callbacks.
+		$this->hooks_civicrm_add();
+
+	}
+
+
+
+	/**
+	 * Hook into updates to a term before the term is updated.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param int $term_id The numeric ID of the new term.
+	 * @param string $taxonomy The taxonomy containing the term.
+	 */
+	public function term_pre_edit( $term_id, $taxonomy = null ) {
+
+		// Bail if there was a Multisite switch.
+		if ( is_multisite() AND ms_is_switched() ) {
+			return;
+		}
+
+		// Let's make an array of the params.
+		$args = [
+			'term_id' => $term_id,
+			'taxonomy' => $taxonomy,
+		];
+
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
+		/**
+		 * Broadcast that a WordPress Term is about to be edited.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of WordPress params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_term_pre_edit', $args );
+
+		// Reinstate CiviCRM callbacks.
+		$this->hooks_civicrm_add();
+
+	}
+
+
+
+	/**
+	 * Hook into updates to a term.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param int $term_id The numeric ID of the edited term.
+	 * @param array $tt_id The numeric ID of the edited term taxonomy.
+	 * @param string $taxonomy Should be (an array containing) the taxonomy.
+	 */
+	public function term_edited( $term_id, $tt_id, $taxonomy ) {
+
+		// Bail if there was a Multisite switch.
+		if ( is_multisite() AND ms_is_switched() ) {
+			return;
+		}
+
+		// Let's make an array of the params.
+		$args = [
+			'term_id' => $term_id,
+			'tt_id' => $tt_id,
+			'taxonomy' => $taxonomy,
+		];
+
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
+		/**
+		 * Broadcast that a WordPress Term has been edited.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of WordPress params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_term_edited', $args );
+
+		// Reinstate CiviCRM callbacks.
+		$this->hooks_civicrm_add();
+
+	}
+
+
+
+	/**
+	 * Hook into deletion of a term.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param int $term_id The numeric ID of the deleted term.
+	 * @param array $tt_id The numeric ID of the deleted term taxonomy.
+	 * @param string $taxonomy Name of the taxonomy.
+	 * @param object $deleted_term The deleted term object.
+	 */
+	public function term_deleted( $term_id, $tt_id, $taxonomy, $deleted_term ) {
+
+		// Bail if there was a Multisite switch.
+		if ( is_multisite() AND ms_is_switched() ) {
+			return;
+		}
+
+		// Let's make an array of the params.
+		$args = [
+			'term_id' => $term_id,
+			'tt_id' => $tt_id,
+			'taxonomy' => $taxonomy,
+			'deleted_term' => $deleted_term,
+		];
+
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
+		/**
+		 * Broadcast that a WordPress Term has been deleted.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of WordPress params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_term_deleted', $args );
 
 		// Reinstate CiviCRM callbacks.
 		$this->hooks_civicrm_add();

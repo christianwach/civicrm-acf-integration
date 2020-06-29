@@ -329,6 +329,38 @@ class CiviCRM_ACF_Integration_CiviCRM {
 
 
 
+	/**
+	 * Get ACF Field setting prefix that distinguishes Custom Fields from Contact Fields.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @return string $custom_field_prefix The prefix of the "CiviCRM Field" value.
+	 */
+	public function custom_field_prefix() {
+
+		// --<
+		return $this->contact->custom_field_prefix;
+
+	}
+
+
+
+	/**
+	 * Get ACF Field setting prefix that distinguishes Contact Fields from Custom Fields.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @return string $custom_field_prefix The prefix of the "CiviCRM Field" value.
+	 */
+	public function contact_field_prefix() {
+
+		// --<
+		return $this->contact->contact_field_prefix;
+
+	}
+
+
+
 	// -------------------------------------------------------------------------
 
 

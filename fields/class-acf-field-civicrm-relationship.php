@@ -32,13 +32,22 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 	public $plugin;
 
 	/**
-	 * Parent (calling) object.
+	 * Advanced Custom Fields object.
 	 *
 	 * @since 0.4.2
 	 * @access public
-	 * @var object $acf The parent object.
+	 * @var object $cpt The Advanced Custom Fields object.
 	 */
 	public $acf;
+
+	/**
+	 * CiviCRM Utilities object.
+	 *
+	 * @since 0.6.4
+	 * @access public
+	 * @var object $civicrm The CiviCRM Utilities object.
+	 */
+	public $civicrm;
 
 	/**
 	 * Field Type name.
@@ -134,8 +143,11 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 		// Store reference to plugin.
 		$this->plugin = $parent->plugin;
 
-		// Store reference to parent.
+		// Store reference to ACF Utilities.
 		$this->acf = $parent;
+
+		// Store reference to CiviCRM Utilities.
+		$this->civicrm = $this->plugin->civicrm;
 
 		// Define label.
 		$this->label = __( 'CiviCRM Relationship', 'civicrm-acf-integration' );
@@ -172,7 +184,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 		add_filter( 'civicrm_acf_integration_relationships_get_for_acf_field', [ $this, 'relationship_types_filter' ], 10, 3 );
 
 		// Get the possible Relationships for this CiviCRM Contact Type.
-		$relationships = $this->plugin->civicrm->relationship->get_for_acf_field( $field );
+		$relationships = $this->civicrm->relationship->get_for_acf_field( $field );
 
 		// Remove callback.
 		remove_filter( 'civicrm_acf_integration_relationships_get_for_acf_field', [ $this, 'relationship_types_filter' ], 10 );
@@ -183,7 +195,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 		}
 
 		// Get Setting field.
-		$setting = $this->plugin->civicrm->relationship->acf_field_get( $relationships );
+		$setting = $this->civicrm->relationship->acf_field_get( $relationships );
 
 		// Now add it.
 		acf_render_field_setting( $field, $setting );
@@ -218,7 +230,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 			$contact_ids = array_map( 'intval', acf_array( $field['value'] ) );
 
 			// Get existing Contacts.
-			$contacts = $this->plugin->civicrm->contact->get_by_ids( $contact_ids );
+			$contacts = $this->civicrm->contact->get_by_ids( $contact_ids );
 
 			// Maybe append them.
 			if ( ! empty( $contacts ) ) {
@@ -319,7 +331,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 		$args['search'] = wp_unslash( strval( $options['s'] ) );
 
 		// Get the "CiviCRM Relationship" key.
-		$relationship_key = $this->plugin->civicrm->relationship->acf_field_key_get();
+		$relationship_key = $this->civicrm->relationship->acf_field_key_get();
 
 		// Assume any Contact Type.
 		$args['contact_type'] = '';
@@ -334,7 +346,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 			$relationship_direction = $relationship_data[1];
 
 			// Get the Relationship Type.
-			$relationship_type = $this->plugin->civicrm->relationship->type_get_by_id( $relationship_id );
+			$relationship_type = $this->civicrm->relationship->type_get_by_id( $relationship_id );
 
 			// We need to find the target Contact Type.
 			if ( $relationship_direction == 'ab' ) {
@@ -365,7 +377,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 		$args = apply_filters( 'acf/fields/' . $this->name . "/query/key={$field['key']}", $args, $field, $post_id );
 
 		// Get Contacts.
-		$contacts = $this->plugin->civicrm->contact->get_by_search_string(
+		$contacts = $this->civicrm->contact->get_by_search_string(
 			$args['search'],
 			$args['contact_type'],
 			$args['contact_sub_type']

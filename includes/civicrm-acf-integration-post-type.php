@@ -179,6 +179,66 @@ class CiviCRM_ACF_Integration_Post_Type {
 
 
 
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get the number of Posts in a WordPress Post Type.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param str $post_type The name of the WordPress Post Type.
+	 * @return int $count The number of Contacts of that Type.
+	 */
+	public function post_count( $post_type ) {
+
+		// Get all Posts of the Post Type.
+		$posts = get_posts( [ 'post_type' => $post_type, 'numberposts' => -1 ] );
+
+		// --<
+		return empty( $posts ) ? 0 : count( $posts );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get all Post Types that are mapped to a Contact Type.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @return array $post_types The array of mapped Post Types.
+	 */
+	public function get_mapped() {
+
+		// Init return.
+		$post_types = [];
+
+		// Get all Post Types.
+		$all_post_types = $this->plugin->post_type->post_types_get_all();
+
+		// Get all used Post Types.
+		$synced_post_types = $this->plugin->mapping->mappings_for_contact_types_get();
+
+		// Loop through them and get the ones we want.
+		foreach( $all_post_types AS $post_type ) {
+			if ( in_array( $post_type->name, $synced_post_types ) ) {
+				$post_types[] = $post_type;
+			}
+		}
+
+		// --<
+		return $post_types;
+
+	}
+
+
+
 	/**
 	 * Check if a Post Type is mapped to a Contact Type.
 	 *

@@ -127,6 +127,52 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		// Add any Relationship Fields attached to a Post.
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
+		// Intercept Post synced from Contact events.
+		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'sync_to_post' ], 10 );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Intercept when a Post has been updated from a Contact via the Mapper.
+	 *
+	 * Sync any associated ACF Fields mapped to Relationships.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
+	 */
+	public function sync_to_post( $args ) {
+
+		// Get the Relationships for this Contact.
+		$relationships = $this->relationships_get_for_contact( $args['objectId'] );
+
+		// Bail if there are no Relationships.
+		if ( empty( $relationships ) ) {
+			return;
+		}
+
+		// Process each in turn.
+		foreach( $relationships AS $relationship ) {
+
+			// Build params.
+			$params = [
+				'op' => 'edit',
+				'objectId' => $relationship['id'],
+				'objectName' => 'Relationship',
+				'objectRef' => (object) $relationship,
+			];
+
+			// Sync Relationship.
+			$this->relationship_edited( $params );
+
+		}
+
 	}
 
 
@@ -858,6 +904,60 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 			$relationships = array_merge( $relationships, $relationships_for_type );
 
 		}
+
+		// --<
+		return $relationships;
+
+	}
+
+
+
+	/**
+	 * Get all the Relationships for a CiviCRM Contact.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param int $contact_id The numeric ID of the Contact.
+	 * @return array|bool $relationships The array of Relationship data.
+	 */
+	public function relationships_get_for_contact( $contact_id ) {
+
+		// Init return.
+		$relationships = [];
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $relationships;
+		}
+
+		// Construct API query.
+		$params = [
+			'version' => 3,
+			'contact_id_a' => $contact_id,
+			'contact_id_b' => $contact_id,
+			'options' => [
+				'limit' => 0,
+				'or' => [
+					[ 'contact_id_a', 'contact_id_b' ],
+				],
+			],
+		];
+
+		// Get Relationship details via API.
+		$result = civicrm_api( 'Relationship', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $relationships;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $relationships;
+		}
+
+ 		// The result set is what we want.
+		$relationships = $result['values'];
 
 		// --<
 		return $relationships;

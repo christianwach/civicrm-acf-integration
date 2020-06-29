@@ -49,6 +49,28 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	 */
 	public $acf_field_key = 'field_cacf_civicrm_custom_field';
 
+	/**
+	 * "CiviCRM Field" field value prefix in the ACF Field data.
+	 *
+	 * This distinguishes Contact Fields from Custom Fields.
+	 *
+	 * @since 0.6.4
+	 * @access public
+	 * @var str $contact_field_prefix The prefix of the "CiviCRM Field" value.
+	 */
+	public $contact_field_prefix = 'caicontact_';
+
+	/**
+	 * "CiviCRM Field" field value prefix in the ACF Field data.
+	 *
+	 * This distinguishes Contact Fields from Custom Fields.
+	 *
+	 * @since 0.6.4
+	 * @access public
+	 * @var str $contact_field_prefix The prefix of the "CiviCRM Field" value.
+	 */
+	public $custom_field_prefix = 'caicustom_';
+
 
 
 	/**
@@ -98,6 +120,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		add_action( 'civicrm_acf_integration_mapper_post_saved', [ $this, 'post_saved' ], 10, 1 );
 		add_action( 'civicrm_acf_integration_mapper_acf_fields_saved', [ $this, 'acf_fields_saved' ], 10, 1 );
 
+		// Listen for events from Manual Sync that require Contact updates.
+		add_action( 'civicrm_acf_integration_admin_post_sync', [ $this, 'post_sync' ], 10, 1 );
+		add_action( 'civicrm_acf_integration_admin_acf_fields_sync', [ $this, 'acf_fields_sync' ], 10, 1 );
+
 		// Listen for queries from our Field Group class.
 		add_action( 'civicrm_acf_integration_query_field_group_mapped', [ $this, 'query_field_group_mapped' ], 10, 2 );
 
@@ -112,6 +138,22 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 
 	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Update a CiviCRM Contact when a WordPress Post is synced.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $args The array of WordPress params.
+	 */
+	public function post_sync( $args ) {
+
+		// Pass on.
+		$this->post_saved( $args );
+
+	}
 
 
 
@@ -190,6 +232,22 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 
 	/**
+	 * Update a CiviCRM Contact when the ACF Fields on a WordPress Post are synced.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $args The array of WordPress params.
+	 */
+	public function acf_fields_sync( $args ) {
+
+		// Pass on.
+		$this->acf_fields_saved( $args );
+
+	}
+
+
+
+	/**
 	 * Update a CiviCRM Contact when the ACF Fields on a WordPress Post have been updated.
 	 *
 	 * @since 0.4.5
@@ -232,7 +290,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		//$submitted_values = acf_maybe_get_POST( 'acf' );
 
 		// Update the Contact with this data.
-		$contact = $this->update_from_fields( $contact_id, $fields );
+		$contact = $this->update_from_fields( $contact_id, $fields, $post->ID );
 
 		// Add our data to the params.
 		$args['contact_id'] = $contact_id;
@@ -468,6 +526,69 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 		// --<
 		return $result['values'];
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get "chunked" CiviCRM API Contact data for a given Contact Type ID.
+	 *
+	 * This method is used internally by the "Manual Sync" admin page.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param integer $contact_type_id The numeric ID of the CiviCRM Contact Type.
+	 * @param int $offset The numeric offset for the query.
+	 * @param int $limit The numeric limit for the query.
+	 * @return array $result The array of Contact data from the CiviCRM API.
+	 */
+	public function contacts_chunked_data_get( $contact_type_id, $offset, $limit ) {
+
+		// Get the hierarchy for the Contact Type ID.
+		$hierarchy = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id, 'id' );
+
+		// Bail if we didn't get any.
+		if ( $hierarchy === false ) {
+			return 0;
+		}
+
+		// Params to query Group membership.
+		$params = [
+			'version' => 3,
+			'contact_type' => $hierarchy['type'],
+			'contact_sub_type' => $hierarchy['subtype'],
+			'options' => [
+				'limit' => $limit,
+				'offset' => $offset,
+			],
+		];
+
+		// Call API.
+		$result = civicrm_api( 'Contact', 'get', $params );
+
+		// Add log entry on failure.
+		if ( isset( $result['is_error'] ) AND $result['is_error'] == '1' ) {
+			$e = new Exception;
+			$trace = $e->getTraceAsString();
+			error_log( print_r( [
+				'method' => __METHOD__,
+				'contact_type_id' => $contact_type_id,
+				'offset' => $offset,
+				'limit' => $limit,
+				'params' => $params,
+				'result' => $result,
+				'backtrace' => $trace,
+			], true ) );
+			return $result;
+		}
+
+		// --<
+		return $result;
 
 	}
 
@@ -903,9 +1024,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	 * @since 0.2
 	 *
 	 * @param array $fields The ACF Field data.
+	 * @param int $post_id The numeric ID of the WordPress Post.
 	 * @return array|bool $contact_data The CiviCRM Contact data.
 	 */
-	public function prepare_from_fields( $fields ) {
+	public function prepare_from_fields( $fields, $post_id = null ) {
 
 		// Init data for fields.
 		$contact_data = [];
@@ -922,7 +1044,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		foreach( $fields AS $field => $value ) {
 
 			// Get the field settings.
-			$settings = get_field_object( $field );
+			$settings = get_field_object( $field, $post_id );
 
 			// Get the CiviCRM Custom Field and Contact Field.
 			$custom_field_id = $this->custom_field_id_get( $settings );
@@ -973,12 +1095,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	 *
 	 * @param int $contact_id The numeric ID of the Contact.
 	 * @param array $fields The ACF Field data.
+	 * @param int $post_id The numeric ID of the WordPress Post.
 	 * @return array|bool $contact The CiviCRM Contact data, or false on failure.
 	 */
-	public function update_from_fields( $contact_id, $fields ) {
+	public function update_from_fields( $contact_id, $fields, $post_id = null ) {
 
 		// Build required data.
-		$contact_data = $this->prepare_from_fields( $fields );
+		$contact_data = $this->prepare_from_fields( $fields, $post_id );
 
 		// Add the Contact ID.
 		$contact_data['id'] = $contact_id;
@@ -1014,14 +1137,14 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		// Build Contact Field choices array for dropdown.
 		$contact_fields_label = esc_attr__( 'Contact Fields', 'civicrm-acf-integration' );
 		foreach( $contact_fields AS $contact_field ) {
-			$choices[$contact_fields_label]['caicontact_' . $contact_field['name']] = $contact_field['title'];
+			$choices[$contact_fields_label][$this->contact_field_prefix . $contact_field['name']] = $contact_field['title'];
 		}
 
 		// Build Custom Field choices array for dropdown.
 		foreach( $custom_fields AS $custom_group_name => $custom_group ) {
 			$custom_fields_label = esc_attr( $custom_group_name );
 			foreach( $custom_group AS $custom_field ) {
-				$choices[$custom_fields_label]['caicustom_' . $custom_field['id']] = $custom_field['label'];
+				$choices[$custom_fields_label][$this->custom_field_prefix . $custom_field['id']] = $custom_field['label'];
 			}
 		}
 
@@ -1080,8 +1203,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 		// Get the mapped Custom Field ID if present.
 		if ( isset( $field[$acf_field_key] ) ) {
-			if ( false !== strpos( $field[$acf_field_key], 'caicustom_' ) ) {
-				$custom_field_id = absint( str_replace( 'caicustom_', '', $field[$acf_field_key] ) );
+			if ( false !== strpos( $field[$acf_field_key], $this->custom_field_prefix ) ) {
+				$custom_field_id = absint( str_replace( $this->custom_field_prefix, '', $field[$acf_field_key] ) );
 			}
 		}
 
@@ -1121,8 +1244,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 		// Set the mapped Contact Field name if present.
 		if ( isset( $field[$acf_field_key] ) ) {
-			if ( false !== strpos( $field[$acf_field_key], 'caicontact_' ) ) {
-				$contact_field_name = strval( str_replace( 'caicontact_', '', $field[$acf_field_key] ) );
+			if ( false !== strpos( $field[$acf_field_key], $this->contact_field_prefix ) ) {
+				$contact_field_name = strval( str_replace( $this->contact_field_prefix, '', $field[$acf_field_key] ) );
 			}
 		}
 

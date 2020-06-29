@@ -80,9 +80,6 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	 */
 	public function register_hooks() {
 
-		// Add term hooks.
-		$this->hooks_wordpress_add();
-
 		// Build array of Taxonomies to use.
 		add_action( 'init', [ $this, 'taxonomies_build' ], 1000 );
 
@@ -90,10 +87,20 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		add_action( 'admin_init', [ $this, 'register_hooks_admin' ] );
 
 		// Listen for when a Post is about to be updated.
-		add_action( 'pre_post_update', [ $this, 'pre_post_saved' ], 10, 2 );
+		add_action( 'pre_post_update', [ $this, 'post_saved_pre' ], 10, 2 );
 
 		// Listen for events from our Mapper that require Taxonomy updates.
 		add_action( 'civicrm_acf_integration_contact_post_saved', [ $this, 'post_saved' ], 10, 1 );
+
+		// Listen for new term creation.
+		add_action( 'civicrm_acf_integration_mapper_term_created', [ $this, 'term_created' ], 20 );
+
+		// Intercept term updates.
+		add_action( 'civicrm_acf_integration_mapper_term_pre_edit', [ $this, 'term_pre_edit' ], 20 );
+		add_action( 'civicrm_acf_integration_mapper_term_edited', [ $this, 'term_edited' ], 20 );
+
+		// Intercept term deletion.
+		add_action( 'civicrm_acf_integration_mapper_term_deleted', [ $this, 'term_deleted' ], 20 );
 
 	}
 
@@ -145,45 +152,6 @@ class CiviCRM_ACF_Integration_Post_Tax {
 				add_action( "{$taxonomy}_edit_form_fields", [ $this, 'form_element_edit_term_add' ], 10, 2 );
 			}
 		}
-
-	}
-
-
-
-	/**
-	 * Register WordPress term hooks.
-	 *
-	 * @since 0.6.4
-	 */
-	public function hooks_wordpress_add() {
-
-		// Intercept new term creation.
-		add_action( 'created_term', [ $this, 'intercept_create_term' ], 20, 3 );
-
-		// Intercept term updates.
-		add_action( 'edit_terms', [ $this, 'intercept_pre_update_term' ], 20, 2 );
-		add_action( 'edited_term', [ $this, 'intercept_update_term' ], 20, 3 );
-
-		// Intercept term deletion.
-		add_action( 'delete_term', [ $this, 'intercept_delete_term' ], 20, 4 );
-
-	}
-
-
-
-
-	/**
-	 * Remove WordPress term hooks.
-	 *
-	 * @since 0.6.4
-	 */
-	public function hooks_wordpress_remove() {
-
-		// Remove all previously added callbacks.
-		remove_action( 'created_term', [ $this, 'intercept_create_term' ], 20 );
-		remove_action( 'edit_terms', [ $this, 'intercept_pre_update_term' ], 20 );
-		remove_action( 'edited_term', [ $this, 'intercept_update_term' ], 20 );
-		remove_action( 'delete_term', [ $this, 'intercept_delete_term' ], 20 );
 
 	}
 
@@ -312,11 +280,9 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	 *
 	 * @since 0.6.4
 	 *
-	 * @param array $term_id The numeric ID of the new term.
-	 * @param array $tt_id The numeric ID of the new term.
-	 * @param string $taxonomy Should be (an array containing) 'event-category'.
+	 * @param array $args The array of CiviCRM params.
 	 */
-	public function intercept_create_term( $term_id, $tt_id, $taxonomy ) {
+	public function term_created( $args ) {
 
 		// Bail if our element is not set.
 		if ( ! isset( $_POST['cai-civicrm-group'] ) ) {
@@ -332,7 +298,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		}
 
 		// Store Group ID in term meta.
-		$success = $this->term_meta_update( $term_id, $group_id );
+		$success = $this->term_meta_update( $args['term_id'], $group_id );
 
 	}
 
@@ -343,13 +309,12 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	 *
 	 * @since 0.6.4
 	 *
-	 * @param int $term_id The numeric ID of the new term.
-	 * @param string $taxonomy The taxonomy containing the term.
+	 * @param array $args The array of CiviCRM params.
 	 */
-	public function intercept_pre_update_term( $term_id, $taxonomy = null ) {
+	public function term_pre_edit( $args ) {
 
 		// Get term.
-		$term = get_term_by( 'id', $term_id, $taxonomy );
+		$term = get_term_by( 'id', $args['term_id'], $args['taxonomy'] );
 
 		// Error check.
 		if ( is_null( $term ) ) {
@@ -362,7 +327,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 			return;
 		}
 
-		// Store for reference in intercept_update_term().
+		// Store for reference in term_edited().
 		$this->term_edited = clone $term;
 
 	}
@@ -374,11 +339,17 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	 *
 	 * @since 0.6.4
 	 *
-	 * @param int $term_id The numeric ID of the edited term.
-	 * @param array $tt_id The numeric ID of the edited term taxonomy.
-	 * @param string $taxonomy Should be (an array containing) the taxonomy.
+	 * @param array $args The array of CiviCRM params.
 	 */
-	public function intercept_update_term( $term_id, $tt_id, $taxonomy ) {
+	public function term_edited( $args ) {
+
+		// Bail if our element is not set.
+		if ( ! isset( $_POST['cai-civicrm-group'] ) ) {
+			return;
+		}
+
+		// Sanitise input.
+		$group_id = intval( $_POST['cai-civicrm-group'] );
 
 		// Assume we have no edited term.
 		$old_term = null;
@@ -389,15 +360,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		}
 
 		// Get current term object.
-		$new_term = get_term_by( 'id', $term_id, $taxonomy );
-
-		// Bail if our element is not set.
-		if ( ! isset( $_POST['cai-civicrm-group'] ) ) {
-			return;
-		}
-
-		// Sanitise input.
-		$group_id = intval( $_POST['cai-civicrm-group'] );
+		$new_term = get_term_by( 'id', $args['term_id'], $args['taxonomy'] );
 
 		/*
 		 * If Group ID is zero, there are a couple of possibilities:
@@ -408,9 +371,9 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		if ( $group_id == 0 ) {
 
 			// Remove term meta if it exists.
-			$existing = $this->term_meta_get( $term_id );
+			$existing = $this->term_meta_get( $args['term_id'] );
 			if ( $existing !== false ) {
-				$this->term_meta_delete( $term_id );
+				$this->term_meta_delete( $args['term_id'] );
 
 				// TODO: Terms must be removed from Posts now.
 
@@ -422,7 +385,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		}
 
 		// Store group ID in term meta.
-		$success = $this->term_meta_update( $term_id, $group_id );
+		$success = $this->term_meta_update( $args['term_id'], $group_id );
 
 		// TODO: Terms must be added to (or replaced in) Posts now.
 
@@ -435,22 +398,16 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	 *
 	 * @since 0.6.4
 	 *
-	 * @param int $term_id The numeric ID of the deleted term.
-	 * @param array $tt_id The numeric ID of the deleted term taxonomy.
-	 * @param string $taxonomy Name of the taxonomy.
-	 * @param object $deleted_term The deleted term object.
+	 * @param array $args The array of CiviCRM params.
 	 */
-	public function intercept_delete_term( $term_id, $tt_id, $taxonomy, $deleted_term ) {
+	public function term_deleted( $args ) {
 
 		/*
 		$e = new Exception;
 		$trace = $e->getTraceAsString();
 		error_log( print_r( [
 			'method' => __METHOD__,
-			'term_id' => $term_id,
-			'tt_id' => $tt_id,
-			'taxonomy' => $taxonomy,
-			'deleted_term' => $deleted_term,
+			'args' => $args,
 			//'backtrace' => $trace,
 		], true ) );
 		*/
@@ -696,7 +653,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	 * @since 0.6.4
 	 *
 	 * @param str $post_type The name of WordPress Post Type.
-	 * @return array|bool $terms The array of term objects, or false on failure.
+	 * @return array $terms The array of term objects.
 	 */
 	public function terms_get_by_post_type( $post_type ) {
 
@@ -735,7 +692,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	 * @since 0.6.4
 	 *
 	 * @param int $post_id The numeric ID of WordPress Post.
-	 * @return array|bool $terms The array of term objects, or false on failure.
+	 * @return array $terms The array of term objects.
 	 */
 	public function terms_get_for_post( $post_id ) {
 
@@ -941,6 +898,47 @@ class CiviCRM_ACF_Integration_Post_Tax {
 
 
 
+	/**
+	 * Get all synced terms in all WordPress taxonomies.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @return array|bool $terms The array of term objects, or false on failure.
+	 */
+	public function synced_terms_get_all() {
+
+		// Query terms in those taxonomies.
+		$args = [
+			'taxonomy' => $this->taxonomies,
+			'hide_empty' => false,
+			'meta_query' => [
+				[
+					'key' => $this->term_meta_key,
+					'compare' => 'EXISTS',
+				],
+			],
+		];
+
+		// Grab the terms.
+		$terms = get_terms( $args );
+
+		// Bail if there are no terms or there's an error.
+		if ( empty( $terms ) OR is_wp_error( $terms ) ) {
+			return [];
+		}
+
+		// Let's add the Group ID to the term object.
+		foreach( $terms AS $term ) {
+			$term->group_id = $this->term_meta_get( $term->term_id );
+		}
+
+		// --<
+		return $terms;
+
+	}
+
+
+
 	// -------------------------------------------------------------------------
 
 
@@ -953,7 +951,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	 * @param int $post_id The WordPress Post ID.
 	 * @param array $data The array of unslashed post data.
 	 */
-	public function pre_post_saved( $post_id, $data ) {
+	public function post_saved_pre( $post_id, $data ) {
 
 		// Init property.
 		$this->terms_pre = [];
