@@ -569,9 +569,6 @@ class CiviCRM_ACF_Integration_Admin {
 				 */
 				do_action( 'civicrm_acf_integration_admin_post_sync', $args );
 
-				// Get ACF Fields for this Post.
-				$fields = get_fields( $post->ID, false );
-
 				// Let's make an array of params.
 				$args = [
 					'post_id' => $post->ID,

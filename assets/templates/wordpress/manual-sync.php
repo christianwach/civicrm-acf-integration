@@ -67,7 +67,7 @@
 
 		<h3><?php _e( 'CiviCRM Group Synchronisation', 'civicrm-acf-integration' ); ?></h3>
 
-		<p><?php _e( 'Select which Groups you want to sync with WordPress.', 'civicrm-acf-integration' ); ?></p>
+		<p><?php _e( 'Select which CiviCRM Groups you want to sync with WordPress Terms.', 'civicrm-acf-integration' ); ?></p>
 
 		<table class="form-table">
 

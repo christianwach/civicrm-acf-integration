@@ -286,6 +286,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		 */
 		$fields = get_fields( $post->ID );
 
+		// TODO: Decide if we should get the ACF Field data without formatting.
+		// This also applies to any calls to get_field_object().
+		//$fields = get_fields( $post->ID, false );
+
 		// Get submitted values. (No need for this - see hook priority)
 		//$submitted_values = acf_maybe_get_POST( 'acf' );
 
