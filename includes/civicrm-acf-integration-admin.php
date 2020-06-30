@@ -424,39 +424,154 @@ class CiviCRM_ACF_Integration_Admin {
 	 */
 	public function settings_update_router() {
 
-		return;
+		// Get all mapped Post Types.
+		$mapped_post_types = $this->plugin->post_type->get_mapped();
 
-	 	// Was a Post Type "Stop Sync" button pressed?
-		if ( isset( $_POST['civi_eo_tax_eo_to_civi_stop'] ) ) {
-			delete_option( '_cai_posts_to_contacts_offset' );
+		// Loop through them and get the data we want.
+		$post_types = [];
+		foreach( $mapped_post_types AS $post_type ) {
+			$post_types[$post_type->name] = 'cai_post_to_contact_stop-' . $post_type->name;
+		}
+
+		// Get all mapped Contact Types.
+		$mapped_contact_types = $this->plugin->civicrm->contact_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$contact_types = [];
+		foreach( $mapped_contact_types AS $contact_type ) {
+			$contact_types[$contact_type['id']] = 'cai_contact_to_post_stop-' . $contact_type['id'];
+		}
+
+		// Get all mapped Groups.
+		$mapped_groups = $this->plugin->civicrm->group->groups_get_mapped();
+
+		// Loop through them and get the data we want.
+		$groups = [];
+		foreach( $mapped_groups AS $group ) {
+			$groups[$group['id']] = 'cai_group_to_term_stop-' . $group['id'];
+		}
+
+		// Init stop, continue and sync flags.
+		$stop = false;
+		$continue = false;
+		$sync_type = false;
+		$entity_id = false;
+
+		// Find out if a Post Type button has been pressed.
+		foreach( $post_types AS $post_type => $stop_code ) {
+
+			// Was a "Stop Sync" button pressed?
+			if ( isset( $_POST[$stop_code] ) ) {
+				$stop = $stop_code;
+				$sync_type = 'post_type';
+				$entity_id = str_replace( 'cai_post_to_contact_stop-', '', $stop_code );
+				break;
+			}
+
+			// Was a "Sync Now" or "Continue Sync" button pressed?
+			$button = str_replace( '_stop', '', $stop_code );
+			if ( isset( $_POST[$button] ) ) {
+				$continue = $button;
+				$sync_type = 'post_type';
+				$entity_id = str_replace( 'cai_post_to_contact_stop-', '', $stop_code );
+				break;
+			}
+
+		}
+
+		// Find out if a Contact Type button has been pressed.
+		if ( $stop === false AND $continue === false ) {
+			foreach( $contact_types AS $contact_type_id => $stop_code ) {
+
+				// Was a "Stop Sync" button pressed?
+				if ( isset( $_POST[$stop_code] ) ) {
+					$stop = $stop_code;
+					$sync_type = 'contact_type';
+					$entity_id = str_replace( 'cai_contact_to_post_stop-', '', $stop_code );
+					break;
+				}
+
+				// Was a "Sync Now" or "Continue Sync" button pressed?
+				$button = str_replace( '_stop', '', $stop_code );
+				if ( isset( $_POST[$button] ) ) {
+					$continue = $button;
+					$sync_type = 'contact_type';
+					$entity_id = str_replace( 'cai_contact_to_post_stop-', '', $stop_code );
+					break;
+				}
+
+			}
+		}
+
+		// Find out if a Group "Stop Sync" button has been pressed.
+		if ( $stop === false ) {
+			foreach( $groups AS $group_id => $stop_code ) {
+
+				// Was a "Stop Sync" button pressed?
+				if ( isset( $_POST[$stop_code] ) ) {
+					$stop = $stop_code;
+					$sync_type = 'group';
+					$entity_id = str_replace( 'cai_group_to_term_stop-', '', $stop_code );
+					break;
+				}
+
+				// Was a "Sync Now" or "Continue Sync" button pressed?
+				$button = str_replace( '_stop', '', $stop_code );
+				if ( isset( $_POST[$button] ) ) {
+					$continue = $button;
+					$sync_type = 'group';
+					$entity_id = str_replace( 'cai_group_to_term_stop-', '', $stop_code );
+					break;
+				}
+
+			}
+		}
+
+	 	// Bail if no button was pressed.
+		if ( empty( $stop ) AND empty( $continue ) ) {
 			return;
 		}
 
-	 	// Was a Contact Type "Stop Sync" button pressed?
-		if ( isset( $_POST['civi_eo_venue_eo_to_civi_stop'] ) ) {
-			delete_option( '_civi_eo_venue_eo_to_civi_offset' );
+		// Check that we trust the source of the data.
+		check_admin_referer( 'civicrm_acf_integration_sync_action', 'civicrm_acf_integration_sync_nonce' );
+
+	 	// Was a "Stop Sync" button pressed?
+		if ( ! empty( $stop ) ) {
+
+			// Define slugs.
+			$slugs = [
+				'post_type' => 'posts_to_contacts_',
+				'contact_type' => 'contacts_to_posts_',
+				'group' => 'groups_to_terms_',
+			];
+
+			// Build key.
+			$key = $slugs[$sync_type] . $entity_id;
+
+			// Clear offset and bail.
+			$this->stepped_offset_delete( $key );
 			return;
+
 		}
 
-	 	// Was a Group "Stop Sync" button pressed?
-		if ( isset( $_POST['civi_eo_event_eo_to_civi_stop'] ) ) {
-			delete_option( '_civi_eo_event_eo_to_civi_offset' );
+		// Bail if there's no sync type.
+		if ( empty( $sync_type ) ) {
 			return;
 		}
 
 		// Was an Post Type "Sync Now" button pressed?
-		if ( isset( $_POST['civi_eo_tax_eo_to_civi'] ) ) {
-			$this->stepped_sync_categories_to_types();
+		if ( $sync_type == 'post_type' ) {
+			$this->stepped_sync_posts_to_contacts( $entity_id );
 		}
 
 		// Was a Contact Type "Sync Now" button pressed?
-		if ( isset( $_POST['civi_eo_venue_eo_to_civi'] ) ) {
-			$this->stepped_sync_venues_to_locations();
+		if ( $sync_type == 'contact_type' ) {
+			$this->stepped_sync_contacts_to_posts( $entity_id );
 		}
 
 		// Was a Group "Sync Now" button pressed?
-		if ( isset( $_POST['civi_eo_event_eo_to_civi'] ) ) {
-			$this->stepped_sync_events_eo_to_civi();
+		if ( $sync_type == 'group' ) {
+			$this->stepped_sync_groups_to_terms( $entity_id );
 		}
 
 	}
@@ -467,8 +582,10 @@ class CiviCRM_ACF_Integration_Admin {
 	 * Stepped synchronisation of WordPress Posts to CiviCRM Contacts.
 	 *
 	 * @since 0.6.4
+	 *
+	 * @param str $entity The identifier for the entity - here it's Post ID.
 	 */
-	public function stepped_sync_posts_to_contacts() {
+	public function stepped_sync_posts_to_contacts( $entity = null ) {
 
 		// Get all mapped Post Types.
 		$mapped_post_types = $this->plugin->post_type->get_mapped();
@@ -480,7 +597,11 @@ class CiviCRM_ACF_Integration_Admin {
 		}
 
 		// Sanitise input.
-		$post_type = isset( $_POST['entity_id'] ) ? trim( $_POST['entity_id'] ) : '';
+		if ( ! empty( $entity ) ) {
+			$post_type = $entity;
+		} else {
+			$post_type = isset( $_POST['entity_id'] ) ? trim( $_POST['entity_id'] ) : '';
+		}
 
 		// Sanity check input.
 		if ( ! in_array( $post_type, $post_types ) ) {
@@ -615,14 +736,20 @@ class CiviCRM_ACF_Integration_Admin {
 	 * Stepped synchronisation of CiviCRM Contacts to WordPress Posts.
 	 *
 	 * @since 0.6.4
+	 *
+	 * @param str $entity The identifier for the entity - here it's Contact ID.
 	 */
-	public function stepped_sync_contacts_to_posts() {
+	public function stepped_sync_contacts_to_posts( $entity = null ) {
 
 		// Init AJAX return.
 		$data = array();
 
 		// Sanitise input.
-		$contact_type_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+		if ( ! empty( $entity ) ) {
+			$contact_type_id = is_numeric( $entity ) ? intval( $entity ) : 0;
+		} else {
+			$contact_type_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+		}
 
 		// Build key.
 		$key = 'contacts_to_posts_' . $contact_type_id;
@@ -742,14 +869,20 @@ class CiviCRM_ACF_Integration_Admin {
 	 * Stepped synchronisation of CiviCRM Groups to WordPress Terms.
 	 *
 	 * @since 0.6.4
+	 *
+	 * @param str $entity The identifier for the entity - here it's Group ID.
 	 */
-	public function stepped_sync_groups_to_terms() {
+	public function stepped_sync_groups_to_terms( $entity = null ) {
 
 		// Init AJAX return.
 		$data = array();
 
 		// Sanitise input.
-		$group_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+		if ( ! empty( $entity ) ) {
+			$group_id = is_numeric( $entity ) ? intval( $entity ) : 0;
+		} else {
+			$group_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+		}
 
 		// Build key.
 		$key = 'groups_to_terms_' . $group_id;

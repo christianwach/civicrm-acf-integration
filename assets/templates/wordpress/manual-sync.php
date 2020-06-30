@@ -26,7 +26,7 @@
 
 					<tr valign="top">
 						<th scope="row"><label for="cai_post_to_contact-<?php echo $post_type_name; ?>"><?php echo esc_html( $post_type_label ); ?></label></th>
-						<td><input type="submit" id="cai_post_to_contact-<?php echo $post_type_name; ?>" name="cai_post_to_contact-<?php echo $post_type_name; ?>" value="<?php if ( 'fgffgs' == get_option( '_civi_eo_tax_civi_to_eo_offset', 'fgffgs' ) ) { _e( 'Sync Now', 'civicrm-acf-integration' ); } else { _e( 'Continue Sync', 'civicrm-acf-integration' ); } ?>" class="button-primary" /><?php if ( 'fgffgs' == get_option( '_civi_eo_tax_civi_to_eo_offset', 'fgffgs' ) ) {} else { ?> <input type="submit" id="cai_post_to_contact_stop-<?php echo $post_type_name; ?>" name="cai_post_to_contact_stop-<?php echo $post_type_name; ?>" value="<?php _e( 'Stop Sync', 'civicrm-acf-integration' ); ?>" class="button-secondary" /><?php } ?></td>
+						<td><input type="submit" id="cai_post_to_contact-<?php echo $post_type_name; ?>" name="cai_post_to_contact-<?php echo $post_type_name; ?>" value="<?php if ( 'fgffgs' == get_option( '_cai_posts_to_contacts_' . $post_type_name . '_offset', 'fgffgs' ) ) { _e( 'Sync Now', 'civicrm-acf-integration' ); } else { _e( 'Continue Sync', 'civicrm-acf-integration' ); } ?>" class="button-primary" /><?php if ( 'fgffgs' == get_option( '_cai_posts_to_contacts_' . $post_type_name . '_offset', 'fgffgs' ) ) {} else { ?> <input type="submit" id="cai_post_to_contact_stop-<?php echo $post_type_name; ?>" name="cai_post_to_contact_stop-<?php echo $post_type_name; ?>" value="<?php _e( 'Stop Sync', 'civicrm-acf-integration' ); ?>" class="button-secondary" /><?php } ?></td>
 					</tr>
 
 					<tr valign="top">
@@ -51,7 +51,7 @@
 
 					<tr valign="top">
 						<th scope="row"><label for="cai_contact_to_post-<?php echo $contact_type_id; ?>"><?php echo esc_html( $contact_type_label ); ?></label></th>
-						<td><input type="submit" id="cai_contact_to_post-<?php echo $contact_type_id; ?>" name="cai_contact_to_post-<?php echo $contact_type_id; ?>" value="<?php if ( 'fgffgs' == get_option( '_civi_eo_tax_civi_to_eo_offset', 'fgffgs' ) ) { _e( 'Sync Now', 'civicrm-acf-integration' ); } else { _e( 'Continue Sync', 'civicrm-acf-integration' ); } ?>" class="button-primary" /><?php if ( 'fgffgs' == get_option( '_civi_eo_tax_civi_to_eo_offset', 'fgffgs' ) ) {} else { ?> <input type="submit" id="cai_contact_to_post_stop-<?php echo $contact_type_id; ?>" name="cai_contact_to_post_stop-<?php echo $contact_type_id; ?>" value="<?php _e( 'Stop Sync', 'civicrm-acf-integration' ); ?>" class="button-secondary" /><?php } ?></td>
+						<td><input type="submit" id="cai_contact_to_post-<?php echo $contact_type_id; ?>" name="cai_contact_to_post-<?php echo $contact_type_id; ?>" value="<?php if ( 'fgffgs' == get_option( '_cai_contacts_to_posts_' . $contact_type_id . '_offset', 'fgffgs' ) ) { _e( 'Sync Now', 'civicrm-acf-integration' ); } else { _e( 'Continue Sync', 'civicrm-acf-integration' ); } ?>" class="button-primary" /><?php if ( 'fgffgs' == get_option( '_cai_contacts_to_posts_' . $contact_type_id . '_offset', 'fgffgs' ) ) {} else { ?> <input type="submit" id="cai_contact_to_post_stop-<?php echo $contact_type_id; ?>" name="cai_contact_to_post_stop-<?php echo $contact_type_id; ?>" value="<?php _e( 'Stop Sync', 'civicrm-acf-integration' ); ?>" class="button-secondary" /><?php } ?></td>
 					</tr>
 
 					<tr valign="top">
@@ -76,7 +76,7 @@
 
 					<tr valign="top">
 						<th scope="row"><label for="cai_group_to_term-<?php echo $group_id; ?>"><?php echo esc_html( $group_label ); ?></label></th>
-						<td><input type="submit" id="cai_group_to_term-<?php echo $group_id; ?>" name="cai_group_to_term-<?php echo $group_id; ?>" value="<?php if ( 'fgffgs' == get_option( '_civi_eo_tax_civi_to_eo_offset', 'fgffgs' ) ) { _e( 'Sync Now', 'civicrm-acf-integration' ); } else { _e( 'Continue Sync', 'civicrm-acf-integration' ); } ?>" class="button-primary" /><?php if ( 'fgffgs' == get_option( '_civi_eo_tax_civi_to_eo_offset', 'fgffgs' ) ) {} else { ?> <input type="submit" id="cai_group_to_term_stop-<?php echo $group_id; ?>" name="cai_group_to_term_stop-<?php echo $group_id; ?>" value="<?php _e( 'Stop Sync', 'civicrm-acf-integration' ); ?>" class="button-secondary" /><?php } ?></td>
+						<td><input type="submit" id="cai_group_to_term-<?php echo $group_id; ?>" name="cai_group_to_term-<?php echo $group_id; ?>" value="<?php if ( 'fgffgs' == get_option( '_cai_groups_to_terms_' . $group_id . '_offset', 'fgffgs' ) ) { _e( 'Sync Now', 'civicrm-acf-integration' ); } else { _e( 'Continue Sync', 'civicrm-acf-integration' ); } ?>" class="button-primary" /><?php if ( 'fgffgs' == get_option( '_cai_groups_to_terms_' . $group_id . '_offset', 'fgffgs' ) ) {} else { ?> <input type="submit" id="cai_group_to_term_stop-<?php echo $group_id; ?>" name="cai_group_to_term_stop-<?php echo $group_id; ?>" value="<?php _e( 'Stop Sync', 'civicrm-acf-integration' ); ?>" class="button-secondary" /><?php } ?></td>
 					</tr>
 
 					<tr valign="top">
