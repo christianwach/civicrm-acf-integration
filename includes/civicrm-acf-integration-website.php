@@ -117,7 +117,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		// Add any Website Fields attached to a Post.
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
-		// Add and Website Fields that are Custom Fields.
+		// Add any Website Fields that are Custom Fields.
 		add_filter( 'civicrm_acf_integration_contact_custom_field_id_get', [ $this, 'custom_field_id_get' ], 10, 2 );
 
 		// Intercept before a Contact is created.
