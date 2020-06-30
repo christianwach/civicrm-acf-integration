@@ -294,13 +294,21 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 				// Get field setting.
 				$acf_setting = get_field_object( $selector, $post_id );
 
-				// Convert to ACF format.
+				// Date Picker test.
 				if ( $acf_setting['type'] == 'date_picker' ) {
+
+					// Contact edit passes a Y-m-d format, so test for that.
 					$datetime = DateTime::createFromFormat( 'Y-m-d', $value );
+
+					// Contact create passes a different format, so test for that.
 					if ( $datetime === false ) {
 						$datetime = DateTime::createFromFormat( 'YmdHis', $value );
 					}
+
+					// Convert to ACF format.
 					$value = $datetime->format( 'Ymd' );
+
+				// Date & Time Picker test.
 				} elseif ( $acf_setting['type'] == 'date_time_picker' ) {
 					$datetime = DateTime::createFromFormat( 'YmdHis', $value );
 					$value = $datetime->format( 'Y-m-d H:i:s' );
