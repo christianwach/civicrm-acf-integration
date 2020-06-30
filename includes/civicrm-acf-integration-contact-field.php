@@ -297,6 +297,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 				// Convert to ACF format.
 				if ( $acf_setting['type'] == 'date_picker' ) {
 					$datetime = DateTime::createFromFormat( 'Y-m-d', $value );
+					if ( $datetime === false ) {
+						$datetime = DateTime::createFromFormat( 'YmdHis', $value );
+					}
 					$value = $datetime->format( 'Ymd' );
 				} elseif ( $acf_setting['type'] == 'date_time_picker' ) {
 					$datetime = DateTime::createFromFormat( 'YmdHis', $value );
