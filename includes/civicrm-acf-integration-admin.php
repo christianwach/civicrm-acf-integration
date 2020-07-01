@@ -540,9 +540,9 @@ class CiviCRM_ACF_Integration_Admin {
 
 			// Define slugs.
 			$slugs = [
-				'post_type' => 'posts_to_contacts_',
-				'contact_type' => 'contacts_to_posts_',
-				'group' => 'groups_to_terms_',
+				'post_type' => 'post_to_contact_',
+				'contact_type' => 'contact_to_post_',
+				'group' => 'group_to_term_',
 			];
 
 			// Build key.
@@ -616,7 +616,12 @@ class CiviCRM_ACF_Integration_Admin {
 		}
 
 		// Build key.
-		$key = 'posts_to_contacts_' . $post_type;
+		$key = 'post_to_contact_' . $post_type;
+
+		// If this is an AJAX request, check security.
+		if ( wp_doing_ajax() ) {
+			check_ajax_referer( 'cai_' . $key );
+		}
 
 		// If we get an error.
 		if ( $post_type === '' ) {
@@ -752,7 +757,12 @@ class CiviCRM_ACF_Integration_Admin {
 		}
 
 		// Build key.
-		$key = 'contacts_to_posts_' . $contact_type_id;
+		$key = 'contact_to_post_' . $contact_type_id;
+
+		// If this is an AJAX request, check security.
+		if ( wp_doing_ajax() ) {
+			check_ajax_referer( 'cai_' . $key );
+		}
 
 		// If we get an error.
 		if ( $contact_type_id === 0 ) {
@@ -885,7 +895,12 @@ class CiviCRM_ACF_Integration_Admin {
 		}
 
 		// Build key.
-		$key = 'groups_to_terms_' . $group_id;
+		$key = 'group_to_term_' . $group_id;
+
+		// If this is an AJAX request, check security.
+		if ( wp_doing_ajax() ) {
+			check_ajax_referer( 'cai_' . $key );
+		}
 
 		// If we get an error.
 		if ( $group_id === 0 ) {

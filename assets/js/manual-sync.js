@@ -160,6 +160,9 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 		// The Entity ID.
 		me.entity_id = options.entity_id;
 
+		// The AJAX nonce.
+		me.ajax_nonce = me.button.data( 'security' );
+
 		/**
 		 * Add a click event listener to start sync.
 		 *
@@ -239,19 +242,21 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 		 */
 		this.send = function() {
 
-			// Use jQuery post.
-			$.post(
+			// Define vars.
+			var url, data;
 
-				// URL to post to.
-				CiviCRM_ACF_Integration_Sync.settings.get_setting( 'ajax_url' ),
+			// URL to post to.
+			url = CiviCRM_ACF_Integration_Sync.settings.get_setting( 'ajax_url' );
 
-				{
+			// Data received by WordPress.
+			data = {
+				action: me.action,
+				entity_id: me.entity_id,
+				_ajax_nonce: me.ajax_nonce
+			},
 
-					// Tokens received by WordPress.
-					action: me.action,
-					entity_id: me.entity_id
-
-				},
+			// Use jQuery post method.
+			$.post( url, data,
 
 				// Callback.
 				function( data, textStatus ) {
@@ -334,10 +339,10 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 			post_types = CiviCRM_ACF_Integration_Sync.settings.get_setting( 'post_types' );
 			for ( prop in post_types ) {
 				obj = new CAI_ProgressBar({
-					bar: '#progress-bar-cai_post_to_contact-' + prop,
-					label: '#progress-bar-cai_post_to_contact-' + prop + ' .progress-label',
+					bar: '#progress-bar-cai_post_to_contact_' + prop,
+					label: '#progress-bar-cai_post_to_contact_' + prop + ' .progress-label',
 					key: 'post_types',
-					button: '#cai_post_to_contact-' + prop,
+					button: '#cai_post_to_contact_' + prop,
 					step: 'step_post_types',
 					action: 'sync_posts_to_contacts',
 					entity_id: prop,
@@ -350,10 +355,10 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 			contact_types = CiviCRM_ACF_Integration_Sync.settings.get_setting( 'contact_types' );
 			for ( prop in contact_types ) {
 				obj = new CAI_ProgressBar({
-					bar: '#progress-bar-cai_contact_to_post-' + prop,
-					label: '#progress-bar-cai_contact_to_post-' + prop + ' .progress-label',
+					bar: '#progress-bar-cai_contact_to_post_' + prop,
+					label: '#progress-bar-cai_contact_to_post_' + prop + ' .progress-label',
 					key: 'contact_types',
-					button: '#cai_contact_to_post-' + prop,
+					button: '#cai_contact_to_post_' + prop,
 					step: 'step_contact_types',
 					action: 'sync_contacts_to_posts',
 					entity_id: prop,
@@ -366,10 +371,10 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 			groups = CiviCRM_ACF_Integration_Sync.settings.get_setting( 'groups' );
 			for ( prop in groups ) {
 				obj = new CAI_ProgressBar({
-					bar: '#progress-bar-cai_group_to_term-' + prop,
-					label: '#progress-bar-cai_group_to_term-' + prop + ' .progress-label',
+					bar: '#progress-bar-cai_group_to_term_' + prop,
+					label: '#progress-bar-cai_group_to_term_' + prop + ' .progress-label',
 					key: 'groups',
-					button: '#cai_group_to_term-' + prop,
+					button: '#cai_group_to_term_' + prop,
 					step: 'step_groups',
 					action: 'sync_groups_to_terms',
 					entity_id: prop,
