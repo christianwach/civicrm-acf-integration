@@ -980,7 +980,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.3
 	 *
 	 * @param str $type The Entity Type that the Option Group applies to.
-	 * @param str $subtype The Contact Sub-type that the Option Group applies to.
+	 * @param str $subtype The Entity Sub-type that the Option Group applies to.
 	 * @return array $custom_fields The array of custom fields.
 	 */
 	public function get_for_entity_type( $type = '', $subtype = '' ) {
