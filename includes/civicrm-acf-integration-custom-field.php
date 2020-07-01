@@ -657,8 +657,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 			case 'StateProvince' :
 
 				// Convert if the value has the special CiviCRM array-like format.
-				if ( false !== strpos( $value, CRM_Core_DAO::VALUE_SEPARATOR ) ) {
-					$value = CRM_Utils_Array::explodePadded( $value );
+				if ( is_string( $value ) ) {
+					if ( false !== strpos( $value, CRM_Core_DAO::VALUE_SEPARATOR ) ) {
+						$value = CRM_Utils_Array::explodePadded( $value );
+					}
 				}
 
 				break;
