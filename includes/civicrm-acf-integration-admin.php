@@ -430,7 +430,7 @@ class CiviCRM_ACF_Integration_Admin {
 		// Loop through them and get the data we want.
 		$post_types = [];
 		foreach( $mapped_post_types AS $post_type ) {
-			$post_types[$post_type->name] = 'cai_post_to_contact_stop-' . $post_type->name;
+			$post_types[$post_type->name] = 'cai_post_to_contact_' . $post_type->name . '_stop';
 		}
 
 		// Get all mapped Contact Types.
@@ -439,7 +439,7 @@ class CiviCRM_ACF_Integration_Admin {
 		// Loop through them and get the data we want.
 		$contact_types = [];
 		foreach( $mapped_contact_types AS $contact_type ) {
-			$contact_types[$contact_type['id']] = 'cai_contact_to_post_stop-' . $contact_type['id'];
+			$contact_types[$contact_type['id']] = 'cai_contact_to_post_' . $contact_type['id'] . '_stop';
 		}
 
 		// Get all mapped Groups.
@@ -448,7 +448,7 @@ class CiviCRM_ACF_Integration_Admin {
 		// Loop through them and get the data we want.
 		$groups = [];
 		foreach( $mapped_groups AS $group ) {
-			$groups[$group['id']] = 'cai_group_to_term_stop-' . $group['id'];
+			$groups[$group['id']] = 'cai_group_to_term_' . $group['id'] . '_stop';
 		}
 
 		// Init stop, continue and sync flags.
@@ -460,11 +460,14 @@ class CiviCRM_ACF_Integration_Admin {
 		// Find out if a Post Type button has been pressed.
 		foreach( $post_types AS $post_type => $stop_code ) {
 
+			// Define replacements.
+			$replacements = [ 'cai_post_to_contact_', '_stop' ];
+
 			// Was a "Stop Sync" button pressed?
 			if ( isset( $_POST[$stop_code] ) ) {
 				$stop = $stop_code;
 				$sync_type = 'post_type';
-				$entity_id = str_replace( 'cai_post_to_contact_stop-', '', $stop_code );
+				$entity_id = str_replace( $replacements, '', $stop_code );
 				break;
 			}
 
@@ -473,7 +476,7 @@ class CiviCRM_ACF_Integration_Admin {
 			if ( isset( $_POST[$button] ) ) {
 				$continue = $button;
 				$sync_type = 'post_type';
-				$entity_id = str_replace( 'cai_post_to_contact_stop-', '', $stop_code );
+				$entity_id = str_replace( $replacements, '', $stop_code );
 				break;
 			}
 
@@ -483,11 +486,14 @@ class CiviCRM_ACF_Integration_Admin {
 		if ( $stop === false AND $continue === false ) {
 			foreach( $contact_types AS $contact_type_id => $stop_code ) {
 
+				// Define replacements.
+				$replacements = [ 'cai_contact_to_post_', '_stop' ];
+
 				// Was a "Stop Sync" button pressed?
 				if ( isset( $_POST[$stop_code] ) ) {
 					$stop = $stop_code;
 					$sync_type = 'contact_type';
-					$entity_id = str_replace( 'cai_contact_to_post_stop-', '', $stop_code );
+					$entity_id = str_replace( $replacements, '', $stop_code );
 					break;
 				}
 
@@ -496,7 +502,7 @@ class CiviCRM_ACF_Integration_Admin {
 				if ( isset( $_POST[$button] ) ) {
 					$continue = $button;
 					$sync_type = 'contact_type';
-					$entity_id = str_replace( 'cai_contact_to_post_stop-', '', $stop_code );
+					$entity_id = str_replace( $replacements, '', $stop_code );
 					break;
 				}
 
@@ -507,11 +513,14 @@ class CiviCRM_ACF_Integration_Admin {
 		if ( $stop === false ) {
 			foreach( $groups AS $group_id => $stop_code ) {
 
+				// Define replacements.
+				$replacements = [ 'cai_group_to_term_', '_stop' ];
+
 				// Was a "Stop Sync" button pressed?
 				if ( isset( $_POST[$stop_code] ) ) {
 					$stop = $stop_code;
 					$sync_type = 'group';
-					$entity_id = str_replace( 'cai_group_to_term_stop-', '', $stop_code );
+					$entity_id = str_replace( $replacements, '', $stop_code );
 					break;
 				}
 
@@ -520,7 +529,7 @@ class CiviCRM_ACF_Integration_Admin {
 				if ( isset( $_POST[$button] ) ) {
 					$continue = $button;
 					$sync_type = 'group';
-					$entity_id = str_replace( 'cai_group_to_term_stop-', '', $stop_code );
+					$entity_id = str_replace( $replacements, '', $stop_code );
 					break;
 				}
 

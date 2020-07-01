@@ -31,7 +31,7 @@
 						<?php $button = __( 'Sync Now', 'civicrm-acf-integration' ); ?>
 					<?php else : ?>
 						<?php $button = __( 'Continue Sync', 'civicrm-acf-integration' ); ?>
-						<?php $stop = 'cai_post_to_contact_stop-' . $post_type; ?>
+						<?php $stop = $identifier . '_stop'; ?>
 					<?php endif; ?>
 
 					<tr valign="top">
@@ -70,7 +70,7 @@
 						<?php $button = __( 'Sync Now', 'civicrm-acf-integration' ); ?>
 					<?php else : ?>
 						<?php $button = __( 'Continue Sync', 'civicrm-acf-integration' ); ?>
-						<?php $stop = 'cai_contact_to_post_stop-' . $contact_type_id; ?>
+						<?php $stop = $identifier . '_stop'; ?>
 					<?php endif; ?>
 
 					<tr valign="top">
@@ -109,7 +109,7 @@
 						<?php $button = __( 'Sync Now', 'civicrm-acf-integration' ); ?>
 					<?php else : ?>
 						<?php $button = __( 'Continue Sync', 'civicrm-acf-integration' ); ?>
-						<?php $stop = 'cai_group_to_term_stop-' . $group_id; ?>
+						<?php $stop = $identifier . '_stop'; ?>
 					<?php endif; ?>
 
 					<tr valign="top">
