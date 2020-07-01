@@ -597,8 +597,8 @@ class CiviCRM_ACF_Integration_Admin {
 		}
 
 		// Sanitise input.
-		if ( ! empty( $entity ) ) {
-			$post_type = $entity;
+		if ( ! wp_doing_ajax() ) {
+			$post_type = empty( $entity ) ? '' : $entity;
 		} else {
 			$post_type = isset( $_POST['entity_id'] ) ? trim( $_POST['entity_id'] ) : '';
 		}
@@ -750,7 +750,7 @@ class CiviCRM_ACF_Integration_Admin {
 		$data = array();
 
 		// Sanitise input.
-		if ( ! empty( $entity ) ) {
+		if ( ! wp_doing_ajax() ) {
 			$contact_type_id = is_numeric( $entity ) ? intval( $entity ) : 0;
 		} else {
 			$contact_type_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
@@ -888,7 +888,7 @@ class CiviCRM_ACF_Integration_Admin {
 		$data = array();
 
 		// Sanitise input.
-		if ( ! empty( $entity ) ) {
+		if ( ! wp_doing_ajax() ) {
 			$group_id = is_numeric( $entity ) ? intval( $entity ) : 0;
 		} else {
 			$group_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
