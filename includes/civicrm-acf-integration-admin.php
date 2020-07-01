@@ -628,12 +628,13 @@ class CiviCRM_ACF_Integration_Admin {
 		$key = 'post_to_contact_' . $post_type;
 
 		// If this is an AJAX request, check security.
+		$result = true;
 		if ( wp_doing_ajax() ) {
-			check_ajax_referer( 'cai_' . $key );
+			$result = check_ajax_referer( 'cai_' . $key, false, false );
 		}
 
 		// If we get an error.
-		if ( $post_type === '' ) {
+		if ( $post_type === '' OR $result === false ) {
 
 			// Set finished flag.
 			$data['finished'] = 'true';
@@ -769,12 +770,13 @@ class CiviCRM_ACF_Integration_Admin {
 		$key = 'contact_to_post_' . $contact_type_id;
 
 		// If this is an AJAX request, check security.
+		$result = true;
 		if ( wp_doing_ajax() ) {
-			check_ajax_referer( 'cai_' . $key );
+			$result = check_ajax_referer( 'cai_' . $key, false, false );
 		}
 
 		// If we get an error.
-		if ( $contact_type_id === 0 ) {
+		if ( $contact_type_id === 0 OR $result === false ) {
 
 			// Set finished flag.
 			$data['finished'] = 'true';
@@ -907,12 +909,13 @@ class CiviCRM_ACF_Integration_Admin {
 		$key = 'group_to_term_' . $group_id;
 
 		// If this is an AJAX request, check security.
+		$result = true;
 		if ( wp_doing_ajax() ) {
-			check_ajax_referer( 'cai_' . $key );
+			$result = check_ajax_referer( 'cai_' . $key, false, false );
 		}
 
 		// If we get an error.
-		if ( $group_id === 0 ) {
+		if ( $group_id === 0 OR $result === false ) {
 
 			// Set finished flag.
 			$data['finished'] = 'true';
