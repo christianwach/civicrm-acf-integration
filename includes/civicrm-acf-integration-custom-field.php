@@ -653,6 +653,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 
 			// Used by "CheckBox" and others.
 			case 'String' :
+			case 'Country' :
+			case 'StateProvince' :
 
 				// Convert if the value has the special CiviCRM array-like format.
 				if ( false !== strpos( $value, CRM_Core_DAO::VALUE_SEPARATOR ) ) {
