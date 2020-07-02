@@ -1192,7 +1192,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 	 * @since 0.4.3
 	 *
 	 * @param array $acf_fields The existing ACF Fields array.
-	 * @param array $field_in_group The ACF Field.
+	 * @param array $field The ACF Field.
 	 * @param int $post_id The numeric ID of the WordPress Post.
 	 * @return array $acf_fields The modified ACF Fields array.
 	 */

@@ -1,4 +1,14 @@
-<!-- assets/templates/wordpress/manual-sync.php -->
+<?php
+/**
+ * Manual Sync template.
+ *
+ * Handles markup for the Manual Sync admin page.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.6.4
+ */
+
+?><!-- assets/templates/wordpress/manual-sync.php -->
 <div class="wrap">
 
 	<h1><?php _e( 'CiviCRM ACF Integration: Manual Sync', 'civicrm-acf-integration' ); ?></h1>

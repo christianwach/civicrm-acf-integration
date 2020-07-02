@@ -152,6 +152,8 @@ class CiviCRM_ACF_Integration_ACF {
 	 * Include Field Types for ACF5.
 	 *
 	 * @since 0.3.1
+	 *
+	 * @param str $version The installed version of ACF.
 	 */
 	public function include_field_types( $version ) {
 

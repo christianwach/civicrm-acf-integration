@@ -292,7 +292,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 *
 	 * @since 0.6.4
 	 *
-	 * @param array $args The array of CiviCRM params.
+	 * @param int $contact_id The numeric ID of the CiviCRM Contact.
 	 */
 	public function ids_get_by_contact_id( $contact_id ) {
 
@@ -1124,7 +1124,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function select_settings_filter( $field, $custom_fields ) {
@@ -1219,7 +1219,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function radio_settings_filter( $field, $custom_fields ) {
@@ -1294,7 +1294,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function checkbox_settings_filter( $field, $custom_fields ) {
@@ -1377,7 +1377,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function date_settings_filter( $field, $custom_fields ) {
@@ -1470,7 +1470,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function date_time_settings_filter( $field, $custom_fields ) {
@@ -1548,7 +1548,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function text_settings_filter( $field, $custom_fields ) {
@@ -1580,7 +1580,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function wysiwyg_settings_filter( $field, $custom_fields ) {
@@ -1612,7 +1612,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function textarea_settings_filter( $field, $custom_fields ) {
@@ -1644,7 +1644,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function true_false_settings_filter( $field, $custom_fields ) {
@@ -1676,7 +1676,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @since 0.4.3
 	 *
 	 * @param array $field The ACF Field data array.
-	 * @return array $custom_fields The array of Custom Fields.
+	 * @param array $custom_fields The array of Custom Fields.
 	 * @return array $filtered_fields The filtered Custom Fields.
 	 */
 	public function url_settings_filter( $field, $custom_fields ) {

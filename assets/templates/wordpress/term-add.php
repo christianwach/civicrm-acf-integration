@@ -1,4 +1,14 @@
-<!-- assets/templates/wordpress/term-add.php -->
+<?php
+/**
+ * Add Term template.
+ *
+ * Injects markup into the Add Term page.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.6.4
+ */
+
+?><!-- assets/templates/wordpress/term-add.php -->
 <div class="form-field term-cai-civicrm-group-wrap">
 	<label for="cai-civicrm-group"><?php _e( 'CiviCRM Group for ACF Integration', 'civicrm-acf-integration' ); ?></label>
 	<select name="cai-civicrm-group" id="cai-civicrm-group" class="postform">

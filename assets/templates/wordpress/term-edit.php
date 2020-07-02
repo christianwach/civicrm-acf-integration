@@ -1,12 +1,18 @@
-<!-- assets/templates/wordpress/term-edit.php -->
+<?php
+/**
+ * Edit Term template.
+ *
+ * Injects markup into the Edit Term page.
+ *
+ * @package CiviCRM_ACF_Integration
+ * @since 0.6.4
+ */
+
+?><!-- assets/templates/wordpress/term-edit.php -->
 <tr class="form-field term-cai-civicrm-group-wrap">
 	<th scope="row"><label for="cai-civicrm-group"><?php _e( 'CiviCRM Group for ACF Integration', 'civicrm-acf-integration' ); ?></label></th>
 	<td>
-		<?php if ( $group_id !== 0 ) : ?>
-			<select name="cai-civicrm-group" id="cai-civicrm-group" class="postform" disabled="disabled">
-		<?php else : ?>
-			<select name="cai-civicrm-group" id="cai-civicrm-group" class="postform">
-		<?php endif; ?>
+		<select name="cai-civicrm-group" id="cai-civicrm-group" class="postform">
 			<?php if ( $group_id !== 0 ) : ?>
 				<option value="0"><?php _e( 'None', 'civicrm-acf-integration' ); ?></option>
 			<?php else : ?>
@@ -22,6 +28,6 @@
 				<?php endforeach; ?>
 			<?php endif; ?>
 		</select>
-		<p class="description"><?php _e( 'When a CiviCRM Group is chosen here, then any Post which is given this term will have its synced Contact added to the Group. In CiviCRM, any Contact that is made a member of the chosen Group will have this term assigned to their synced Post.', 'civicrm-acf-integration' ); ?></p>
+		<p class="description"><?php _e( 'When a CiviCRM Group is chosen, then any Contact that is a member of the chosen Group will have this term assigned to their synced Post.', 'civicrm-acf-integration' ); ?></p>
 	</td>
 </tr>
