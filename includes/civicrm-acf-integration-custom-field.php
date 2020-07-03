@@ -665,6 +665,27 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 
 				break;
 
+			// Contact Reference fields may return the Contact's "sort_name".
+			case 'ContactReference' :
+
+				// Test for a numeric value.
+				if ( ! is_numeric( $value ) ) {
+
+					$e = new Exception;
+					$trace = $e->getTraceAsString();
+					error_log( print_r( [
+						'method' => __METHOD__,
+						'value' => $value,
+						'field' => $field,
+						'selector' => $selector,
+						'post_id' => $post_id,
+						//'backtrace' => $trace,
+					], true ) );
+
+				}
+
+				break;
+
 			// Used by "Date Select" and  "Date Time Select".
 			case 'Timestamp' :
 
