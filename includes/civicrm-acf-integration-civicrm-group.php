@@ -292,11 +292,24 @@ class CiviCRM_ACF_Integration_CiviCRM_Group {
 	 */
 	public function groups_get_mapped() {
 
+		// Init return.
+		$groups = [];
+
 		// Get all synced terms.
 		$synced_terms = $this->plugin->post->tax->synced_terms_get_all();
 
 		// Grab just the Group IDs.
 		$group_ids = wp_list_pluck( $synced_terms, 'group_id' );
+
+		// Bail if there are none.
+		if ( empty( $group_ids ) ) {
+			return $groups;
+		}
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $groups;
+		}
 
 		// Params to get queried Groups.
 		$params = [
