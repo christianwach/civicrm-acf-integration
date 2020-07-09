@@ -671,6 +671,16 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 				// Test for a numeric value.
 				if ( ! is_numeric( $value ) ) {
 
+					/*
+					 * This definitely happens when Contact Reference fields are
+					 * attached to Events - when retrieving the Event from the
+					 * CiviCRM API, the Custom Field values are helpfully added
+					 * to the returned data. However, the value in "custom_N" is
+					 * the Contact's "sort_name". The numeric ID is also returned,
+					 * but this is added under the key "custom_N_id" instead.
+					 */
+
+					/*
 					$e = new Exception;
 					$trace = $e->getTraceAsString();
 					error_log( print_r( [
@@ -681,6 +691,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 						'post_id' => $post_id,
 						//'backtrace' => $trace,
 					], true ) );
+					*/
 
 				}
 
