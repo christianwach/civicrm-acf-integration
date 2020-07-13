@@ -828,7 +828,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		$terms_for_post = [];
 
 		// Bail if Post is not mapped.
-		if ( ! $this->post->is_mapped( $post_id ) ) {
+		if ( ! $this->post->is_mapped_to_contact( $post_id ) ) {
 			return $terms_for_post;
 		}
 
@@ -966,7 +966,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		}
 
 		// Bail if this Post Type is not mapped.
-		if ( ! $this->plugin->post_type->is_mapped( $post->post_type ) ) {
+		if ( ! $this->plugin->post_type->is_mapped_to_contact_type( $post->post_type ) ) {
 			return;
 		}
 
@@ -1131,93 +1131,104 @@ class CiviCRM_ACF_Integration_Post_Tax {
 				continue;
 			}
 
-			// Get the Post ID that this Contact is mapped to.
-			$post_id = $this->plugin->civicrm->contact->is_mapped( $contact );
-			if ( $post_id === false ) {
+			// Bail if none of this Contact's Contact Types is mapped.
+			$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
+			if ( $post_types === false ) {
 				continue;
 			}
 
-			// Grab Post object.
-			$post = get_post( $post_id );
+			// Handle each Post Type in turn.
+			foreach( $post_types AS $post_type ) {
 
-			// Get all synced term IDs for the Post Type.
-			$synced_terms_for_post_type = $this->synced_terms_get_for_post_type( $post->post_type );
-			$synced_term_ids_for_post_type = wp_list_pluck( $synced_terms_for_post_type, 'term_id' );
-
-			// Find the term ID(s) from those the Group syncs with.
-			$term_ids_for_post = array_intersect( $term_ids_for_group, $synced_term_ids_for_post_type );
-
-			// Find the term(s) from those the Group syncs with.
-			$terms_for_post = [];
-			foreach( $term_ids_for_post AS $term_id_for_post ) {
-				foreach( $terms_for_group AS $term_for_group ) {
-					if ( $term_for_group->term_id == $term_id_for_post ) {
-						$terms_for_post[$term_for_group->term_id] = $term_for_group;
-					}
+				// Get the Post ID that this Contact is mapped to.
+				$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
+				if ( $post_id === false ) {
+					continue;
 				}
-			}
 
-			// Get all the current terms for the Post.
-			$terms_in_post = $this->terms_get_for_post( $post_id );
-			$term_ids_in_post = wp_list_pluck( $terms_in_post, 'term_id' );
+				// Grab Post object.
+				$post = get_post( $post_id );
 
-			// If the term(s) need to be added.
-			if ( $op === 'add' ) {
+				// Get all synced term IDs for the Post Type.
+				$synced_terms_for_post_type = $this->synced_terms_get_for_post_type( $post->post_type );
+				$synced_term_ids_for_post_type = wp_list_pluck( $synced_terms_for_post_type, 'term_id' );
 
-				// If the Post does not have the term(s), add them.
+				// Find the term ID(s) from those the Group syncs with.
+				$term_ids_for_post = array_intersect( $term_ids_for_group, $synced_term_ids_for_post_type );
+
+				// Find the term(s) from those the Group syncs with.
+				$terms_for_post = [];
 				foreach( $term_ids_for_post AS $term_id_for_post ) {
-					if ( ! in_array( $term_id_for_post, $term_ids_in_post ) ) {
-						$terms_in_post[] = $terms_for_post[$term_id_for_post];
-					}
-				}
-
-			}
-
-			// If the term(s) need to be removed.
-			if ( $op === 'remove' ) {
-
-				// Init final array.
-				$term_ids_final = array_diff( $term_ids_in_post, $term_ids_for_post );
-
-				// Rebuild terms-in-post array.
-				$terms_in_post_new = [];
-
-				foreach( $term_ids_final AS $term_id_final ) {
-					foreach( $terms_in_post AS $term_in_post ) {
-						if ( $term_in_post->term_id == $term_id_final ) {
-							$terms_in_post_new[] = $term_in_post;
-							continue;
+					foreach( $terms_for_group AS $term_for_group ) {
+						if ( $term_for_group->term_id == $term_id_for_post ) {
+							$terms_for_post[$term_for_group->term_id] = $term_for_group;
 						}
 					}
 				}
 
-				// Overwrite.
-				$terms_in_post = $terms_in_post_new;
+				// Get all the current terms for the Post.
+				$terms_in_post = $this->terms_get_for_post( $post_id );
+				$term_ids_in_post = wp_list_pluck( $terms_in_post, 'term_id' );
 
-			}
+				// If the term(s) need to be added.
+				if ( $op === 'add' ) {
 
-			// Grab the taxonomies for the synced terms.
-			$taxonomies = array_unique( wp_list_pluck( $synced_terms_for_post_type, 'taxonomy' ) );
+					// If the Post does not have the term(s), add them.
+					foreach( $term_ids_for_post AS $term_id_for_post ) {
+						if ( ! in_array( $term_id_for_post, $term_ids_in_post ) ) {
+							$terms_in_post[] = $terms_for_post[$term_id_for_post];
+						}
+					}
 
-			// Loop through them.
-			foreach( $taxonomies AS $taxonomy ) {
-
-				// Find the terms in this taxonomy.
-				$args = [ 'taxonomy' => $taxonomy ];
-				$terms_in_tax = wp_filter_object_list( $terms_in_post, $args );
-
-				// If there are none.
-				if ( empty( $terms_in_tax ) ) {
-					$term_ids_in_tax = [];
-				} else {
-					$term_ids_in_tax = wp_list_pluck( $terms_in_tax, 'term_id' );
 				}
 
-				// Overwrite with new set of terms.
-				wp_set_object_terms( $post_id, $term_ids_in_tax, $taxonomy, false );
+				// If the term(s) need to be removed.
+				if ( $op === 'remove' ) {
 
-				// Clear cache.
-				clean_object_term_cache( $post_id, $taxonomy );
+					// Init final array.
+					$term_ids_final = array_diff( $term_ids_in_post, $term_ids_for_post );
+
+					// Rebuild terms-in-post array.
+					$terms_in_post_new = [];
+
+					foreach( $term_ids_final AS $term_id_final ) {
+						foreach( $terms_in_post AS $term_in_post ) {
+							if ( $term_in_post->term_id == $term_id_final ) {
+								$terms_in_post_new[] = $term_in_post;
+								continue;
+							}
+						}
+					}
+
+					// Overwrite.
+					$terms_in_post = $terms_in_post_new;
+
+				}
+
+				// Grab the taxonomies for the synced terms.
+				$taxonomies = array_unique( wp_list_pluck( $synced_terms_for_post_type, 'taxonomy' ) );
+
+				// Loop through them.
+				foreach( $taxonomies AS $taxonomy ) {
+
+					// Find the terms in this taxonomy.
+					$args = [ 'taxonomy' => $taxonomy ];
+					$terms_in_tax = wp_filter_object_list( $terms_in_post, $args );
+
+					// If there are none.
+					if ( empty( $terms_in_tax ) ) {
+						$term_ids_in_tax = [];
+					} else {
+						$term_ids_in_tax = wp_list_pluck( $terms_in_tax, 'term_id' );
+					}
+
+					// Overwrite with new set of terms.
+					wp_set_object_terms( $post_id, $term_ids_in_tax, $taxonomy, false );
+
+					// Clear cache.
+					clean_object_term_cache( $post_id, $taxonomy );
+
+				}
 
 			}
 

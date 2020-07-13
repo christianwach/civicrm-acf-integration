@@ -696,11 +696,11 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 	 * @since 0.4.3
 	 *
 	 * @param array $relationships The retrieved array of Relationship Types.
-	 * @param array $contact_types The array of Contact Types.
+	 * @param array $hierarchy The array of Contact Types for a Contact.
 	 * @param array $field The ACF Field data array.
 	 * @return array $filtered The filtered array of Relationship Types.
 	 */
-	public function relationship_types_filter( $relationships, $contact_types, $field ) {
+	public function relationship_types_filter( $relationships, $hierarchy, $field ) {
 
 		// Init return.
 		$filtered = [];
@@ -710,50 +710,58 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 			return $filtered;
 		}
 
+		// Get separated array of Contact Types.
+		$contact_types = $this->civicrm->contact_type->hierarchy_separate( $hierarchy );
+
 		// Filter fields to include each Relationship in both directions when possible.
 		foreach( $relationships AS $relationship ) {
 
-			// Check the A-to-B relationship.
-			if ( $relationship['contact_type_a'] == $contact_types['type'] ) {
+			// Check each Contact Type in turn.
+			foreach( $contact_types AS $contact_type ) {
 
-				// Define key.
-				$key = $relationship['id'] . '_ab';
+				// Check the A-to-B relationship.
+				if ( $relationship['contact_type_a'] == $contact_type['type'] ) {
 
-				// Add to subtype optgroup if possible.
-				if ( ! empty( $relationship['contact_sub_type_a'] ) ) {
-					if ( $relationship['contact_sub_type_a'] == $contact_types['subtype'] ) {
-						$filtered[$contact_types['subtype']][$key] = $relationship['label_a_b'];
+					// Define key.
+					$key = $relationship['id'] . '_ab';
+
+					// Add to subtype optgroup if possible.
+					if ( ! empty( $relationship['contact_sub_type_a'] ) ) {
+						if ( $relationship['contact_sub_type_a'] == $contact_type['subtype'] ) {
+							$filtered[$contact_type['subtype']][$key] = $relationship['label_a_b'];
+						}
+					}
+
+					// Add to type optgroup if not already added - and no subtype.
+					if ( ! isset( $filtered[$contact_type['subtype']][$key] ) ) {
+						if ( empty( $relationship['contact_sub_type_a'] ) ) {
+							$filtered[$contact_type['type']][$key] = $relationship['label_a_b'];
+						}
+					}
+
+				}
+
+				// Check the B-to-A relationship.
+				if ( $relationship['contact_type_b'] == $contact_type['type'] ) {
+
+					// Define key.
+					$key = $relationship['id'] . '_ba';
+
+					// Add to subtype optgroup if possible.
+					if ( ! empty( $relationship['contact_sub_type_b'] ) ) {
+						if ( $relationship['contact_sub_type_b'] == $contact_type['subtype'] ) {
+							$filtered[$contact_type['subtype']][$key] = $relationship['label_b_a'];
+						}
+					}
+
+					// Add to type optgroup if not already added - and no subtype.
+					if ( ! isset( $filtered[$contact_type['subtype']][$key] ) ) {
+						if ( empty( $relationship['contact_sub_type_b'] ) ) {
+							$filtered[$contact_type['type']][$key] = $relationship['label_b_a'];
+						}
 					}
 				}
 
-				// Add to type optgroup if not already added - and no subtype.
-				if ( ! isset( $filtered[$contact_types['subtype']][$key] ) ) {
-					if ( empty( $relationship['contact_sub_type_a'] ) ) {
-						$filtered[$contact_types['type']][$key] = $relationship['label_a_b'];
-					}
-				}
-
-			}
-
-			// Check the B-to-A relationship.
-			if ( $relationship['contact_type_b'] == $contact_types['type'] ) {
-
-				// Define key.
-				$key = $relationship['id'] . '_ba';
-
-				// Add to subtype optgroup if possible.
-				if ( ! empty( $relationship['contact_sub_type_b'] ) ) {
-					if ( $relationship['contact_sub_type_b'] == $contact_types['subtype'] ) {
-						$filtered[$contact_types['subtype']][$key] = $relationship['label_b_a'];
-					}
-				}
-
-				// Add to type optgroup if not already added - and no subtype.
-				if ( ! isset( $filtered[$contact_types['subtype']][$key] ) ) {
-					if ( empty( $relationship['contact_sub_type_b'] ) ) {
-						$filtered[$contact_types['type']][$key] = $relationship['label_b_a'];
-					}
-				}
 			}
 
 		}

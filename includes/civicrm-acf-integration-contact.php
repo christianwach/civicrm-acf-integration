@@ -175,7 +175,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		}
 
 		// Bail if this Post Type is not mapped.
-		if ( ! $this->plugin->post_type->is_mapped( $post->post_type ) ) {
+		if ( ! $this->plugin->post_type->is_mapped_to_contact_type( $post->post_type ) ) {
 			$this->do_not_sync = true;
 			return;
 		}
@@ -603,14 +603,123 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 
 	/**
-	 * Check if a Contact is mapped to a Post.
+	 * Check whether any of a Contact's Contact Types is mapped to a Post Type.
+	 *
+	 * The Mapper makes use of the boolean return to bail early. Other classes
+	 * use the returned array of Post Types to loop through the mapped Posts.
+	 *
+	 * @see CiviCRM_ACF_Integration_Mapper::contact_pre_create()
+	 * @see CiviCRM_ACF_Integration_Mapper::contact_pre_edit()
+	 *
+	 * @since 0.7
+	 *
+	 * @param array|obj $contact The Contact data.
+	 * @param str $create_post Create a mapped Post if missing. Either 'create' or 'skip'.
+	 * @return array|bool $is_mapped An array of Post Types if the Contact is mapped, false otherwise.
+	 */
+	public function is_mapped( $contact, $create_post = 'skip' ) {
+
+		// Init return.
+		$is_mapped = [];
+
+		// Maybe cast Contact data as array.
+		if ( is_object( $contact ) ) {
+			$contact = (array) $contact;
+		}
+
+		// Get the Contact Type hierarchy.
+		$hierarchy = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $contact );
+
+		// Get separated array of Contact Types.
+		$contact_types = $this->civicrm->contact_type->hierarchy_separate( $hierarchy );
+
+		// Check each Contact Type in turn.
+		foreach( $contact_types AS $contact_type ) {
+
+			// Get the Post Type mapped to this Contact Type.
+			$post_type = $this->plugin->civicrm->contact_type->is_mapped_to_post_type( $contact_type );
+
+			// Skip if this Contact Type is not mapped.
+			if ( $post_type === false ) {
+				continue;
+			}
+
+			// Add mapped Post Type.
+			$is_mapped[] = $post_type;
+
+			// Let's check if the Contact has all the Posts it should have.
+			$contact_id = false;
+			if ( ! empty( $contact['contact_id'] ) ) {
+				$contact_id = $contact['contact_id'];
+			}
+			if ( ! empty( $contact['id'] ) ) {
+				$contact_id = $contact['id'];
+			}
+
+			// If there's no Contact ID, carry on.
+			if ( $contact_id === false ) {
+				continue;
+			}
+
+			// Get the associated Post IDs.
+			$post_ids = $this->plugin->post->get_by_contact_id( $contact_id, $post_type );
+
+			// Create the Post if it's missing.
+			if ( $post_ids === false AND $create_post === 'create' ) {
+
+				// Prevent recursion and the resulting unexpected Post creation.
+				if ( doing_action( 'civicrm_acf_integration_post_contact_sync' ) ) {
+					continue;
+				}
+
+				// Get full Contact data.
+				$contact_data = $this->get_by_id( $contact_id );
+
+				// Remove WordPress callbacks to prevent recursion.
+				$this->plugin->mapper->hooks_wordpress_remove();
+				$this->plugin->mapper->hooks_civicrm_remove();
+
+				// Let's make an array of params.
+				$args = [
+					'op' => 'sync',
+					'objectName' => $contact_data['contact_type'],
+					'objectId' => $contact_data['contact_id'],
+					'objectRef' => (object) $contact_data,
+				];
+
+				// Sync this Contact to the Post Type.
+				$this->plugin->post->contact_sync_to_post( $args, $post_type );
+
+				// Reinstate WordPress callbacks.
+				$this->plugin->mapper->hooks_wordpress_add();
+				$this->plugin->mapper->hooks_civicrm_add();
+
+			}
+
+		}
+
+		// Cast as boolean if there's no mapping.
+		if ( empty( $is_mapped ) ) {
+			$is_mapped = false;
+		}
+
+		// --<
+		return $is_mapped;
+
+	}
+
+
+
+	/**
+	 * Check if a Contact is mapped to a Post of a particular Post Type.
 	 *
 	 * @since 0.2
 	 *
 	 * @param array|obj $contact The Contact data.
+	 * @param str $post_type The WordPress Post Type.
 	 * @return int|bool $is_mapped The ID of the WordPress Post if the Contact is mapped, false otherwise.
 	 */
-	public function is_mapped( $contact ) {
+	public function is_mapped_to_post( $contact, $post_type = 'any' ) {
 
 		// TODO: Query Posts with Post meta instead? Or pseudo-cache?
 
@@ -622,28 +731,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			$contact = (array) $contact;
 		}
 
-		// Get the Contact Type hierarchy for this Contact.
-		$contact_type = $this->civicrm->contact_type->hierarchy_get_for_contact( $contact );
-
-		// Check if it's a top level Contact Type.
-		if ( empty( $contact_type['subtype'] ) ) {
-			$contact_type = $contact_type['type'];
-		} else {
-			$contact_type = $contact_type['subtype'];
-		}
-
-		// Get the data for this Contact Type.
-		$contact_type_data = $this->civicrm->contact_type->get_data( $contact_type, 'name' );
-
-		// Bail if we didn't get any.
-		if ( $contact_type_data === false ) {
-			return $is_mapped;
-		}
-
-		// Bail if Contact Type not a mapped to a Post Type.
-		$mapped = $this->civicrm->contact_type->is_mapped( $contact_type_data['id'] );
-		if ( $mapped === false ) {
-			return $is_mapped;
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->is_mapped( $contact );
+		if ( $post_types === false ) {
+			return;
 		}
 
 		// "hook_civicrm_pre" sends $contact['contact_id']
@@ -661,16 +752,16 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			return $is_mapped;
 		}
 
-		// Find the Post that this Contact is synced with.
-		$post = $this->plugin->post->get_by_contact_id( $contact_id );
+		// Find the Post ID of this Post Type that this Contact is synced with.
+		$post_ids = $this->plugin->post->get_by_contact_id( $contact_id, $post_type );
 
-		// Bail if no Post is found.
-		if ( ! ( $post instanceof WP_Post ) ) {
+		// Bail if no Post ID is found.
+		if ( empty( $post_ids ) ) {
 			return $is_mapped;
 		}
 
-		// Assign return.
-		$is_mapped = $post->ID;
+		// There should be only one Post ID per Post Type.
+		$is_mapped = array_pop( $post_ids );
 
 		// --<
 		return $is_mapped;
@@ -1389,16 +1480,24 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			$contact_type_id = $this->civicrm->contact_type->id_get_for_post_type( $post_type_name );
 
 			// Get Contact Type hierarchy.
-			$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
+			$hierarchy = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
 
-			// Get the Custom Fields for this CiviCRM Contact Type.
-			$custom_fields_for_type = $this->civicrm->custom_field->get_for_entity_type(
-				$contact_types['type'],
-				$contact_types['subtype']
-			);
+			// Get separated array of Contact Types.
+			$contact_types = $this->civicrm->contact_type->hierarchy_separate( $hierarchy );
 
-			// Merge with return array.
-			$custom_fields = array_merge( $custom_fields, $custom_fields_for_type );
+			// Check each Contact Type in turn.
+			foreach( $contact_types AS $contact_type ) {
+
+				// Get the Custom Fields for this CiviCRM Contact Type.
+				$custom_fields_for_type = $this->civicrm->custom_field->get_for_entity_type(
+					$contact_type['type'],
+					$contact_type['subtype']
+				);
+
+				// Merge with return array.
+				$custom_fields = array_merge( $custom_fields, $custom_fields_for_type );
+
+			}
 
 		}
 
@@ -1412,24 +1511,24 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	/**
 	 * Listen for queries from the Custom Field class.
 	 *
-	 * This method responds with a Post ID if it detects that the set of Custom
-	 * Fields maps to a Contact.
+	 * This method responds with an array of Post IDs if it detects that the
+	 * set of Custom Fields maps to a Contact.
 	 *
 	 * @since 0.4.5
 	 *
-	 * @param bool $post_id False, since we're asking for a Post ID.
+	 * @param bool $post_ids False, since we're asking for the Post IDs.
 	 * @param array $args The array of CiviCRM Custom Fields params.
-	 * @param bool|int $post_id The mapped Post ID, or false if not mapped.
+	 * @return array|bool $post_id The mapped Post IDs, or false if not mapped.
 	 */
-	public function query_post_id( $post_id, $args ) {
+	public function query_post_id( $post_ids, $args ) {
 
 		// Bail early if a Post ID has been found.
-		if ( $post_id !== false ) {
-			return $post_id;
+		if ( $post_ids !== false ) {
+			return $post_ids;
 		}
 
-		// Init Contact.
-		$contact = false;
+		// Init Contact ID.
+		$contact_id = false;
 
 		// Let's tease out the context from the Custom Field data.
 		foreach( $args['custom_fields'] AS $field ) {
@@ -1440,28 +1539,51 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			}
 
 			// Grab the Contact.
-			$contact = $this->get_by_id( $field['entity_id'] );
+			$contact_id = $field['entity_id'];
 
 			// We can bail now that we know.
 			break;
 
 		}
 
-		// Bail if there's no Contact.
+		// Bail if there's no Contact ID.
+		if ( $contact_id === false ) {
+			return false;
+		}
+
+		// Grab Contact.
+		$contact = $this->get_by_id( $contact_id );
 		if ( $contact === false ) {
 			return false;
 		}
 
-		// Get the Post ID that this Contact is mapped to.
-		$post_id = $this->is_mapped( $contact );
-
-		// Skip if not mapped.
-		if ( $post_id === false ) {
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->is_mapped( $contact, 'create' );
+		if ( $post_types === false ) {
 			return false;
 		}
 
+		// Init return.
+		$post_ids = [];
+
+		// Get the Post IDs that this Contact is mapped to.
+		foreach( $post_types AS $post_type ) {
+
+			// Get array of IDs for this Post Type.
+			$ids = $this->plugin->post->get_by_contact_id( $contact_id, $post_type );
+
+			// Skip if not mapped.
+			if ( $ids === false ) {
+				continue;
+			}
+
+			// Add to return array.
+			$post_ids = array_merge( $post_ids, $ids );
+
+		}
+
 		// --<
-		return $post_id;
+		return $post_ids;
 
 	}
 

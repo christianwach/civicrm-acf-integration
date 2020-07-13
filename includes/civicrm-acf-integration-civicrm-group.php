@@ -91,94 +91,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Group {
 		// Intercept CiviCRM's rejoin Contacts to Group.
 		add_action( 'civicrm_acf_integration_mapper_group_contacts_rejoined', [ $this, 'group_contacts_rejoined' ], 10 );
 
-		// Intercept before a Contact is created.
-		add_action( 'civicrm_acf_integration_mapper_contact_pre_create', [ $this, 'contact_pre_create' ], 10 );
-
 		// Intercept Post created from Contact events.
-		add_action( 'civicrm_acf_integration_post_created', [ $this, 'post_created' ], 20 );
 		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'sync_to_post' ], 10 );
 
 		// Intercept calls to sync the Group.
 		add_action( 'civicrm_acf_integration_admin_group_sync', [ $this, 'group_sync' ], 10, 1 );
-
-	}
-
-
-
-	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * A CiviCRM Contact is about to be created.
-	 *
-	 * Before a Contact is created, we need to set a flag so that we know that
-	 * we need to delay the Custom Field sync process until the synced Post has
-	 * been created.
-	 *
-	 * @since 0.6.4
-	 *
-	 * @param array $args The array of CiviCRM params.
-	 */
-	public function contact_pre_create( $args ) {
-
-		// Bail if not the operation we want.
-		if ( $args['op'] != 'create' ) {
-			return;
-		}
-
-		// Always clear flag if set previously.
-		if ( isset( $this->contact_create ) ){
-			unset( $this->contact_create );
-		}
-
-		// Init flag.
-		$this->contact_create = true;
-
-		// Always clear properties if set previously.
-		if ( isset( $this->data_pre ) ){
-			unset( $this->data_pre );
-		}
-
-		// Init empty property.
-		$this->data_pre = [];
-
-	}
-
-
-
-	/**
-	 * Intercept when a Post has been created from a Contact via the Mapper.
-	 *
-	 * Sync any associated ACF Fields mapped to Custom Fields.
-	 *
-	 * @since 0.6.4
-	 *
-	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
-	 */
-	public function post_created( $args ) {
-
-		// Only do this when a Contact has been created.
-		if ( ! isset( $this->contact_create ) OR $this->contact_create !== true ) {
-			return;
-		}
-
-		// Bail if there's no data.
-		if ( empty( $this->data_pre ) ) {
-			return;
-		}
-
-		// We're now at the "contact created" stage.
-		$this->contact_create = false;
-
-		// Call the method again, this time with the stored data.
-		foreach( $this->data_pre AS $custom_data ) {
-			$this->group_contacts_created( $custom_data );
-		}
-
-		// Unset our properties.
-		unset( $this->contact_create );
-		unset( $this->data_pre );
 
 	}
 
@@ -861,16 +778,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Group {
 	 * @param array $args The array of CiviCRM params.
 	 */
 	public function group_contacts_created( $args ) {
-
-		/*
-		 * When using the CiviCRM UI to create a Contact, we have to save the
-		 * data for later use because "civicrm_post" (when the WordPress Post
-		 * is created) doesn't fire until all associated data has been saved.
-		 */
-		if ( $args['op'] == 'create' AND isset( $this->contact_create ) AND $this->contact_create === true ) {
-			$this->data_pre[$args['objectId']] = $args;
-			return;
-		}
 
 		// Process terms for Group Contacts.
 		$this->plugin->post->tax->terms_update_for_group_contacts( $args['objectId'], $args['objectRef'], 'add' );

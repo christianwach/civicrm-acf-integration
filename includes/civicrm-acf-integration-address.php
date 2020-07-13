@@ -584,27 +584,38 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 			return;
 		}
 
-		// Bail if this Contact has no mapped Post.
-		$post_id = $this->plugin->civicrm->contact->is_mapped( $contact );
-		if ( $post_id === false ) {
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
+		if ( $post_types === false ) {
 			return;
 		}
 
-		// Bail if there are no Address fields for this Post.
-		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
-		if ( empty( $acf_fields['address'] ) ) {
-			return;
-		}
+		// Handle each Post Type in turn.
+		foreach( $post_types AS $post_type ) {
 
-		// Bail if there are no ACF Fields to update.
-		$fields_to_update = $this->fields_to_update_get( $acf_fields, $address, $previous );
-		if ( empty( $fields_to_update ) ) {
-			return;
-		}
+			// Bail if this Contact has no mapped Post.
+			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
+			if ( $post_id === false ) {
+				return;
+			}
 
-		// Update the found ACF Fields.
-		foreach( $fields_to_update AS $selector => $address_field ) {
-			$this->field_update( $address, $selector, $post_id, $address_field['action'] );
+			// Bail if there are no Address fields for this Post.
+			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
+			if ( empty( $acf_fields['address'] ) ) {
+				return;
+			}
+
+			// Bail if there are no ACF Fields to update.
+			$fields_to_update = $this->fields_to_update_get( $acf_fields, $address, $previous );
+			if ( empty( $fields_to_update ) ) {
+				return;
+			}
+
+			// Update the found ACF Fields.
+			foreach( $fields_to_update AS $selector => $address_field ) {
+				$this->field_update( $address, $selector, $post_id, $address_field['action'] );
+			}
+
 		}
 
 	}

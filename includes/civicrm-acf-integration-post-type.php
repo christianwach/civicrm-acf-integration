@@ -247,7 +247,7 @@ class CiviCRM_ACF_Integration_Post_Type {
 	 * @param str $post_type The name of the Post Type.
 	 * @return bool $is_linked True if the Post Type is mapped, false otherwise.
 	 */
-	public function is_mapped( $post_type ) {
+	public function is_mapped_to_contact_type( $post_type ) {
 
 		// Assume not.
 		$is_linked = false;
@@ -267,6 +267,34 @@ class CiviCRM_ACF_Integration_Post_Type {
 
 		// --<
 		return $is_linked;
+
+	}
+
+
+
+	/**
+	 * Get the singular label for a given Post Type.
+	 *
+	 * @since 0.7
+	 *
+	 * @param str $post_type The name of the Post Type.
+	 * @return str $label The singular label for the Post Type.
+	 */
+	public function singular_label_get( $post_type ) {
+
+		// Get Post Type data.
+		$post_type_data = get_post_type_object( $post_type );
+
+		// Default to the (usually plural) label.
+		$label = $post_type_data->label;
+
+		// If the labels array is populated, override with singular label.
+		if ( ! empty( $post_type_data->labels->singular_name ) ) {
+			$label = $post_type_data->labels->singular_name;
+		}
+
+		// --<
+		return $label;
 
 	}
 

@@ -353,7 +353,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 		}
 
 		// Build types.
-		$types = [ 'type' => $contact_type_name, 'subtype' => $contact_subtype ];
+		$types = [ 'type' => $contact_type_name, 'subtype' => [ $contact_subtype ] ];
 
 		// Maybe add to pseudo-cache.
 		if ( ! isset( $pseudocache[$mode][$contact_type] ) ) {
@@ -373,7 +373,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 	 * @since 0.2
 	 *
 	 * @param str $contact_type_id The numeric ID of the CiviCRM Contact Type.
-	 * @return array $types An associative array populated with parent type and sub-type.
+	 * @return array $types An associative array populated with parent type and sub-types.
 	 */
 	public function hierarchy_get_by_id( $contact_type_id ) {
 
@@ -396,7 +396,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 	 * @since 0.2
 	 *
 	 * @param array|obj $contact The Contact data.
-	 * @return int|bool $is_mapped The ID of the WordPress Post if the Contact is mapped, false otherwise.
+	 * @return array $types The array of Contact Type data for the Contact.
 	 */
 	public function hierarchy_get_for_contact( $contact ) {
 
@@ -408,19 +408,17 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 		// Grab the top level Contact Type for this Contact.
 		$contact_type = $contact['contact_type'];
 
-		// TODO: Handle Contacts with multiple Contact Sub-types.
-
 		// Find the lowest level Contact Type for this Contact.
-		$contact_sub_type = '';
+		$contact_sub_type = [];
 		if ( ! empty( $contact['contact_sub_type'] ) ) {
 			if ( is_array( $contact['contact_sub_type'] ) ) {
-				$contact_sub_type = array_pop( $contact['contact_sub_type'] );
+				$contact_sub_type = $contact['contact_sub_type'];
 			} else {
 				if ( false !== strpos( $contact['contact_sub_type'], CRM_Core_DAO::VALUE_SEPARATOR ) ) {
 					$types = CRM_Utils_Array::explodePadded( $contact['contact_sub_type'] );
-					$contact_sub_type = array_pop( $types );
+					$contact_sub_type = $types;
 				} else {
-					$contact_sub_type = $contact['contact_sub_type'];
+					$contact_sub_type = [ $contact['contact_sub_type'] ];
 				}
 			}
 		}
@@ -430,6 +428,59 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 
 		// --<
 		return $types;
+
+	}
+
+
+
+	/**
+	 * Convert a Contact Type hierarchy into an array separated items.
+	 *
+	 * A CiviCRM Contact can only have one top-level type, but many possible
+	 * sub-types. The existing methods return an array of the form:
+	 *
+	 * [
+	 *   'type' => 'TopLevelName',
+	 *   'subtype' => [ 'SubTypeName1', 'SubTypeName2', 'SubTypeName3' ]
+	 * ]
+	 *
+	 * This method rebuilds the array to return an array which looks like:
+	 *
+	 * [
+	 *   [ 'type' => 'TopLevelName', 'subtype' => 'SubTypeName1' ],
+	 *   [ 'type' => 'TopLevelName', 'subtype' => 'SubTypeName2' ],
+	 *   [ 'type' => 'TopLevelName', 'subtype' => 'SubTypeName3' ],
+	 * ]
+	 *
+	 * This is useful when iterating over Contact Types.
+	 *
+	 * @see CiviCRM_ACF_Integration_CiviCRM_Contact_Type::hierarchy_get_by_id()
+	 * @see CiviCRM_ACF_Integration_CiviCRM_Contact_Type::hierarchy_get_for_contact()
+	 *
+	 * @since 0.7
+	 *
+	 * @param array $hierarchy The array of Contact Type data for a Contact.
+	 * @return array $contact_types The array of separated Contact Type data.
+	 */
+	public function hierarchy_separate( $hierarchy ) {
+
+		// Init return.
+		$contact_types = [];
+
+		// Build array of Contact Type arrays.
+		if ( empty( $hierarchy['subtype'] ) ) {
+			$contact_types = [ $hierarchy ];
+		} else {
+			foreach( $hierarchy['subtype'] AS $subtype ) {
+				$contact_types[] = [
+					'type' => $hierarchy['type'],
+					'subtype' => $subtype,
+				];
+			}
+		}
+
+		// --<
+		return $contact_types;
 
 	}
 
@@ -559,7 +610,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 
 
 	/**
-	 * Get all Contact Types that are mapped to a Post Type.
+	 * Get all Contact Types that are mapped to Post Types.
 	 *
 	 * @since 0.6.4
 	 *
@@ -643,7 +694,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 	 * @param int|str|array $contact_type The "ID", "name" or "hierarchy" of the Contact Type.
 	 * @return str|bool $is_linked The name of the Post Type, or false otherwise.
 	 */
-	public function is_mapped( $contact_type ) {
+	public function is_mapped_to_post_type( $contact_type ) {
 
 		// Assume not.
 		$is_mapped = false;

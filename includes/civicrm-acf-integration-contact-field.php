@@ -202,8 +202,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 	 */
 	public function post_edited( $args ) {
 
+		// Get the Contact Type hierarchy.
+		$hierarchy = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $args['objectRef'] );
+
 		// Get the public Contact Fields for the top level type.
-		$public_fields = $this->get_public( $args['contact_types'] );
+		$public_fields = $this->get_public( $hierarchy );
 
 		// Get the ACF Fields for this Post.
 		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $args['post_id'] );

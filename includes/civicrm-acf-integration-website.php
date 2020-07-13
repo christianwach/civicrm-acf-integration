@@ -120,88 +120,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		// Add any Website Fields that are Custom Fields.
 		add_filter( 'civicrm_acf_integration_contact_custom_field_id_get', [ $this, 'custom_field_id_get' ], 10, 2 );
 
-		// Intercept before a Contact is created.
-		add_action( 'civicrm_acf_integration_mapper_contact_pre_create', [ $this, 'contact_pre_create' ], 10 );
-
 		// Intercept Post created from Contact events.
-		add_action( 'civicrm_acf_integration_post_created', [ $this, 'post_created' ], 20 );
 		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'sync_to_post' ], 10 );
-
-	}
-
-
-
-	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * A CiviCRM Contact is about to be created.
-	 *
-	 * Before a Contact is created, we need to set a flag so that we know that
-	 * we need to delay the Custom Field sync process until the synced Post has
-	 * been created.
-	 *
-	 * @since 0.6.4
-	 *
-	 * @param array $args The array of CiviCRM params.
-	 */
-	public function contact_pre_create( $args ) {
-
-		// Bail if not the operation we want.
-		if ( $args['op'] != 'create' ) {
-			return;
-		}
-
-		// Always clear flag if set previously.
-		if ( isset( $this->contact_create ) ){
-			unset( $this->contact_create );
-		}
-
-		// Init flag.
-		$this->contact_create = true;
-
-		// Always clear properties if set previously.
-		if ( isset( $this->data_pre ) ){
-			unset( $this->data_pre );
-		}
-
-		// Init empty property.
-		$this->data_pre = [];
-
-	}
-
-
-
-	/**
-	 * Intercept when a Post has been created from a Contact via the Mapper.
-	 *
-	 * Sync any associated ACF Fields mapped to Custom Fields.
-	 *
-	 * @since 0.6.4
-	 *
-	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
-	 */
-	public function post_created( $args ) {
-
-		// Only do this when a Contact has been created.
-		if ( $this->contact_create !== true ) {
-			return;
-		}
-
-		// Bail if there's no data.
-		if ( empty( $this->data_pre ) ) {
-			return;
-		}
-
-		// Call the method again, this time with the stored data.
-		foreach( $this->data_pre AS $custom_data ) {
-			$this->website_edited( $custom_data );
-		}
-
-		// Unset our properties.
-		unset( $this->contact_create );
-		unset( $this->data_pre );
 
 	}
 
@@ -645,59 +565,51 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		// Get the Contact data.
 		$contact = $this->plugin->civicrm->contact->get_by_id( $website->contact_id );
 
-		// Bail if this Contact's Contact Type is not mapped.
-		$contact_types = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $contact );
-		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types );
-		if ( $post_type === false ) {
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
+		if ( $post_types === false ) {
 			return;
 		}
 
-		// Get the Post ID for this Contact.
-		$post_id = $this->plugin->civicrm->contact->is_mapped( $contact );
+		// Handle each Post Type in turn.
+		foreach( $post_types AS $post_type ) {
 
-		// Skip if not mapped or Post doesn't yet exist.
-		if ( $post_id === false ) {
+			// Get the Post ID for this Contact.
+			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
 
-			/*
-			 * When using the CiviCRM UI to create a Contact, we have to save the
-			 * data for later use because "civicrm_post" (when the WordPress Post
-			 * is created) doesn't fire until all associated data has been saved.
-			 */
-			if ( $args['op'] == 'create' AND $this->contact_create === true ) {
-				$this->data_pre[$args['objectId']] = $args;
-			}
-
-			// --<
-			return;
-
-		}
-
-		// Get the ACF Fields for this Post.
-		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
-
-		// Bail if there are no Website Fields.
-		if ( empty( $acf_fields['website'] ) ) {
-			return;
-		}
-
-		// TODO: Find the ACF Fields to update.
-		//$fields_to_update = $this->fields_to_update_get( $acf_fields, $website, $args['op'] );
-
-		// Let's look at each ACF Field in turn.
-		foreach( $acf_fields['website'] AS $selector => $website_field ) {
-
-			// Skip if it's a Custom Field.
-			if ( false !== strpos( $website_field, $this->civicrm->custom_field_prefix() ) ) {
+			// Skip if not mapped or Post doesn't yet exist.
+			if ( $post_id === false ) {
 				continue;
 			}
 
-			// Skip if it's not the right Website Type.
-			if ( $website_field != $website->website_type_id ) {
+			// Get the ACF Fields for this Post.
+			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
+
+			// Bail if there are no Website Fields.
+			if ( empty( $acf_fields['website'] ) ) {
 				continue;
 			}
 
-			// Update it.
-			$this->plugin->acf->field->value_update( $selector, $website->url, $post_id );
+			// TODO: Find the ACF Fields to update.
+			//$fields_to_update = $this->fields_to_update_get( $acf_fields, $website, $args['op'] );
+
+			// Let's look at each ACF Field in turn.
+			foreach( $acf_fields['website'] AS $selector => $website_field ) {
+
+				// Skip if it's a Custom Field.
+				if ( false !== strpos( $website_field, $this->civicrm->custom_field_prefix() ) ) {
+					continue;
+				}
+
+				// Skip if it's not the right Website Type.
+				if ( $website_field != $website->website_type_id ) {
+					continue;
+				}
+
+				// Update it.
+				$this->plugin->acf->field->value_update( $selector, $website->url, $post_id );
+
+			}
 
 		}
 

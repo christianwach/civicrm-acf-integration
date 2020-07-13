@@ -1040,70 +1040,69 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		// Grab Contact.
 		$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
 
-		// Get the Post ID that this Contact is mapped to.
-		$post_id = $this->plugin->civicrm->contact->is_mapped( $contact );
-
-		// Skip if not mapped.
-		if ( $post_id === false ) {
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact );
+		if ( $post_types === false ) {
 			return;
 		}
 
-		// Get the ACF Fields for this Post.
-		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
+		// Handle each Post Type in turn.
+		foreach( $post_types AS $post_type ) {
 
-		// Bail if we don't have any Relationship Fields.
-		if ( empty( $acf_fields['relationship'] ) ) {
-			return;
-		}
+			// Get the Post ID that this Contact is mapped to.
+			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
 
-		// Let's look at each ACF Field in turn.
-		foreach( $acf_fields['relationship'] AS $selector => $value ) {
-
-			// Get the Relationship data.
-			$relationship_data = explode( '_', $value );
-			$relationship_type_id = absint( $relationship_data[0] );
-			$relationship_direction = $relationship_data[1];
-
-			// Skip if this Relationship is not mapped to the Field.
-			if ( $relationship_type_id != $relationship->relationship_type_id ) {
+			// Skip if not mapped.
+			if ( $post_id === false ) {
 				continue;
 			}
 
-			// Get the existing value, which should be an array.
-			$existing = get_field( $selector, $post_id );
+			// Get the ACF Fields for this Post.
+			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
 
-			// If it isn't one, let's make it an empty array.
-			if ( ! is_array( $existing ) OR empty( $existing ) ) {
-				$existing = [];
+			// Bail if we don't have any Relationship Fields.
+			if ( empty( $acf_fields['relationship'] ) ) {
+				continue;
 			}
 
-			// Assign the correct Target Contact ID.
-			if ( $relationship_direction == 'ab' ) {
-				$target_contact_id = $relationship->contact_id_b;
-			} else {
-				$target_contact_id = $relationship->contact_id_a;
-			}
+			// Let's look at each ACF Field in turn.
+			foreach( $acf_fields['relationship'] AS $selector => $value ) {
 
-			// If deleting the Relationship.
-			if ( $op == 'delete' ) {
+				// Get the Relationship data.
+				$relationship_data = explode( '_', $value );
+				$relationship_type_id = absint( $relationship_data[0] );
+				$relationship_direction = $relationship_data[1];
 
-				// Remove Contact ID if it's there.
-				if ( in_array( $target_contact_id, $existing ) ) {
-					$existing = array_diff( $existing, [ $target_contact_id ] );
+				// Skip if this Relationship is not mapped to the Field.
+				if ( $relationship_type_id != $relationship->relationship_type_id ) {
+					continue;
 				}
 
-			// If creating the Relationship.
-			} elseif ( $op == 'create' ) {
+				// Get the existing value, which should be an array.
+				$existing = get_field( $selector, $post_id );
 
-				// Add Contact ID if it's not there.
-				if ( ! in_array( $target_contact_id, $existing ) ) {
-					$existing[] = $target_contact_id;
+				// If it isn't one, let's make it an empty array.
+				if ( ! is_array( $existing ) OR empty( $existing ) ) {
+					$existing = [];
 				}
 
-			} else {
+				// Assign the correct Target Contact ID.
+				if ( $relationship_direction == 'ab' ) {
+					$target_contact_id = $relationship->contact_id_b;
+				} else {
+					$target_contact_id = $relationship->contact_id_a;
+				}
 
-				// If the Relationship is active.
-				if ( $relationship->is_active == '1' ) {
+				// If deleting the Relationship.
+				if ( $op == 'delete' ) {
+
+					// Remove Contact ID if it's there.
+					if ( in_array( $target_contact_id, $existing ) ) {
+						$existing = array_diff( $existing, [ $target_contact_id ] );
+					}
+
+				// If creating the Relationship.
+				} elseif ( $op == 'create' ) {
 
 					// Add Contact ID if it's not there.
 					if ( ! in_array( $target_contact_id, $existing ) ) {
@@ -1112,17 +1111,29 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 
 				} else {
 
-					// Remove Contact ID if it's there.
-					if ( in_array( $target_contact_id, $existing ) ) {
-						$existing = array_diff( $existing, [ $target_contact_id ] );
+					// If the Relationship is active.
+					if ( $relationship->is_active == '1' ) {
+
+						// Add Contact ID if it's not there.
+						if ( ! in_array( $target_contact_id, $existing ) ) {
+							$existing[] = $target_contact_id;
+						}
+
+					} else {
+
+						// Remove Contact ID if it's there.
+						if ( in_array( $target_contact_id, $existing ) ) {
+							$existing = array_diff( $existing, [ $target_contact_id ] );
+						}
+
 					}
 
 				}
 
-			}
+				// Overwrite the ACF Field data.
+				$this->plugin->acf->field->value_update( $selector, $existing, $post_id );
 
-			// Overwrite the ACF Field data.
-			$this->plugin->acf->field->value_update( $selector, $existing, $post_id );
+			}
 
 		}
 

@@ -279,9 +279,7 @@ class CiviCRM_ACF_Integration_Mapper {
 
 
 	/**
-	 * Fires just before a CiviCRM Entity is created, updated or deleted.
-	 *
-	 * We don't use this at present but it's useful for debugging.
+	 * Fires just before a CiviCRM Entity is created.
 	 *
 	 * @since 0.2.1
 	 *
@@ -303,35 +301,38 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
-		// Bail if this Contact's Contact Type is not mapped.
-		$contact_types = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $objectRef );
-		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types );
-		if ( $post_type === false ) {
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $objectRef );
+		if ( $post_types === false ) {
 			return;
 		}
-
-		// Let's make an array of the CiviCRM params.
-		$args = [
-			'op' => $op,
-			'objectName' => $objectName,
-			'objectId' => $objectId,
-			'objectRef' => $objectRef,
-			'top_level_types' => $top_level_types,
-			'contact_types' => $contact_types,
-			'post_type' => $post_type,
-		];
 
 		// Remove WordPress callbacks to prevent recursion.
 		$this->hooks_wordpress_remove();
 
-		/**
-		 * Broadcast that a relevant Contact is about to be created.
-		 *
-		 * @since 0.6.4
-		 *
-		 * @param array $args The array of CiviCRM params.
-		 */
-		do_action( 'civicrm_acf_integration_mapper_contact_pre_create', $args );
+		// Handle each Post Type in turn.
+		foreach( $post_types AS $post_type ) {
+
+			// Let's make an array of the CiviCRM params.
+			$args = [
+				'op' => $op,
+				'objectName' => $objectName,
+				'objectId' => $objectId,
+				'objectRef' => $objectRef,
+				'top_level_types' => $top_level_types,
+				'post_type' => $post_type,
+			];
+
+			/**
+			 * Broadcast that a relevant Contact is about to be created.
+			 *
+			 * @since 0.6.4
+			 *
+			 * @param array $args The array of CiviCRM params.
+			 */
+			do_action( 'civicrm_acf_integration_mapper_contact_pre_create', $args );
+
+		}
 
 		// Reinstate WordPress callbacks.
 		$this->hooks_wordpress_add();
@@ -341,9 +342,7 @@ class CiviCRM_ACF_Integration_Mapper {
 
 
 	/**
-	 * Fires just before a CiviCRM Entity is created, updated or deleted.
-	 *
-	 * We don't use this at present but it's useful for debugging.
+	 * Fires just before a CiviCRM Entity is updated.
 	 *
 	 * @since 0.2.1
 	 *
@@ -365,35 +364,38 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
-		// Bail if this Contact's Contact Type is not mapped.
-		$contact_types = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $objectRef );
-		$post_type = $this->plugin->civicrm->contact_type->is_mapped( $contact_types );
-		if ( $post_type === false ) {
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $objectRef );
+		if ( $post_types === false ) {
 			return;
 		}
-
-		// Let's make an array of the CiviCRM params.
-		$args = [
-			'op' => $op,
-			'objectName' => $objectName,
-			'objectId' => $objectId,
-			'objectRef' => $objectRef,
-			'top_level_types' => $top_level_types,
-			'contact_types' => $contact_types,
-			'post_type' => $post_type,
-		];
 
 		// Remove WordPress callbacks to prevent recursion.
 		$this->hooks_wordpress_remove();
 
-		/**
-		 * Broadcast that a relevant Contact is about to be updated.
-		 *
-		 * @since 0.4.5
-		 *
-		 * @param array $args The array of CiviCRM params.
-		 */
-		do_action( 'civicrm_acf_integration_mapper_contact_pre_edit', $args );
+		// Handle each Post Type in turn.
+		foreach( $post_types AS $post_type ) {
+
+			// Let's make an array of the CiviCRM params.
+			$args = [
+				'op' => $op,
+				'objectName' => $objectName,
+				'objectId' => $objectId,
+				'objectRef' => $objectRef,
+				'top_level_types' => $top_level_types,
+				'post_type' => $post_type,
+			];
+
+			/**
+			 * Broadcast that a relevant Contact is about to be updated.
+			 *
+			 * @since 0.4.5
+			 *
+			 * @param array $args The array of CiviCRM params.
+			 */
+			do_action( 'civicrm_acf_integration_mapper_contact_pre_edit', $args );
+
+		}
 
 		// Reinstate WordPress callbacks.
 		$this->hooks_wordpress_add();
@@ -424,6 +426,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the CiviCRM params.
 		$args = [
 			'op' => $op,
@@ -431,9 +436,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a relevant Contact has been created.
@@ -473,6 +475,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the CiviCRM params.
 		$args = [
 			'op' => $op,
@@ -501,9 +506,6 @@ class CiviCRM_ACF_Integration_Mapper {
 				$args['extra'][$property] = $objectRef->$property;
 			}
 		}
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a relevant Contact has been updated.
@@ -546,6 +548,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the CiviCRM params.
 		$args = [
 			'op' => $op,
@@ -553,9 +558,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Email has been updated.
@@ -599,6 +601,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -606,9 +611,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Website is about to be updated.
@@ -643,6 +645,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the CiviCRM params.
 		$args = [
 			'op' => $op,
@@ -650,9 +655,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Website has been updated.
@@ -691,6 +693,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the CiviCRM params.
 		$args = [
 			'op' => $op,
@@ -698,9 +703,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'entityID' => $entityID,
 			'custom_fields' => $custom_fields,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a set of CiviCRM Custom Fields has been updated.
@@ -748,6 +750,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -755,9 +760,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Relationship is about to be updated.
@@ -797,6 +799,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -804,9 +809,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Relationship has been created.
@@ -846,6 +848,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -853,9 +858,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Contact's Relationship has been updated.
@@ -895,6 +897,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -902,9 +907,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Relationship has been deleted.
@@ -948,6 +950,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -955,9 +960,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Address is about to be updated.
@@ -997,6 +999,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -1004,9 +1009,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Address has been created.
@@ -1046,6 +1048,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -1053,9 +1058,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Address has been updated.
@@ -1095,6 +1097,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -1102,9 +1107,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Address has been deleted.
@@ -1148,6 +1150,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'op' => $op,
@@ -1155,9 +1160,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 		];
-
-		// Remove WordPress callbacks to prevent recursion.
-		$this->hooks_wordpress_remove();
 
 		/**
 		 * Broadcast that a CiviCRM Group has been deleted.
@@ -1201,14 +1203,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
-		// Let's make an array of the params.
-		$args = [
-			'op' => $op,
-			'objectName' => $objectName,
-			'objectId' => $objectId,
-			'objectRef' => $objectRef,
-		];
-
 		// Bail if there are no Contacts.
 		if ( empty( $objectRef ) ) {
 			return;
@@ -1216,6 +1210,14 @@ class CiviCRM_ACF_Integration_Mapper {
 
 		// Remove WordPress callbacks to prevent recursion.
 		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
 
 		/**
 		 * Broadcast that Contacts have been added to a CiviCRM Group.
@@ -1255,14 +1257,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
-		// Let's make an array of the params.
-		$args = [
-			'op' => $op,
-			'objectName' => $objectName,
-			'objectId' => $objectId,
-			'objectRef' => $objectRef,
-		];
-
 		// Bail if there are no Contacts.
 		if ( empty( $objectRef ) ) {
 			return;
@@ -1270,6 +1264,14 @@ class CiviCRM_ACF_Integration_Mapper {
 
 		// Remove WordPress callbacks to prevent recursion.
 		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
 
 		/**
 		 * Broadcast that Contacts have been deleted from a CiviCRM Group.
@@ -1313,14 +1315,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
-		// Let's make an array of the params.
-		$args = [
-			'op' => $op,
-			'objectName' => $objectName,
-			'objectId' => $objectId,
-			'objectRef' => $objectRef,
-		];
-
 		// Bail if there are no Contacts.
 		if ( empty( $objectRef ) ) {
 			return;
@@ -1328,6 +1322,14 @@ class CiviCRM_ACF_Integration_Mapper {
 
 		// Remove WordPress callbacks to prevent recursion.
 		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
 
 		/**
 		 * Broadcast that Contacts have rejoined a CiviCRM Group.
@@ -1365,15 +1367,15 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'post_id' => $post_id,
 			'post' => $post,
 			'update' => $update,
 		];
-
-		// Remove CiviCRM callbacks to prevent recursion.
-		$this->hooks_civicrm_remove();
 
 		/**
 		 * Broadcast that a WordPress Post has been saved.
@@ -1405,13 +1407,13 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'post_id' => $post_id,
 		];
-
-		// Remove CiviCRM callbacks to prevent recursion.
-		$this->hooks_civicrm_remove();
 
 		/**
 		 * Broadcast that ACF Fields have been saved for a Post.
@@ -1450,15 +1452,15 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'term_id' => $term_id,
 			'tt_id' => $tt_id,
 			'taxonomy' => $taxonomy,
 		];
-
-		// Remove CiviCRM callbacks to prevent recursion.
-		$this->hooks_civicrm_remove();
 
 		/**
 		 * Broadcast that a WordPress Term has been created.
@@ -1491,14 +1493,14 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'term_id' => $term_id,
 			'taxonomy' => $taxonomy,
 		];
-
-		// Remove CiviCRM callbacks to prevent recursion.
-		$this->hooks_civicrm_remove();
 
 		/**
 		 * Broadcast that a WordPress Term is about to be edited.
@@ -1532,15 +1534,15 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'term_id' => $term_id,
 			'tt_id' => $tt_id,
 			'taxonomy' => $taxonomy,
 		];
-
-		// Remove CiviCRM callbacks to prevent recursion.
-		$this->hooks_civicrm_remove();
 
 		/**
 		 * Broadcast that a WordPress Term has been edited.
@@ -1575,6 +1577,9 @@ class CiviCRM_ACF_Integration_Mapper {
 			return;
 		}
 
+		// Remove CiviCRM callbacks to prevent recursion.
+		$this->hooks_civicrm_remove();
+
 		// Let's make an array of the params.
 		$args = [
 			'term_id' => $term_id,
@@ -1582,9 +1587,6 @@ class CiviCRM_ACF_Integration_Mapper {
 			'taxonomy' => $taxonomy,
 			'deleted_term' => $deleted_term,
 		];
-
-		// Remove CiviCRM callbacks to prevent recursion.
-		$this->hooks_civicrm_remove();
 
 		/**
 		 * Broadcast that a WordPress Term has been deleted.

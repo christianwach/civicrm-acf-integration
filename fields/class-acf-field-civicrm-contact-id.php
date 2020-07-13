@@ -199,7 +199,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 
 		// Get Contact ID for this Post.
 		if ( empty( $value ) ) {
-			$contact_id = $this->plugin->post->is_mapped( $post_id );
+			$contact_id = $this->plugin->post->is_mapped_to_contact( $post_id );
 			if ( $contact_id !== false ) {
 				$value = $contact_id;
 			}
@@ -226,7 +226,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 
 		// Assign Contact ID for this Post if empty.
 		if ( empty( $value ) ) {
-			$contact_id = $this->plugin->post->is_mapped( $post_id );
+			$contact_id = $this->plugin->post->is_mapped_to_contact( $post_id );
 			if ( $contact_id !== false ) {
 				$value = $contact_id;
 			}
