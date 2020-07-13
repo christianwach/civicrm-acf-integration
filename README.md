@@ -1,6 +1,21 @@
 CiviCRM ACF Integration
 =======================
 
+**Contributors:** [needle](https://profiles.wordpress.org/needle/)
+**Donate link:** https://www.paypal.me/interactivist
+**Tags:** civicrm, acf, sync
+**Requires at least:** 4.9
+**Tested up to:** 5.5
+**Stable tag:** 0.7.1
+**License:** GPLv2 or later
+**License URI:** http://www.gnu.org/licenses/gpl-2.0.html
+
+Enables integration between CiviCRM Entities and WordPress Entities with data synced via Advanced Custom Fields.
+
+---
+
+### Description ###
+
 *CiviCRM ACF Integration* is a WordPress plugin that enables integration between CiviCRM Entities and WordPress Entities with data synced via Advanced Custom Fields.
 
 Please be aware that this plugin is at an early stage of development and — although it is limited in its coverage of the entities that can be linked — it is fairly comprehensive in its mapping of the built-in CiviCRM *Custom Field Types* with their corresponding ACF *Field Types*.
