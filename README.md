@@ -148,7 +148,10 @@ Unless you disable the CiviCRM Shortcode on a Post Type (via the settings page i
 
 #### Credits ####
 
-Many thanks to [Ryan Waterbury](https://github.com/onedogsolutions) of [One Dog Solutions](https://onedog.solutions/) for funding the initial development of this plugin.
+Many thanks to:
+
+* [Ryan Waterbury](https://github.com/onedogsolutions) of [One Dog Solutions](https://onedog.solutions/) for funding the initial development of this plugin.
+* [Tadpole Collective](https://tadpole.cc/) for funding the integration of CiviCRM Groups with WordPress Terms and the development of Manual Sync functionality.
 
 ---
 
