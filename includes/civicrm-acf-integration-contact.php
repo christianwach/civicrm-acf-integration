@@ -966,10 +966,32 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		// Always assign Post Title to Contact "display_name".
 		$contact_data['display_name'] = $post->post_title;
 
-		// Retrieve and assign Contact Types.
+		// Retrieve Contact Type hierarchy for this Post Type.
 		$contact_types = $this->civicrm->contact_type->hierarchy_get_for_post_type( $post->post_type );
-		$contact_data['contact_type'] = $contact_types['type'];
-		$contact_data['contact_sub_type'] = $contact_types['subtype'];
+
+		// If this is a new Contact.
+		if ( empty( $contact_id ) ) {
+
+			// Assign new Contact Type data.
+			$contact_data['contact_type'] = $contact_types['type'];
+			$contact_data['contact_sub_type'] = $contact_types['subtype'];
+
+		} else {
+
+			// Get the full Contact data.
+			$contact = $this->get_by_id( $contact_id );
+
+			// Get current Contact Type hierarchy for the Contact.
+			$hierarchy = $this->civicrm->contact_type->hierarchy_get_for_contact( $contact );
+
+			// Contact Type is always the same.
+			$contact_data['contact_type'] = $hierarchy['type'];
+
+			// Merge existing and new Contact Subtype data.
+			$subtypes = array_unique( array_merge( $hierarchy['subtype'], $contact_types['subtype'] ) );
+			$contact_data['contact_sub_type'] = $subtypes;
+
+		}
 
 		// Set a status for the Contact depending on the Post status.
 		if ( $post->post_status == 'trash' ) {
