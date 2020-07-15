@@ -1118,8 +1118,15 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	 */
 	public function terms_update_for_group_contacts( $group_id, $contact_ids, $op ) {
 
-		// Get term IDs that are synced to this Group ID.
+		// Get Term IDs that are synced to this Group ID.
 		$terms_for_group = $this->terms_get_by_group_id( $group_id );
+
+		// Bail if there are none.
+		if ( empty( $terms_for_group ) ) {
+			return;
+		}
+
+		// Get the just the Term IDs.
 		$term_ids_for_group = wp_list_pluck( $terms_for_group, 'term_id' );
 
 		// Loop through added Contacts.
