@@ -964,7 +964,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		}
 
 		// Always assign Post Title to Contact "display_name".
-		$contact_data['display_name'] = $post->post_title;
+		if ( empty( $post->post_title ) ) {
+			$contact_data['display_name'] = __( 'Name not set', 'civicrm-acf-integration' );
+		} else {
+			$contact_data['display_name'] = $post->post_title;
+		}
 
 		// Retrieve Contact Type hierarchy for this Post Type.
 		$contact_types = $this->civicrm->contact_type->hierarchy_get_for_post_type( $post->post_type );
