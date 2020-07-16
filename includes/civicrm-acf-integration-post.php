@@ -922,8 +922,8 @@ class CiviCRM_ACF_Integration_Post {
 			return $post;
 		}
 
-		// Bail if this is an auto-draft.
-		if ( $post_obj->post_status == 'auto-draft' ) {
+		// Bail if this is a draft or an auto-draft.
+		if ( $post_obj->post_status == 'draft' OR $post_obj->post_status == 'auto-draft' ) {
 			return $post;
 		}
 
@@ -937,7 +937,7 @@ class CiviCRM_ACF_Integration_Post {
 			return $post;
 		}
 
-		// The Post it should be synced.
+		// The Post should be synced.
 		$post = $post_obj;
 
 		// --<
