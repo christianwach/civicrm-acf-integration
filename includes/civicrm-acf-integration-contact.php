@@ -997,6 +997,31 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 		}
 
+		// Flatten the hierarchy.
+		$flattened = $this->civicrm->contact_type->hierarchy_separate( $contact_types );
+
+		// Are all Subtypes empty?
+		$empty_subtype = true;
+		foreach( $flattened AS $flat ) {
+			if ( ! empty( $flat['subtype'] ) ) {
+				$empty_subtype = false;
+				break;
+			}
+		}
+
+		// Remove Subtype when empty.
+		if ( $empty_subtype === true ) {
+			unset( $contact_data['contact_sub_type'] );
+		}
+
+		// Set mandatory fields for Contacts depending on their Contact Type.
+		if ( $contact_data['contact_type'] == 'Organization' ) {
+			$contact_data['organization_name'] = $contact_data['display_name'];
+		}
+		if ( $contact_data['contact_type'] == 'Household' ) {
+			$contact_data['household_name'] = $contact_data['display_name'];
+		}
+
 		// Set a status for the Contact depending on the Post status.
 		if ( $post->post_status == 'trash' ) {
 			$contact_data['is_deleted'] = 1;
