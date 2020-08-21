@@ -53,6 +53,7 @@ class CiviCRM_ACF_Integration_Mapper {
 		'mm/dd' => 'm/d',
 		'dd-mm' => 'd-m',
 		'M yy' => 'm Y',
+		'M Y' => 'm Y',
 		'yy' => 'Y',
 	];
 
@@ -223,6 +224,13 @@ class CiviCRM_ACF_Integration_Mapper {
 		add_action( 'civicrm_pre', [ $this, 'group_contacts_deleted' ], 10, 4 );
 		add_action( 'civicrm_pre', [ $this, 'group_contacts_rejoined' ], 10, 4 );
 
+		// Intercept Activity updates in CiviCRM.
+		add_action( 'civicrm_pre', [ $this, 'activity_pre_create' ], 10, 4 );
+		add_action( 'civicrm_pre', [ $this, 'activity_pre_edit' ], 10, 4 );
+		add_action( 'civicrm_post', [ $this, 'activity_created' ], 10, 4 );
+		add_action( 'civicrm_post', [ $this, 'activity_edited' ], 10, 4 );
+		add_action( 'civicrm_post', [ $this, 'activity_deleted' ], 10, 4 );
+
 	}
 
 
@@ -265,10 +273,17 @@ class CiviCRM_ACF_Integration_Mapper {
 		// Remove Group update hooks.
 		remove_action( 'civicrm_pre', array( $this, 'group_deleted_pre' ), 10 );
 
-		// Intercept Group Membership update hooks.
+		// Remove Group Membership update hooks.
 		remove_action( 'civicrm_pre', [ $this, 'group_contacts_created' ], 10 );
 		remove_action( 'civicrm_pre', [ $this, 'group_contacts_deleted' ], 10 );
 		remove_action( 'civicrm_pre', [ $this, 'group_contacts_rejoined' ], 10 );
+
+		// Remove Activity update hooks.
+		remove_action( 'civicrm_pre', [ $this, 'activity_pre_create' ], 10 );
+		remove_action( 'civicrm_pre', [ $this, 'activity_pre_edit' ], 10 );
+		remove_action( 'civicrm_post', [ $this, 'activity_created' ], 10 );
+		remove_action( 'civicrm_post', [ $this, 'activity_edited' ], 10 );
+		remove_action( 'civicrm_post', [ $this, 'activity_deleted' ], 10 );
 
 	}
 
@@ -1339,6 +1354,298 @@ class CiviCRM_ACF_Integration_Mapper {
 		 * @param array $args The array of CiviCRM params.
 		 */
 		do_action( 'civicrm_acf_integration_mapper_group_contacts_rejoined', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Fires just before a CiviCRM Activity is created.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function activity_pre_create( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if not the context we want.
+		if ( $op != 'create' ) {
+			return;
+		}
+
+		// Bail if this is not an Activity.
+		if ( $objectName != 'Activity' ) {
+			return;
+		}
+
+		// Cast as object for consistency.
+		if ( ! is_object( $objectRef ) ) {
+			$objectRef = (object) $objectRef;
+		}
+
+		// Bail if this Activity's Activity Type is not mapped.
+		$post_type = $this->plugin->civicrm->activity->is_mapped( $objectRef );
+		if ( $post_type === false ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the CiviCRM params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+			'post_type' => $post_type,
+		];
+
+		/**
+		 * Broadcast that a relevant Activity is about to be created.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_activity_pre_create', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Fires just before a CiviCRM Entity is updated.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function activity_pre_edit( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if not the context we want.
+		if ( $op != 'edit' ) {
+			return;
+		}
+
+		// Bail if this is not an Activity.
+		if ( $objectName != 'Activity' ) {
+			return;
+		}
+
+		// Cast as object for consistency.
+		if ( ! is_object( $objectRef ) ) {
+			$objectRef = (object) $objectRef;
+		}
+
+		// Bail if this Activity's Activity Type is not mapped.
+		$post_type = $this->plugin->civicrm->activity->is_mapped( $objectRef );
+		if ( $post_type === false ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the CiviCRM params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+			'post_type' => $post_type,
+		];
+
+		/**
+		 * Broadcast that a relevant Activity is about to be updated.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_activity_pre_edit', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Create a WordPress Post when a CiviCRM Activity is created.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function activity_created( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if it's not the "create" operation.
+		if ( $op != 'create' ) {
+			return;
+		}
+
+		// Bail if this is not an Activity.
+		if ( $objectName != 'Activity' ) {
+			return;
+		}
+
+		// Cast as object for consistency.
+		if ( ! is_object( $objectRef ) ) {
+			$objectRef = (object) $objectRef;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the CiviCRM params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a relevant Activity has been created.
+		 *
+		 * @since 0.4.5
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_activity_created', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Update a WordPress Post when a CiviCRM Activity is updated.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function activity_edited( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if it's not an "edit" operation.
+		if ( $op != 'edit' ) {
+			return;
+		}
+
+		// Bail if this is not an Activity.
+		if ( $objectName != 'Activity' ) {
+			return;
+		}
+
+		// Bail if it's not an Activity.
+		if ( ! ( $objectRef instanceof CRM_Activity_DAO_Activity ) ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the CiviCRM params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a relevant Activity has been updated.
+		 *
+		 * Used internally to:
+		 *
+		 * - Update a WordPress Post
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_activity_edited', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Activity has been deleted.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function activity_deleted( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if not the context we want.
+		if ( $op != 'delete' ) {
+			return;
+		}
+
+		// Bail if this is not an Activity.
+		if ( $objectName != 'Activity' ) {
+			return;
+		}
+
+		// Cast as object for consistency.
+		if ( ! is_object( $objectRef ) ) {
+			$objectRef = (object) $objectRef;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a CiviCRM Activity has been deleted.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_activity_deleted', $args );
 
 		// Reinstate WordPress callbacks.
 		$this->hooks_wordpress_add();

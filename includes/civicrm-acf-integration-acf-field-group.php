@@ -83,9 +83,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 		// Update mapped Fields when Field Group is saved.
 		add_action( 'acf/update_field_group', [ $this, 'field_group_updated' ] );
 
-		// Inspect load_field_group hook.
-		//add_action( 'acf/load_field_group', [ $this, 'field_group_modify' ] );
-
 	}
 
 
@@ -174,7 +171,7 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 		foreach( $fields AS $field ) {
 
 			// Skip if the CiviCRM Field key isn't there or isn't populated.
-			$key = $this->plugin->civicrm->contact->acf_field_key_get();
+			$key = $this->plugin->civicrm->acf_field_key_get();
 			if ( ! array_key_exists( $key, $field ) OR empty( $field[$key] ) ) {
 				continue;
 			}
@@ -194,29 +191,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 			acf_update_field( $field );
 
 		}
-
-		// --<
-		return $field_group;
-
-	}
-
-
-
-	/**
-	 * Modify Field Groups.
-	 *
-	 * @since 0.3
-	 *
-	 * @param array $field_group The existing field group data array.
-	 * @return array $field_group The modified field group data array.
-	 */
-	public function field_group_modify( $field_group ) {
-
-		// Get field key.
-		$field_key = $this->plugin->civicrm->contact_type->acf_field_key_get();
-
-		// Add our setting.
-		$field_group[$field_key] = '';
 
 		// --<
 		return $field_group;

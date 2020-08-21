@@ -154,17 +154,22 @@ class CiviCRM_ACF_Integration_ACF_Field {
 			// Add their Field "name" to the return.
 			foreach( $fields_in_group AS $field_in_group ) {
 
-				// Get the CiviCRM Custom Field and Contact Field.
-				$custom_field_id = $this->plugin->civicrm->contact->custom_field_id_get( $field_in_group );
-				$contact_field_name = $this->plugin->civicrm->contact->contact_field_name_get( $field_in_group );
+				// Get the CiviCRM Custom Field and add if it has a reference to a CiviCRM Field.
+				$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field_in_group );
+				if ( ! empty( $custom_field_id ) ) {
+					$acf_fields['custom'][$field_in_group['name']] = $custom_field_id;
+				}
 
-				// Add if it has a reference to a CiviCRM Field.
-				if ( ! empty( $custom_field_id ) OR ! empty( $contact_field_name ) ) {
-					if ( ! empty( $custom_field_id ) ) {
-						$acf_fields['custom'][$field_in_group['name']] = $custom_field_id;
-					} else {
-						$acf_fields['contact'][$field_in_group['name']] = $contact_field_name;
-					}
+				// Get the CiviCRM Contact Field and add if it has a reference to a CiviCRM Field.
+				$contact_field_name = $this->plugin->civicrm->contact->contact_field_name_get( $field_in_group );
+				if ( ! empty( $contact_field_name ) ) {
+					$acf_fields['contact'][$field_in_group['name']] = $contact_field_name;
+				}
+
+				// Get the CiviCRM Activity Field and add if it has a reference to a CiviCRM Field.
+				$activity_field_name = $this->plugin->civicrm->activity->activity_field_name_get( $field_in_group );
+				if ( ! empty( $activity_field_name ) ) {
+					$acf_fields['activity'][$field_in_group['name']] = $activity_field_name;
 				}
 
 				/**
@@ -247,7 +252,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		}
 
 		// Get the mapped Custom Field ID if present.
-		$custom_field_id = $this->plugin->civicrm->contact->custom_field_id_get( $field );
+		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
 		// Bail if we don't have one.
 		if ( $custom_field_id === false ) {
@@ -437,6 +442,9 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 */
 	public function select_setting_add( $field ) {
 
+		// Get the Activity Fields for this ACF Field.
+		$activity_fields = $this->plugin->civicrm->activity_field->get_for_acf_field( $field );
+
 		// Get the Contact Fields for this CiviCRM Contact Type.
 		$contact_fields = $this->plugin->civicrm->contact_field->get_for_acf_field( $field );
 
@@ -447,12 +455,16 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		$filtered_fields = $this->plugin->civicrm->custom_field->select_settings_filter( $field, $custom_fields );
 
 		// Bail if there are no fields.
-		if ( empty( $filtered_fields ) AND empty( $contact_fields ) ) {
+		if ( empty( $filtered_fields ) AND empty( $contact_fields ) AND empty( $activity_fields ) ) {
 			return;
 		}
 
-		// Get Setting field.
-		$setting = $this->plugin->civicrm->contact->acf_field_get( $filtered_fields, $contact_fields );
+		// Get Setting field based on Entity.
+		if ( ! empty( $activity_fields ) ) {
+			$setting = $this->plugin->civicrm->activity->acf_field_get( $filtered_fields, $activity_fields );
+		} else {
+			$setting = $this->plugin->civicrm->contact->acf_field_get( $filtered_fields, $contact_fields );
+		}
 
 		// Now add it.
 		acf_render_field_setting( $field, $setting );
@@ -472,29 +484,45 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	public function select_setting_modify( $field ) {
 
 		// Get the mapped Custom Field ID if present.
-		$custom_field_id = $this->plugin->civicrm->contact->custom_field_id_get( $field );
+		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
-		// Check for Contact Field if we don't have a Custom Field.
-		if ( $custom_field_id === false ) {
+		// Check for a Custom Field.
+		if ( $custom_field_id !== false ) {
+
+			// Get keyed array of settings.
+			$choices = $this->plugin->civicrm->custom_field->select_choices_get( $custom_field_id );
+
+		} else {
 
 			// Get the mapped Contact Field name if present.
 			$contact_field_name = $this->plugin->civicrm->contact->contact_field_name_get( $field );
 
 			// Bail if we don't have one.
-			if ( $contact_field_name === false ) {
-				return $field;
+			if ( $contact_field_name !== false ) {
+
+				// Get keyed array of settings.
+				$choices = $this->plugin->civicrm->contact_field->select_choices_get( $contact_field_name );
+
+				// "Prefix" and "Suffix" are optional.
+				$field['allow_null'] = 1;
+
+			} else {
+
+				// Get the mapped Activity Field name if present.
+				$activity_field_name = $this->plugin->civicrm->activity->activity_field_name_get( $field );
+
+				// Bail if we don't have one.
+				if ( $activity_field_name !== false ) {
+
+					// Get keyed array of settings.
+					$choices = $this->plugin->civicrm->activity_field->select_choices_get( $activity_field_name );
+
+					// These are all optional.
+					$field['allow_null'] = 1;
+
+				}
+
 			}
-
-			// Get keyed array of settings.
-			$choices = $this->plugin->civicrm->contact_field->select_choices_get( $contact_field_name );
-
-			// "Prefix" and "Suffix" are optional.
-			$field['allow_null'] = 1;
-
-		} else {
-
-			// Get keyed array of settings.
-			$choices = $this->plugin->civicrm->custom_field->select_choices_get( $custom_field_id );
 
 		}
 
@@ -558,7 +586,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	public function radio_setting_modify( $field ) {
 
 		// Get the mapped Custom Field ID if present.
-		$custom_field_id = $this->plugin->civicrm->contact->custom_field_id_get( $field );
+		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
 		// Check for Contact Field if we don't have a Custom Field.
 		if ( $custom_field_id === false ) {
@@ -647,7 +675,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	public function checkbox_setting_modify( $field ) {
 
 		// Get the mapped Custom Field ID if present.
-		$custom_field_id = $this->plugin->civicrm->contact->custom_field_id_get( $field );
+		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
 		// Bail if we don't have one.
 		if ( $custom_field_id === false ) {
@@ -791,7 +819,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	public function date_picker_setting_modify( $field ) {
 
 		// Get the mapped Custom Field ID if present.
-		$custom_field_id = $this->plugin->civicrm->contact->custom_field_id_get( $field );
+		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
 		// Check for Contact Field if we don't have a Custom Field.
 		if ( $custom_field_id === false ) {
@@ -853,22 +881,29 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 */
 	public function date_time_picker_setting_add( $field ) {
 
-		// Get the Contact Fields for this CiviCRM Contact Type.
+		// Get the Activity Fields for this ACF Field.
+		$activity_fields = $this->plugin->civicrm->activity_field->get_for_acf_field( $field );
+
+		// Get the Contact Fields for this ACF Field.
 		$contact_fields = $this->plugin->civicrm->contact_field->get_for_acf_field( $field );
 
-		// Get the Custom Fields for this CiviCRM Contact Type.
+		// Get the Custom Fields for this ACF Field.
 		$custom_fields = $this->plugin->civicrm->custom_field->get_for_acf_field( $field );
 
-		// Filter the Custom Fields for this CiviCRM Contact Type.
+		// Filter the Custom Fields for this ACF Field.
 		$filtered_fields = $this->plugin->civicrm->custom_field->date_time_settings_filter( $field, $custom_fields );
 
 		// Bail if there are no fields.
-		if ( empty( $filtered_fields ) AND empty( $contact_fields ) ) {
+		if ( empty( $filtered_fields ) AND empty( $contact_fields ) AND empty( $activity_fields ) ) {
 			return;
 		}
 
-		// Get Setting field.
-		$setting = $this->plugin->civicrm->contact->acf_field_get( $filtered_fields, $contact_fields );
+		// Get Setting field based on Entity.
+		if ( ! empty( $activity_fields ) ) {
+			$setting = $this->plugin->civicrm->activity->acf_field_get( $filtered_fields, $activity_fields );
+		} else {
+			$setting = $this->plugin->civicrm->contact->acf_field_get( $filtered_fields, $contact_fields );
+		}
 
 		// Now add it.
 		acf_render_field_setting( $field, $setting );
@@ -891,15 +926,25 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	public function date_time_picker_setting_modify( $field ) {
 
 		// Get the mapped Custom Field ID if present.
-		$custom_field_id = $this->plugin->civicrm->contact->custom_field_id_get( $field );
+		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
-		// Bail if we don't have one.
-		if ( $custom_field_id === false ) {
-			return $field;
+		// Apply settings if we have one.
+		if ( $custom_field_id !== false ) {
+			$field = $this->plugin->civicrm->custom_field->date_time_settings_get( $field, $custom_field_id );
 		}
 
-		// Apply settings.
-		$field = $this->plugin->civicrm->custom_field->date_time_settings_get( $field, $custom_field_id );
+		// Check Activity settings if we have one.
+		if ( $custom_field_id === false ) {
+
+			// Get the mapped Activity Field name if present.
+			$activity_field_name = $this->plugin->civicrm->activity->activity_field_name_get( $field );
+
+			// Bail if we don't have one.
+			if ( $activity_field_name !== false ) {
+				$field = $this->plugin->civicrm->activity_field->date_time_settings_get( $field, $activity_field_name );
+			}
+
+		}
 
 		// --<
 		return $field;
@@ -1068,6 +1113,9 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 */
 	public function text_setting_add( $field ) {
 
+		// Get the Activity Fields for this ACF Field.
+		$activity_fields = $this->plugin->civicrm->activity_field->get_for_acf_field( $field );
+
 		// Get the Contact Fields for this CiviCRM Contact Type.
 		$contact_fields = $this->plugin->civicrm->contact_field->get_for_acf_field( $field );
 
@@ -1078,12 +1126,16 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		$filtered_fields = $this->plugin->civicrm->custom_field->text_settings_filter( $field, $custom_fields );
 
 		// Bail if there are no fields.
-		if ( empty( $filtered_fields ) AND empty( $contact_fields ) ) {
+		if ( empty( $filtered_fields ) AND empty( $contact_fields ) AND empty( $activity_fields ) ) {
 			return;
 		}
 
-		// Get Setting field.
-		$setting = $this->plugin->civicrm->contact->acf_field_get( $filtered_fields, $contact_fields );
+		// Get Setting field based on Entity.
+		if ( ! empty( $activity_fields ) ) {
+			$setting = $this->plugin->civicrm->activity->acf_field_get( $filtered_fields, $activity_fields );
+		} else {
+			$setting = $this->plugin->civicrm->contact->acf_field_get( $filtered_fields, $contact_fields );
+		}
 
 		// Now add it.
 		acf_render_field_setting( $field, $setting );
@@ -1103,7 +1155,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	public function text_setting_modify( $field ) {
 
 		// Get the mapped Custom Field ID if present.
-		$custom_field_id = $this->plugin->civicrm->contact->custom_field_id_get( $field );
+		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
 		// Check for Contact Field if we don't have a Custom Field.
 		if ( $custom_field_id === false ) {

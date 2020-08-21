@@ -115,7 +115,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
 		// Intercept Post created from Contact events.
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
 
 	}
 
@@ -394,7 +394,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 	 *
 	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
 	 */
-	public function sync_to_post( $args ) {
+	public function contact_sync_to_post( $args ) {
 
 		// Get all Emails for this Contact.
 		$data = $this->emails_get_for_contact( $args['objectId'] );

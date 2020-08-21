@@ -470,13 +470,13 @@ class CiviCRM_ACF_Integration_Post_Tax {
 			/*
 			$e = new Exception;
 			$trace = $e->getTraceAsString();
-			error_log( print_r( array(
+			error_log( print_r( [
 				'method' => __METHOD__,
 				'message' => __( 'Could not add term_meta', 'civicrm-acf-integration' ),
 				'term_id' => $term_id,
 				'group_id' => $group_id,
 				'backtrace' => $trace,
-			), true ) );
+			], true ) );
 			*/
 
 		}
@@ -487,13 +487,13 @@ class CiviCRM_ACF_Integration_Post_Tax {
 			// Log error message.
 			$e = new Exception;
 			$trace = $e->getTraceAsString();
-			error_log( print_r( array(
+			error_log( print_r( [
 				'method' => __METHOD__,
 				'message' => $meta_id->get_error_message(),
 				'term' => $term,
 				'group_id' => $group_id,
 				'backtrace' => $trace,
-			), true ) );
+			], true ) );
 
 			// Also overwrite return.
 			$meta_id = false;
@@ -530,13 +530,13 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		if ( $meta_id === false ) {
 			$e = new Exception;
 			$trace = $e->getTraceAsString();
-			error_log( print_r( array(
+			error_log( print_r( [
 				'method' => __METHOD__,
 				'message' => __( 'Could not update term_meta', 'civicrm-acf-integration' ),
 				'term_id' => $term_id,
 				'group_id' => $group_id,
 				'backtrace' => $trace,
-			), true ) );
+			], true ) );
 		}
 
 		// Log a message if the term_id is ambiguous between taxonomies.
@@ -545,13 +545,13 @@ class CiviCRM_ACF_Integration_Post_Tax {
 			// Log error message.
 			$e = new Exception;
 			$trace = $e->getTraceAsString();
-			error_log( print_r( array(
+			error_log( print_r( [
 				'method' => __METHOD__,
 				'message' => $meta_id->get_error_message(),
 				'term_id' => $term_id,
 				'group_id' => $group_id,
 				'backtrace' => $trace,
-			), true ) );
+			], true ) );
 
 			// Also overwrite return.
 			$meta_id = false;

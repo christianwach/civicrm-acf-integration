@@ -155,7 +155,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		// Intercept Post created, updated (or synced) from Contact events.
 		add_action( 'civicrm_acf_integration_post_created', [ $this, 'post_edited' ], 10 );
 		add_action( 'civicrm_acf_integration_post_edited', [ $this, 'post_edited' ], 10 );
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
 
 	}
 
@@ -174,7 +174,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 	 *
 	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
 	 */
-	public function sync_to_post( $args ) {
+	public function contact_sync_to_post( $args ) {
 
 		// Get Employer ID for this Contact.
 		$employer_id = CRM_Core_DAO::getFieldValue( 'CRM_Contact_DAO_Contact', $args['objectId'], 'employer_id' );

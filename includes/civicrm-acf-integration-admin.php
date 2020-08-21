@@ -57,9 +57,11 @@ class CiviCRM_ACF_Integration_Admin {
 	 * @var object $step_counts The array of item counts to process per AJAX request.
 	 */
 	public $step_counts = array(
-		'post_types' => 10, // Number of Posts per WordPress Post Type.
+		'contact_post_types' => 10, // Number of Contact Posts per WordPress Post Type.
 		'contact_types' => 10, // Number of Contacts per CiviCRM Contact Type.
 		'groups' => 10, // Number of Group Members per CiviCRM Group.
+		'activity_post_types' => 10, // Number of Activity Posts per WordPress Post Type.
+		'activity_types' => 10, // Number of Activities per CiviCRM Activity Type.
 	);
 
 
@@ -156,6 +158,8 @@ class CiviCRM_ACF_Integration_Admin {
 		add_action( 'wp_ajax_sync_posts_to_contacts', array( $this, 'stepped_sync_posts_to_contacts' ) );
 		add_action( 'wp_ajax_sync_contacts_to_posts', array( $this, 'stepped_sync_contacts_to_posts' ) );
 		add_action( 'wp_ajax_sync_groups_to_terms', array( $this, 'stepped_sync_groups_to_terms' ) );
+		add_action( 'wp_ajax_sync_posts_to_activities', array( $this, 'stepped_sync_posts_to_activities' ) );
+		add_action( 'wp_ajax_sync_activities_to_posts', array( $this, 'stepped_sync_activities_to_posts' ) );
 
 	}
 
@@ -239,15 +243,15 @@ class CiviCRM_ACF_Integration_Admin {
 			CIVICRM_ACF_INTEGRATION_VERSION
 		);
 
-		// Get all mapped Post Types.
-		$mapped_post_types = $this->plugin->post_type->get_mapped();
+		// Get all Post Types mapped to Contacts.
+		$mapped_contact_post_types = $this->plugin->post_type->get_mapped( 'contact' );
 
 		// Loop through them and get the data we want.
-		$post_types = [];
-		foreach( $mapped_post_types AS $post_type ) {
-			$post_types[$post_type->name] = [
-				'label' => esc_html( $post_type->label ),
-				'count' => $this->plugin->post_type->post_count( $post_type->name ),
+		$contact_post_types = [];
+		foreach( $mapped_contact_post_types AS $contact_post_type ) {
+			$contact_post_types[$contact_post_type->name] = [
+				'label' => esc_html( $contact_post_type->label ),
+				'count' => $this->plugin->post_type->post_count( $contact_post_type->name ),
 			];
 		}
 
@@ -275,26 +279,54 @@ class CiviCRM_ACF_Integration_Admin {
 			];
 		}
 
+		// Get all Post Types mapped to Activities.
+		$mapped_activity_post_types = $this->plugin->post_type->get_mapped( 'activity' );
+
+		// Loop through them and get the data we want.
+		$activity_post_types = [];
+		foreach( $mapped_activity_post_types AS $activity_post_type ) {
+			$activity_post_types[$activity_post_type->name] = [
+				'label' => esc_html( $activity_post_type->label ),
+				'count' => $this->plugin->post_type->post_count( $activity_post_type->name ),
+			];
+		}
+
+		// Get all mapped Activity Types.
+		$mapped_activity_types = $this->plugin->civicrm->activity_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$activity_types = [];
+		foreach( $mapped_activity_types AS $activity_type ) {
+			$activity_types[$activity_type['value']] = [
+				'label' => esc_html( $activity_type['label'] ),
+				'count' => $this->plugin->civicrm->activity_type->activity_count( $activity_type['value'] ),
+			];
+		}
+
 		// Init settings.
 		$settings = [
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'post_types' => $post_types,
+			'contact_post_types' => $contact_post_types,
 			'contact_types' => $contact_types,
 			'groups' => $groups,
-			'step_post_types' => $this->step_counts['post_types'],
+			'activity_post_types' => $activity_post_types,
+			'activity_types' => $activity_types,
+			'step_contact_post_types' => $this->step_counts['contact_post_types'],
 			'step_contact_types' => $this->step_counts['contact_types'],
 			'step_groups' => $this->step_counts['groups'],
+			'step_activity_post_types' => $this->step_counts['activity_post_types'],
+			'step_activity_types' => $this->step_counts['activity_types'],
 		];
 
 		// Init localisation.
 		$localisation = [];
 
-		// Add Post Types localisation.
-		$localisation['post_types'] = [
+		// Add Contact Post Types localisation.
+		$localisation['contact_post_types'] = [
 			'total' => __( 'Posts to sync: {{total}}', 'civicrm-acf-integration' ),
 			'current' => __( 'Processing posts {{from}} to {{to}}', 'civicrm-acf-integration' ),
 			'complete' => __( 'Processing posts {{from}} to {{to}} complete', 'civicrm-acf-integration' ),
-			'count' => count( $post_types ),
+			'count' => count( $contact_post_types ),
 		];
 
 		// Add Contact Types localisation.
@@ -302,7 +334,7 @@ class CiviCRM_ACF_Integration_Admin {
 			'total' => __( 'Contacts to sync: {{total}}', 'civicrm-acf-integration' ),
 			'current' => __( 'Processing contacts {{from}} to {{to}}', 'civicrm-acf-integration' ),
 			'complete' => __( 'Processing contacts {{from}} to {{to}} complete', 'civicrm-acf-integration' ),
-			'count' => count( $post_types ),
+			'count' => count( $contact_types ),
 		];
 
 		// Add Groups localisation.
@@ -310,7 +342,23 @@ class CiviCRM_ACF_Integration_Admin {
 			'total' => __( 'Group members to sync: {{total}}', 'civicrm-acf-integration' ),
 			'current' => __( 'Processing group members {{from}} to {{to}}', 'civicrm-acf-integration' ),
 			'complete' => __( 'Processing group members {{from}} to {{to}} complete', 'civicrm-acf-integration' ),
-			'count' => count( $post_types ),
+			'count' => count( $groups ),
+		];
+
+		// Add Activity Post Types localisation.
+		$localisation['activity_post_types'] = [
+			'total' => __( 'Posts to sync: {{total}}', 'civicrm-acf-integration' ),
+			'current' => __( 'Processing posts {{from}} to {{to}}', 'civicrm-acf-integration' ),
+			'complete' => __( 'Processing posts {{from}} to {{to}} complete', 'civicrm-acf-integration' ),
+			'count' => count( $activity_post_types ),
+		];
+
+		// Add Activity Types localisation.
+		$localisation['activity_types'] = [
+			'total' => __( 'Activitys to sync: {{total}}', 'civicrm-acf-integration' ),
+			'current' => __( 'Processing activities {{from}} to {{to}}', 'civicrm-acf-integration' ),
+			'complete' => __( 'Processing activities {{from}} to {{to}} complete', 'civicrm-acf-integration' ),
+			'count' => count( $activity_types ),
 		];
 
 		// Add common localisation.
@@ -379,13 +427,13 @@ class CiviCRM_ACF_Integration_Admin {
 			wp_die( __( 'You do not have permission to access this page.', 'civicrm-acf-integration' ) );
 		}
 
-		// Get all mapped Post Types.
-		$mapped_post_types = $this->plugin->post_type->get_mapped();
+		// Get all Post Types mapped to Contacts.
+		$mapped_contact_post_types = $this->plugin->post_type->get_mapped( 'contact' );
 
 		// Loop through them and get the data we want.
-		$post_types = [];
-		foreach( $mapped_post_types AS $post_type ) {
-			$post_types[$post_type->name] = $post_type->label;
+		$contact_post_types = [];
+		foreach( $mapped_contact_post_types AS $contact_post_type ) {
+			$contact_post_types[$contact_post_type->name] = $contact_post_type->label;
 		}
 
 		// Get all mapped Contact Types.
@@ -406,6 +454,24 @@ class CiviCRM_ACF_Integration_Admin {
 			$groups[$group['id']] = $group['title'];
 		}
 
+		// Get all Post Types mapped to Activities.
+		$mapped_activity_post_types = $this->plugin->post_type->get_mapped( 'activity' );
+
+		// Loop through them and get the data we want.
+		$activity_post_types = [];
+		foreach( $mapped_activity_post_types AS $activity_post_type ) {
+			$activity_post_types[$activity_post_type->name] = $activity_post_type->label;
+		}
+
+		// Get all mapped Activity Types.
+		$mapped_activity_types = $this->plugin->civicrm->activity_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$activity_types = [];
+		foreach( $mapped_activity_types AS $activity_type ) {
+			$activity_types[$activity_type['value']] = $activity_type['label'];
+		}
+
 		// Include template file.
 		include( CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/manual-sync.php' );
 
@@ -424,13 +490,13 @@ class CiviCRM_ACF_Integration_Admin {
 	 */
 	public function settings_update_router() {
 
-		// Get all mapped Post Types.
-		$mapped_post_types = $this->plugin->post_type->get_mapped();
+		// Get all Post Types mapped to Contacts.
+		$mapped_contact_post_types = $this->plugin->post_type->get_mapped( 'contact' );
 
 		// Loop through them and get the data we want.
-		$post_types = [];
-		foreach( $mapped_post_types AS $post_type ) {
-			$post_types[$post_type->name] = 'cai_post_to_contact_' . $post_type->name . '_stop';
+		$contact_post_types = [];
+		foreach( $mapped_contact_post_types AS $contact_post_type ) {
+			$contact_post_types[$contact_post_type->name] = 'cai_post_to_contact_' . $contact_post_type->name . '_stop';
 		}
 
 		// Get all mapped Contact Types.
@@ -451,14 +517,32 @@ class CiviCRM_ACF_Integration_Admin {
 			$groups[$group['id']] = 'cai_group_to_term_' . $group['id'] . '_stop';
 		}
 
+		// Get all Post Types mapped to Activities.
+		$mapped_activity_post_types = $this->plugin->post_type->get_mapped( 'activity' );
+
+		// Loop through them and get the data we want.
+		$activity_post_types = [];
+		foreach( $mapped_activity_post_types AS $activity_post_type ) {
+			$activity_post_types[$activity_post_type->name] = 'cai_post_to_activity_' . $activity_post_type->name . '_stop';
+		}
+
+		// Get all mapped Activity Types.
+		$mapped_activity_types = $this->plugin->civicrm->activity_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$activity_types = [];
+		foreach( $mapped_activity_types AS $activity_type ) {
+			$activity_types[$activity_type['id']] = 'cai_activity_to_post_' . $activity_type['id'] . '_stop';
+		}
+
 		// Init stop, continue and sync flags.
 		$stop = false;
 		$continue = false;
 		$sync_type = false;
 		$entity_id = false;
 
-		// Find out if a Post Type button has been pressed.
-		foreach( $post_types AS $post_type => $stop_code ) {
+		// Find out if a Contact Post Type button has been pressed.
+		foreach( $contact_post_types AS $contact_post_type => $stop_code ) {
 
 			// Define replacements.
 			$replacements = [ 'cai_post_to_contact_', '_stop' ];
@@ -466,7 +550,7 @@ class CiviCRM_ACF_Integration_Admin {
 			// Was a "Stop Sync" button pressed?
 			if ( isset( $_POST[$stop_code] ) ) {
 				$stop = $stop_code;
-				$sync_type = 'post_type';
+				$sync_type = 'contact_post_type';
 				$entity_id = str_replace( $replacements, '', $stop_code );
 				break;
 			}
@@ -475,7 +559,7 @@ class CiviCRM_ACF_Integration_Admin {
 			$button = str_replace( '_stop', '', $stop_code );
 			if ( isset( $_POST[$button] ) ) {
 				$continue = $button;
-				$sync_type = 'post_type';
+				$sync_type = 'contact_post_type';
 				$entity_id = str_replace( $replacements, '', $stop_code );
 				break;
 			}
@@ -536,6 +620,58 @@ class CiviCRM_ACF_Integration_Admin {
 			}
 		}
 
+		// Find out if an Activity Post Type button has been pressed.
+		foreach( $activity_post_types AS $activity_post_type => $stop_code ) {
+
+			// Define replacements.
+			$replacements = [ 'cai_post_to_activity_', '_stop' ];
+
+			// Was a "Stop Sync" button pressed?
+			if ( isset( $_POST[$stop_code] ) ) {
+				$stop = $stop_code;
+				$sync_type = 'activity_post_type';
+				$entity_id = str_replace( $replacements, '', $stop_code );
+				break;
+			}
+
+			// Was a "Sync Now" or "Continue Sync" button pressed?
+			$button = str_replace( '_stop', '', $stop_code );
+			if ( isset( $_POST[$button] ) ) {
+				$continue = $button;
+				$sync_type = 'activity_post_type';
+				$entity_id = str_replace( $replacements, '', $stop_code );
+				break;
+			}
+
+		}
+
+		// Find out if an Activity Type button has been pressed.
+		if ( $stop === false AND $continue === false ) {
+			foreach( $activity_types AS $activity_type_id => $stop_code ) {
+
+				// Define replacements.
+				$replacements = [ 'cai_activity_to_post_', '_stop' ];
+
+				// Was a "Stop Sync" button pressed?
+				if ( isset( $_POST[$stop_code] ) ) {
+					$stop = $stop_code;
+					$sync_type = 'activity_type';
+					$entity_id = str_replace( $replacements, '', $stop_code );
+					break;
+				}
+
+				// Was a "Sync Now" or "Continue Sync" button pressed?
+				$button = str_replace( '_stop', '', $stop_code );
+				if ( isset( $_POST[$button] ) ) {
+					$continue = $button;
+					$sync_type = 'activity_type';
+					$entity_id = str_replace( $replacements, '', $stop_code );
+					break;
+				}
+
+			}
+		}
+
 	 	// Bail if no button was pressed.
 		if ( empty( $stop ) AND empty( $continue ) ) {
 			return;
@@ -549,9 +685,11 @@ class CiviCRM_ACF_Integration_Admin {
 
 			// Define slugs.
 			$slugs = [
-				'post_type' => 'post_to_contact_',
+				'contact_post_type' => 'post_to_contact_',
 				'contact_type' => 'contact_to_post_',
 				'group' => 'group_to_term_',
+				'activity_post_type' => 'post_to_activity_',
+				'activity_type' => 'activity_to_post_',
 			];
 
 			// Build key.
@@ -568,8 +706,8 @@ class CiviCRM_ACF_Integration_Admin {
 			return;
 		}
 
-		// Was an Post Type "Sync Now" button pressed?
-		if ( $sync_type == 'post_type' ) {
+		// Was a Contact Post Type "Sync Now" button pressed?
+		if ( $sync_type == 'contact_post_type' ) {
 			$this->stepped_sync_posts_to_contacts( $entity_id );
 		}
 
@@ -581,6 +719,16 @@ class CiviCRM_ACF_Integration_Admin {
 		// Was a Group "Sync Now" button pressed?
 		if ( $sync_type == 'group' ) {
 			$this->stepped_sync_groups_to_terms( $entity_id );
+		}
+
+		// Was an Activity Post Type "Sync Now" button pressed?
+		if ( $sync_type == 'activity_post_type' ) {
+			$this->stepped_sync_posts_to_activities( $entity_id );
+		}
+
+		// Was an Activity Type "Sync Now" button pressed?
+		if ( $sync_type == 'activity_type' ) {
+			$this->stepped_sync_activities_to_posts( $entity_id );
 		}
 
 	}
@@ -597,23 +745,23 @@ class CiviCRM_ACF_Integration_Admin {
 	public function stepped_sync_posts_to_contacts( $entity = null ) {
 
 		// Get all mapped Post Types.
-		$mapped_post_types = $this->plugin->post_type->get_mapped();
+		$mapped_contact_post_types = $this->plugin->post_type->get_mapped( 'contact' );
 
 		// Loop through them and get the data we want.
-		$post_types = [];
-		foreach( $mapped_post_types AS $post_type ) {
-			$post_types[] = $post_type->name;
+		$contact_post_types = [];
+		foreach( $mapped_contact_post_types AS $contact_post_type ) {
+			$contact_post_types[] = $contact_post_type->name;
 		}
 
 		// Sanitise input.
 		if ( ! wp_doing_ajax() ) {
-			$post_type = empty( $entity ) ? '' : $entity;
+			$contact_post_type = empty( $entity ) ? '' : $entity;
 		} else {
-			$post_type = isset( $_POST['entity_id'] ) ? trim( $_POST['entity_id'] ) : '';
+			$contact_post_type = isset( $_POST['entity_id'] ) ? trim( $_POST['entity_id'] ) : '';
 		}
 
 		// Sanity check input.
-		if ( ! in_array( $post_type, $post_types ) ) {
+		if ( ! in_array( $contact_post_type, $contact_post_types ) ) {
 
 			// Set finished flag.
 			$data['finished'] = 'true';
@@ -625,7 +773,7 @@ class CiviCRM_ACF_Integration_Admin {
 		}
 
 		// Build key.
-		$key = 'post_to_contact_' . $post_type;
+		$key = 'post_to_contact_' . $contact_post_type;
 
 		// If this is an AJAX request, check security.
 		$result = true;
@@ -634,7 +782,7 @@ class CiviCRM_ACF_Integration_Admin {
 		}
 
 		// If we get an error.
-		if ( $post_type === '' OR $result === false ) {
+		if ( $contact_post_type === '' OR $result === false ) {
 
 			// Set finished flag.
 			$data['finished'] = 'true';
@@ -650,13 +798,13 @@ class CiviCRM_ACF_Integration_Admin {
 
 		// Construct args.
 		$args = [
-			'post_type' => $post_type,
+			'post_type' => $contact_post_type,
 			'no_found_rows' => true,
-			'numberposts' => $this->step_counts['post_types'],
+			'numberposts' => $this->step_counts['contact_post_types'],
 			'offset' => $offset,
 		];
 
-		// Get all terms.
+		// Get all posts.
 		$posts = get_posts( $args );
 
 		// If we get results.
@@ -666,10 +814,10 @@ class CiviCRM_ACF_Integration_Admin {
 			$data['finished'] = 'false';
 
 			// Are there less items than the step count?
-			if ( count( $posts ) < $this->step_counts['post_types'] ) {
+			if ( count( $posts ) < $this->step_counts['contact_post_types'] ) {
 				$diff = count( $posts );
 			} else {
-				$diff = $this->step_counts['post_types'];
+				$diff = $this->step_counts['contact_post_types'];
 			}
 
 			// Set from and to flags.
@@ -696,13 +844,13 @@ class CiviCRM_ACF_Integration_Admin {
 				 *
 				 * - Update a CiviCRM Contact
 				 * - Update the CiviCRM Custom Fields
-				 * - Update the CiviCRM Group membershipss
+				 * - Update the CiviCRM Group memberships
 				 *
 				 * @since 0.6.4
 				 *
 				 * @param array $args The array of WordPress params.
 				 */
-				do_action( 'civicrm_acf_integration_admin_post_sync', $args );
+				do_action( 'civicrm_acf_integration_admin_contact_post_sync', $args );
 
 				// Let's make an array of params.
 				$args = [
@@ -720,7 +868,7 @@ class CiviCRM_ACF_Integration_Admin {
 				 *
 				 * @param array $args The array of CiviCRM params.
 				 */
-				do_action( 'civicrm_acf_integration_admin_acf_fields_sync', $args );
+				do_action( 'civicrm_acf_integration_admin_contact_acf_fields_sync', $args );
 
 			}
 
@@ -752,7 +900,7 @@ class CiviCRM_ACF_Integration_Admin {
 	 *
 	 * @since 0.6.4
 	 *
-	 * @param str $entity The identifier for the entity - here it's Contact ID.
+	 * @param str $entity The identifier for the entity - here it's Contact Type ID.
 	 */
 	public function stepped_sync_contacts_to_posts( $entity = null ) {
 
@@ -1003,6 +1151,303 @@ class CiviCRM_ACF_Integration_Admin {
 			 * @param array $args The array of CiviCRM params.
 			 */
 			do_action( 'civicrm_acf_integration_admin_group_sync', $args );
+
+			// Reinstate WordPress callbacks.
+			$this->plugin->mapper->hooks_wordpress_add();
+
+			// Increment offset option.
+			$this->stepped_offset_update( $key, $data['to'] );
+
+		}
+
+		// Send data to browser.
+		$this->send_data( $data );
+
+	}
+
+
+
+	/**
+	 * Stepped synchronisation of WordPress Posts to CiviCRM Activities.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param str $entity The identifier for the entity - here it's Post ID.
+	 */
+	public function stepped_sync_posts_to_activities( $entity = null ) {
+
+		// Get all mapped Post Types.
+		$mapped_activity_post_types = $this->plugin->post_type->get_mapped( 'activity' );
+
+		// Loop through them and get the data we want.
+		$activity_post_types = [];
+		foreach( $mapped_activity_post_types AS $activity_post_type ) {
+			$activity_post_types[] = $activity_post_type->name;
+		}
+
+		// Sanitise input.
+		if ( ! wp_doing_ajax() ) {
+			$activity_post_type = empty( $entity ) ? '' : $entity;
+		} else {
+			$activity_post_type = isset( $_POST['entity_id'] ) ? trim( $_POST['entity_id'] ) : '';
+		}
+
+		// Sanity check input.
+		if ( ! in_array( $activity_post_type, $activity_post_types ) ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Send data to browser.
+			$this->send_data( $data );
+			return;
+
+		}
+
+		// Build key.
+		$key = 'post_to_activity_' . $activity_post_type;
+
+		// If this is an AJAX request, check security.
+		$result = true;
+		if ( wp_doing_ajax() ) {
+			$result = check_ajax_referer( 'cai_' . $key, false, false );
+		}
+
+		// If we get an error.
+		if ( $activity_post_type === '' OR $result === false ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Send data to browser.
+			$this->send_data( $data );
+			return;
+
+		}
+
+		// Get the current offset.
+		$offset = $this->stepped_offset_init( $key );
+
+		// Construct args.
+		$args = [
+			'post_type' => $activity_post_type,
+			'no_found_rows' => true,
+			'numberposts' => $this->step_counts['activity_post_types'],
+			'offset' => $offset,
+		];
+
+		// Get all posts.
+		$posts = get_posts( $args );
+
+		// If we get results.
+		if ( count( $posts ) > 0 ) {
+
+			// Set finished flag.
+			$data['finished'] = 'false';
+
+			// Are there less items than the step count?
+			if ( count( $posts ) < $this->step_counts['activity_post_types'] ) {
+				$diff = count( $posts );
+			} else {
+				$diff = $this->step_counts['activity_post_types'];
+			}
+
+			// Set from and to flags.
+			$data['from'] = intval( $offset );
+			$data['to'] = $data['from'] + $diff;
+
+			// Remove CiviCRM callbacks to prevent recursion.
+			$this->plugin->mapper->hooks_civicrm_remove();
+
+			// Sync each Post in turn.
+			foreach( $posts AS $post ) {
+
+				// Let's make an array of params.
+				$args = [
+					'post_id' => $post->ID,
+					'post' => $post,
+					'update' => true,
+				];
+
+				/**
+				 * Broadcast that the Post must be synced.
+				 *
+				 * Used internally to:
+				 *
+				 * - Update a CiviCRM Activity
+				 * - Update the CiviCRM Custom Fields
+				 *
+				 * @since 0.7.3
+				 *
+				 * @param array $args The array of WordPress params.
+				 */
+				do_action( 'civicrm_acf_integration_admin_activity_post_sync', $args );
+
+				// Let's make an array of params.
+				$args = [
+					'post_id' => $post->ID,
+				];
+
+				/**
+				 * Broadcast that the ACF Fields must be synced.
+				 *
+				 * Used internally to:
+				 *
+				 * - Update the CiviCRM Custom Fields
+				 *
+				 * @since 0.7.3
+				 *
+				 * @param array $args The array of CiviCRM params.
+				 */
+				do_action( 'civicrm_acf_integration_admin_activity_acf_fields_sync', $args );
+
+			}
+
+			// Reinstate CiviCRM callbacks.
+			$this->plugin->mapper->hooks_civicrm_add();
+
+			// Increment offset option.
+			$this->stepped_offset_update( $key, $data['to'] );
+
+		} else {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Delete the option to start from the beginning.
+			$this->stepped_offset_delete( $key );
+
+		}
+
+		// Send data to browser.
+		$this->send_data( $data );
+
+	}
+
+
+
+	/**
+	 * Stepped synchronisation of CiviCRM Activities to WordPress Posts.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param str $entity The identifier for the Entity - here it's Activity Type ID.
+	 */
+	public function stepped_sync_activities_to_posts( $entity = null ) {
+
+		// Init AJAX return.
+		$data = array();
+
+		// Sanitise input.
+		if ( ! wp_doing_ajax() ) {
+			$activity_type_id = is_numeric( $entity ) ? intval( $entity ) : 0;
+		} else {
+			$activity_type_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+		}
+
+		// Build key.
+		$key = 'activity_to_post_' . $activity_type_id;
+
+		// If this is an AJAX request, check security.
+		$result = true;
+		if ( wp_doing_ajax() ) {
+			$result = check_ajax_referer( 'cai_' . $key, false, false );
+		}
+
+		// If we get an error.
+		if ( $activity_type_id === 0 OR $result === false ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Send data to browser.
+			$this->send_data( $data );
+			return;
+
+		}
+
+		// Get the current offset.
+		$offset = $this->stepped_offset_init( $key );
+
+		// Init query result.
+		$result = [];
+
+		// Init CiviCRM.
+		if ( $this->plugin->civicrm->is_initialised() ) {
+
+			// Get the Activity data.
+			$result = $this->plugin->civicrm->activity->activities_chunked_data_get(
+				$activity_type_id,
+				$offset,
+				$this->step_counts['activity_types']
+			);
+
+		} else {
+
+			// Do not allow progress.
+			$result['is_error'] = 1;
+
+		}
+
+		// Did we get an error?
+		$error = false;
+		if ( isset( $result['is_error'] ) AND $result['is_error'] == '1' ) {
+			$error = true;
+		}
+
+		// Finish sync on failure or empty result.
+		if ( $error OR empty( $result['values'] ) ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Delete the option to start from the beginning.
+			$this->stepped_offset_delete( $key );
+
+		} else {
+
+			// Set finished flag.
+			$data['finished'] = 'false';
+
+			// Are there fewer items than the step count?
+			if ( count( $result['values'] ) < $this->step_counts['activity_types'] ) {
+				$diff = count( $result['values'] );
+			} else {
+				$diff = $this->step_counts['activity_types'];
+			}
+
+			// Set "from" and "to" flags.
+			$data['from'] = intval( $offset );
+			$data['to'] = $data['from'] + $diff;
+
+			// Remove WordPress callbacks to prevent recursion.
+			$this->plugin->mapper->hooks_wordpress_remove();
+
+			// Trigger sync for each Activity in turn.
+			foreach( $result['values'] AS $activity ) {
+
+				// Let's make an array of params.
+				$args = [
+					'op' => 'sync',
+					'objectName' => 'Activity',
+					'objectId' => $activity['id'],
+					'objectRef' => (object) $activity,
+				];
+
+				/**
+				 * Broadcast that the Activity must be synced.
+				 *
+				 * Used internally to:
+				 *
+				 * - Update a WordPress Post
+				 *
+				 * @since 0.7.3
+				 *
+				 * @param array $args The array of CiviCRM params.
+				 */
+				do_action( 'civicrm_acf_integration_admin_activity_sync', $args );
+
+			}
 
 			// Reinstate WordPress callbacks.
 			$this->plugin->mapper->hooks_wordpress_add();

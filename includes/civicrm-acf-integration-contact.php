@@ -41,15 +41,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	public $civicrm;
 
 	/**
-	 * "CiviCRM Field" field key in the ACF Field data.
-	 *
-	 * @since 0.3
-	 * @access public
-	 * @var str $acf_field_key The key of the "CiviCRM Field" in the ACF Field data.
-	 */
-	public $acf_field_key = 'field_cacf_civicrm_custom_field';
-
-	/**
 	 * "CiviCRM Field" field value prefix in the ACF Field data.
 	 *
 	 * This distinguishes Contact Fields from Custom Fields.
@@ -59,17 +50,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	 * @var str $contact_field_prefix The prefix of the "CiviCRM Field" value.
 	 */
 	public $contact_field_prefix = 'caicontact_';
-
-	/**
-	 * "CiviCRM Field" field value prefix in the ACF Field data.
-	 *
-	 * This distinguishes Contact Fields from Custom Fields.
-	 *
-	 * @since 0.6.4
-	 * @access public
-	 * @var str $contact_field_prefix The prefix of the "CiviCRM Field" value.
-	 */
-	public $custom_field_prefix = 'caicustom_';
 
 
 
@@ -121,8 +101,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		add_action( 'civicrm_acf_integration_mapper_acf_fields_saved', [ $this, 'acf_fields_saved' ], 10, 1 );
 
 		// Listen for events from Manual Sync that require Contact updates.
-		add_action( 'civicrm_acf_integration_admin_post_sync', [ $this, 'post_sync' ], 10, 1 );
-		add_action( 'civicrm_acf_integration_admin_acf_fields_sync', [ $this, 'acf_fields_sync' ], 10, 1 );
+		add_action( 'civicrm_acf_integration_admin_contact_post_sync', [ $this, 'post_sync' ], 10, 1 );
+		add_action( 'civicrm_acf_integration_admin_contact_acf_fields_sync', [ $this, 'acf_fields_sync' ], 10, 1 );
 
 		// Listen for queries from our Field Group class.
 		add_action( 'civicrm_acf_integration_query_field_group_mapped', [ $this, 'query_field_group_mapped' ], 10, 2 );
@@ -561,7 +541,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			return 0;
 		}
 
-		// Params to query Group membership.
+		// Params to query Contacts.
 		$params = [
 			'version' => 3,
 			'contact_type' => $hierarchy['type'],
@@ -734,7 +714,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		// Bail if none of this Contact's Contact Types is mapped.
 		$post_types = $this->is_mapped( $contact );
 		if ( $post_types === false ) {
-			return;
+			return $is_mapped;
 		}
 
 		// "hook_civicrm_pre" sends $contact['contact_id']
@@ -865,12 +845,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		if ( empty( $contact['id'] ) ) {
 			$e = new Exception;
 			$trace = $e->getTraceAsString();
-			error_log( print_r( array(
+			error_log( print_r( [
 				'method' => __METHOD__,
 				'message' => __( 'A numerical ID must be present to update a Contact.', 'civicrm-acf-integration' ),
 				'contact' => $contact,
 				'backtrace' => $trace,
-			), true ) );
+			], true ) );
 			return false;
 		}
 
@@ -903,12 +883,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		if ( empty( $contact['id'] ) ) {
 			$e = new Exception;
 			$trace = $e->getTraceAsString();
-			error_log( print_r( array(
+			error_log( print_r( [
 				'method' => __METHOD__,
 				'message' => __( 'A numerical ID must be present to delete a Contact.', 'civicrm-acf-integration' ),
 				'contact' => $contact,
 				'backtrace' => $trace,
-			), true ) );
+			], true ) );
 			return false;
 		}
 
@@ -1193,7 +1173,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			$settings = get_field_object( $field, $post_id );
 
 			// Get the CiviCRM Custom Field and Contact Field.
-			$custom_field_id = $this->custom_field_id_get( $settings );
+			$custom_field_id = $this->civicrm->custom_field->custom_field_id_get( $settings );
 			$contact_field_name = $this->contact_field_name_get( $settings );
 
 			// Do we have a synced Custom Field or Contact Field?
@@ -1287,10 +1267,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		}
 
 		// Build Custom Field choices array for dropdown.
+		$custom_field_prefix = $this->civicrm->custom_field_prefix();
 		foreach( $custom_fields AS $custom_group_name => $custom_group ) {
 			$custom_fields_label = esc_attr( $custom_group_name );
 			foreach( $custom_group AS $custom_field ) {
-				$choices[$custom_fields_label][$this->custom_field_prefix . $custom_field['id']] = $custom_field['label'];
+				$choices[$custom_fields_label][$custom_field_prefix . $custom_field['id']] = $custom_field['label'];
 			}
 		}
 
@@ -1306,9 +1287,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 		// Define field.
 		$field = [
-			'key' => $this->acf_field_key_get(),
+			'key' => $this->civicrm->acf_field_key_get(),
 			'label' => __( 'CiviCRM Field', 'civicrm-acf-integration' ),
-			'name' => $this->acf_field_key_get(),
+			'name' => $this->civicrm->acf_field_key_get(),
 			'type' => 'select',
 			'instructions' => __( 'Choose the CiviCRM Field that this ACF Field should sync with. (Optional)', 'civicrm-acf-integration' ),
 			'default_value' => '',
@@ -1330,49 +1311,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 
 	/**
-	 * Get the mapped Custom Field ID if present.
-	 *
-	 * This method should probably be moved elsewhere.
-	 *
-	 * @since 0.3.1
-	 *
-	 * @param array $field The existing field data array.
-	 * @return int|bool $custom_field_id The numeric ID of the Custom Field, or false if none.
-	 */
-	public function custom_field_id_get( $field ) {
-
-		// Init return.
-		$custom_field_id = false;
-
-		// Get the ACF CiviCRM Field key.
-		$acf_field_key = $this->acf_field_key_get();
-
-		// Get the mapped Custom Field ID if present.
-		if ( isset( $field[$acf_field_key] ) ) {
-			if ( false !== strpos( $field[$acf_field_key], $this->custom_field_prefix ) ) {
-				$custom_field_id = absint( str_replace( $this->custom_field_prefix, '', $field[$acf_field_key] ) );
-			}
-		}
-
-		/**
-		 * Filter the Custom Field ID.
-		 *
-		 * @since 0.5
-		 *
-		 * @param int $custom_field_id The existing Custom Field ID.
-		 * @param array $field The array of ACF Field data.
-		 * @return int $custom_field_id The modified Custom Field ID.
-		 */
-		$custom_field_id = apply_filters( 'civicrm_acf_integration_contact_custom_field_id_get', $custom_field_id, $field );
-
-		// --<
-		return $custom_field_id;
-
-	}
-
-
-
-	/**
 	 * Get the mapped Contact Field name if present.
 	 *
 	 * @since 0.4.1
@@ -1386,7 +1324,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		$contact_field_name = false;
 
 		// Get the ACF CiviCRM Field key.
-		$acf_field_key = $this->acf_field_key_get();
+		$acf_field_key = $this->civicrm->acf_field_key_get();
 
 		// Set the mapped Contact Field name if present.
 		if ( isset( $field[$acf_field_key] ) ) {
@@ -1404,26 +1342,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		 * @param array $field The array of ACF Field data.
 		 * @return int $contact_field_name The modified Contact Field name.
 		 */
-		$custom_field_id = apply_filters( 'civicrm_acf_integration_contact_contact_field_name_get', $contact_field_name, $field );
+		$contact_field_name = apply_filters( 'civicrm_acf_integration_contact_contact_field_name_get', $contact_field_name, $field );
 
 		// --<
 		return $contact_field_name;
-
-	}
-
-
-
-	/**
-	 * Getter method for the "CiviCRM Field" key.
-	 *
-	 * @since 0.4.1
-	 *
-	 * @return str $acf_field_key The key of the "CiviCRM Field" in the ACF Field data.
-	 */
-	public function acf_field_key_get() {
-
-		// --<
-		return $this->acf_field_key;
 
 	}
 

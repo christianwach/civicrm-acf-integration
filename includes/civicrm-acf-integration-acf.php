@@ -162,12 +162,18 @@ class CiviCRM_ACF_Integration_ACF {
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-contact.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-yes-no.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-relationship.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-creator.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-target.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-assignee.php';
 
 		// Create fields.
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Creator( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Target( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Assignee( $this );
 
 	}
 

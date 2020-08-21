@@ -66,6 +66,9 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 		 */
 		this.dom_ready = function() {
 
+			// Init listeners.
+			me.listeners();
+
 		};
 
 		// Init localisation array.
@@ -119,6 +122,30 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 		 */
 		this.get_setting = function( identifier ) {
 			return me.settings[identifier];
+		};
+
+		/**
+		 * Add listeners.
+		 *
+		 * @since 0.7.3
+		 */
+		this.listeners = function() {
+
+			// Unbind first to allow repeated calls to this function.
+			$('#civicrm_acf_integration_sync_form').off( 'click', '.cai_trigger' );
+
+			/**
+			 * Listen for clicks on "accordion" triggers.
+			 *
+			 * @since 0.7.3
+			 */
+			$('#civicrm_acf_integration_sync_form').on( 'click', '.cai_trigger', function( event ) {
+
+				// Toggle next cai_wrapper.
+				$(this).next( 'div.cai_wrapper' ).slideToggle( 'slow' );
+
+			});
+
 		};
 
 	};
@@ -333,20 +360,20 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 		this.setup = function() {
 
 			// Define vars.
-			var post_types, contact_types, groups, prop, obj;
+			var contact_post_types, contact_types, groups, prop, obj;
 
 			// WordPress Posts to CiviCRM Contacts.
-			post_types = CiviCRM_ACF_Integration_Sync.settings.get_setting( 'post_types' );
-			for ( prop in post_types ) {
+			contact_post_types = CiviCRM_ACF_Integration_Sync.settings.get_setting( 'contact_post_types' );
+			for ( prop in contact_post_types ) {
 				obj = new CAI_ProgressBar({
 					bar: '#progress-bar-cai_post_to_contact_' + prop,
 					label: '#progress-bar-cai_post_to_contact_' + prop + ' .progress-label',
-					key: 'post_types',
+					key: 'contact_post_types',
 					button: '#cai_post_to_contact_' + prop,
-					step: 'step_post_types',
+					step: 'step_contact_post_types',
 					action: 'sync_posts_to_contacts',
 					entity_id: prop,
-					count: post_types[prop].count
+					count: contact_post_types[prop].count
 				});
 				me.bars.push( obj );
 			}
@@ -379,6 +406,38 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 					action: 'sync_groups_to_terms',
 					entity_id: prop,
 					count: groups[prop].count
+				});
+				me.bars.push( obj );
+			}
+
+			// WordPress Posts to CiviCRM Activities.
+			activity_post_types = CiviCRM_ACF_Integration_Sync.settings.get_setting( 'activity_post_types' );
+			for ( prop in activity_post_types ) {
+				obj = new CAI_ProgressBar({
+					bar: '#progress-bar-cai_post_to_activity_' + prop,
+					label: '#progress-bar-cai_post_to_activity_' + prop + ' .progress-label',
+					key: 'activity_post_types',
+					button: '#cai_post_to_activity_' + prop,
+					step: 'step_activity_post_types',
+					action: 'sync_posts_to_activities',
+					entity_id: prop,
+					count: activity_post_types[prop].count
+				});
+				me.bars.push( obj );
+			}
+
+			// CiviCRM Activities to WordPress Posts.
+			activity_types = CiviCRM_ACF_Integration_Sync.settings.get_setting( 'activity_types' );
+			for ( prop in activity_types ) {
+				obj = new CAI_ProgressBar({
+					bar: '#progress-bar-cai_activity_to_post_' + prop,
+					label: '#progress-bar-cai_activity_to_post_' + prop + ' .progress-label',
+					key: 'activity_types',
+					button: '#cai_activity_to_post_' + prop,
+					step: 'step_activity_types',
+					action: 'sync_activities_to_posts',
+					entity_id: prop,
+					count: activity_types[prop].count
 				});
 				me.bars.push( obj );
 			}

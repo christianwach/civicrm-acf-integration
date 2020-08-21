@@ -92,7 +92,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Group {
 		add_action( 'civicrm_acf_integration_mapper_group_contacts_rejoined', [ $this, 'group_contacts_rejoined' ], 10 );
 
 		// Intercept Post created from Contact events.
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
 
 		// Intercept calls to sync the Group.
 		add_action( 'civicrm_acf_integration_admin_group_sync', [ $this, 'group_sync' ], 10, 1 );
@@ -114,7 +114,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Group {
 	 *
 	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
 	 */
-	public function sync_to_post( $args ) {
+	public function contact_sync_to_post( $args ) {
 
 		// Get "current" Groups for this Contact.
 		$current = $this->groups_get_current_for_contact( $args['objectId'] );

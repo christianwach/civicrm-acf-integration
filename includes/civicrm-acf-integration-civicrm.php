@@ -112,6 +112,49 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	 */
 	public $address;
 
+	/**
+	 * CiviCRM Activity Type object.
+	 *
+	 * @since 0.7.3
+	 * @access public
+	 * @var object $activity_type The CiviCRM Activity Type object.
+	 */
+	public $activity_type;
+
+	/**
+	 * CiviCRM Activity object.
+	 *
+	 * @since 0.7.3
+	 * @access public
+	 * @var object $activity The CiviCRM Activity object.
+	 */
+	public $activity;
+
+	/**
+	 * CiviCRM Activity Field object.
+	 *
+	 * @since 0.7.3
+	 * @access public
+	 * @var object $activity_field The CiviCRM Activity Field object.
+	 */
+	public $activity_field;
+
+	/**
+	 * "CiviCRM Field" field key in the ACF Field data.
+	 *
+	 * This "top level" field key is common to "Contact" and "Activity" Entities
+	 * where the field name prefix distiguishes the target Entity.
+	 *
+	 * @see self::custom_field_prefix()
+	 * @see self::contact_field_prefix()
+	 * @see self::activity_field_prefix()
+	 *
+	 * @since 0.7.3
+	 * @access public
+	 * @var str $acf_field_key The key of the "CiviCRM Field" in the ACF Field data.
+	 */
+	public $acf_field_key = 'field_cacf_civicrm_custom_field';
+
 
 
 	/**
@@ -183,6 +226,9 @@ class CiviCRM_ACF_Integration_CiviCRM {
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-address.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-email.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-website.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity-type.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity-field.php';
 
 	}
 
@@ -211,6 +257,13 @@ class CiviCRM_ACF_Integration_CiviCRM {
 		$this->address = new CiviCRM_ACF_Integration_CiviCRM_Address( $this );
 		$this->email = new CiviCRM_ACF_Integration_CiviCRM_Email( $this );
 		$this->website = new CiviCRM_ACF_Integration_CiviCRM_Website( $this );
+
+		// Init Activity Type.
+		$this->activity_type = new CiviCRM_ACF_Integration_CiviCRM_Activity_Type( $this );
+
+		// Init Activity and Activity Fields.
+		$this->activity = new CiviCRM_ACF_Integration_CiviCRM_Activity( $this );
+		$this->activity_field = new CiviCRM_ACF_Integration_CiviCRM_Activity_Field( $this );
 
 	}
 
@@ -329,6 +382,26 @@ class CiviCRM_ACF_Integration_CiviCRM {
 
 
 
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Getter method for the "CiviCRM Field" key.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @return str $acf_field_key The key of the "CiviCRM Field" in the ACF Field data.
+	 */
+	public function acf_field_key_get() {
+
+		// --<
+		return $this->acf_field_key;
+
+	}
+
+
+
 	/**
 	 * Get ACF Field setting prefix that distinguishes Custom Fields from Contact Fields.
 	 *
@@ -339,7 +412,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	public function custom_field_prefix() {
 
 		// --<
-		return $this->contact->custom_field_prefix;
+		return $this->custom_field->custom_field_prefix;
 
 	}
 
@@ -350,12 +423,28 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	 *
 	 * @since 0.6.4
 	 *
-	 * @return string $custom_field_prefix The prefix of the "CiviCRM Field" value.
+	 * @return string $contact_field_prefix The prefix of the "CiviCRM Field" value.
 	 */
 	public function contact_field_prefix() {
 
 		// --<
 		return $this->contact->contact_field_prefix;
+
+	}
+
+
+
+	/**
+	 * Get ACF Field setting prefix that distinguishes Activity Fields from Custom Fields.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @return string $activity_field_prefix The prefix of the "CiviCRM Field" value.
+	 */
+	public function activity_field_prefix() {
+
+		// --<
+		return $this->activity->activity_field_prefix;
 
 	}
 
@@ -379,14 +468,14 @@ class CiviCRM_ACF_Integration_CiviCRM {
 
 		$e = new Exception;
 		$trace = $e->getTraceAsString();
-		error_log( print_r( array(
+		error_log( print_r( [
 			'method' => __METHOD__,
 			'op' => $op,
 			'objectName' => $objectName,
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 			//'backtrace' => $trace,
-		), true ) );
+		], true ) );
 
 	}
 
@@ -406,14 +495,40 @@ class CiviCRM_ACF_Integration_CiviCRM {
 
 		$e = new Exception;
 		$trace = $e->getTraceAsString();
-		error_log( print_r( array(
+		error_log( print_r( [
 			'method' => __METHOD__,
 			'op' => $op,
 			'objectName' => $objectName,
 			'objectId' => $objectId,
 			'objectRef' => $objectRef,
 			//'backtrace' => $trace,
-		), true ) );
+		], true ) );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Utility for de-nullifying CiviCRM data.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param mixed $value The existing value.
+	 * @return mixed $value The cleaned value.
+	 */
+	public function denullify( $value ) {
+
+		// Catch inconsistent CiviCRM "empty-ish" values.
+		if ( empty( $value ) OR $value == 'null' OR $value == 'NULL' ) {
+			$value = '';
+		}
+
+		// --<
+		return $value;
 
 	}
 

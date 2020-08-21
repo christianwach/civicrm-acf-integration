@@ -41,6 +41,17 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	public $civicrm;
 
 	/**
+	 * "CiviCRM Field" field value prefix in the ACF Field data.
+	 *
+	 * This distinguishes Contact Fields from Custom Fields.
+	 *
+	 * @since 0.6.4
+	 * @access public
+	 * @var str $custom_field_prefix The prefix of the "CiviCRM Field" value.
+	 */
+	public $custom_field_prefix = 'caicustom_';
+
+	/**
 	 * CiviCRM Custom Field data types that can have "Select", "Radio" and
 	 * "CheckBox" HTML subtypes.
 	 *
@@ -124,13 +135,160 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 		add_action( 'civicrm_acf_integration_mapper_custom_edited', [ $this, 'custom_edited' ], 10 );
 
 		// Intercept Post synced from Contact events.
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
+
+		// Intercept Post synced from Activity events.
+		//add_action( 'civicrm_acf_integration_post_activity_sync', [ $this, 'activity_sync_to_post' ], 10 );
 
 		// Intercept CiviCRM Add/Edit Custom Field postSave hook.
 		//add_action( 'civicrm_postSave_civicrm_custom_field', [ $this, 'custom_field_edited' ], 10, 1 );
 
 		// Intercept CiviCRM Add/Edit Option Value postSave hook.
 		//add_action( 'civicrm_postSave_civicrm_option_value', [ $this, 'option_value_edited' ], 10, 1 );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Intercept when a Post has been updated from an Activity via the Mapper.
+	 *
+	 * Sync any associated ACF Fields mapped to Custom Fields.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $args The array of CiviCRM Activity and WordPress Post params.
+	 */
+	public function activity_sync_to_post( $args ) {
+
+		// Get the Custom Fields for this CiviCRM Activity.
+		$custom_fields_for_activity = $this->get_for_activity( $args['objectRef'] );
+
+		// Bail if we don't have any Custom Fields for this Activity.
+		if ( empty( $custom_fields_for_activity ) ) {
+			return;
+		}
+
+		// Get the Custom Field IDs for this Activity.
+		$custom_field_ids = $this->ids_get_by_activity_id( $args['objectId'], $args['post_type'] );
+
+		// Filter the Custom Fields array.
+		$filtered = [];
+		foreach( $custom_field_ids AS $selector => $custom_field_id ) {
+			foreach( $custom_fields_for_activity AS $key => $custom_field_data ) {
+				if ( $custom_field_data['id'] == $custom_field_id ) {
+					$filtered[$selector] = $custom_field_data;
+					break;
+				}
+			}
+		}
+
+		// Extract the Custom Field mappings.
+		$custom_field_mappings = wp_list_pluck( $filtered, 'id' );
+
+		// Get the Custom Field values for this Activity.
+		$custom_field_values = $this->values_get_by_activity_id( $args['objectId'], $custom_field_mappings );
+
+		// Build a final data array.
+		$final = [];
+		foreach( $filtered AS $key => $custom_field ) {
+			$custom_field['value'] = $custom_field_values[$custom_field['id']];
+			$custom_field['type'] = $custom_field['data_type'];
+			$final[$key] = $custom_field;
+		}
+
+		// Let's populate each ACF Field in turn.
+		foreach( $final AS $selector => $field ) {
+
+			// Modify values for ACF prior to update.
+			$value = $this->value_get_for_acf(
+				$field['value'],
+				$field,
+				$selector,
+				$args['post_id']
+			);
+
+			// Update the ACF Field.
+			$this->plugin->acf->field->value_update( $selector, $value, $args['post_id'] );
+
+		}
+
+	}
+
+
+
+	/**
+	 * Get the values for a given CiviCRM Activity ID and set of Custom Fields.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param int $activity_id The numeric ID of the CiviCRM Activity to query.
+	 * @param array $custom_field_ids The Custom Field IDs to query.
+	 * @return array $activity_data An array of Activity data.
+	 */
+	public function values_get_by_activity_id( $activity_id, $custom_field_ids = [] ) {
+
+		// Init return.
+		$activity_data = [];
+
+		// Bail if we have no Custom Field IDs.
+		if ( empty( $custom_field_ids ) ) {
+			return $activity_data;
+		}
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $activity_data;
+		}
+
+		// Format codes.
+		$codes = [];
+		foreach( $custom_field_ids AS $custom_field_id ) {
+			$codes[] = 'custom_' . $custom_field_id;
+		}
+
+		// Define params to get queried Activity.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+			'id' => $activity_id,
+			'return' => $codes,
+			'options' => [
+				'limit' => 0, // No limit.
+			],
+		];
+
+		// Call the API.
+		$result = civicrm_api( 'Activity', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $activity_data;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $activity_data;
+		}
+
+		// Overwrite return.
+		foreach( $result['values'] AS $item ) {
+			foreach( $item AS $key => $value ) {
+				if ( substr( $key, 0, 7 ) == 'custom_' ) {
+					$index = str_replace( 'custom_', '', $key );
+					$activity_data[$index] = $value;
+				}
+			}
+		}
+
+		// Maybe filter here?
+
+		// --<
+		return $activity_data;
 
 	}
 
@@ -149,7 +307,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 *
 	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
 	 */
-	public function sync_to_post( $args ) {
+	public function contact_sync_to_post( $args ) {
 
 		// Get the Custom Fields for this CiviCRM Contact.
 		$custom_fields_for_contact = $this->get_for_contact( $args['objectRef'] );
@@ -476,6 +634,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 		 * Internally, this is used by:
 		 *
 		 * @see CiviCRM_ACF_Integration_CiviCRM_Contact::query_post_id()
+		 * @see CiviCRM_ACF_Integration_CiviCRM_Activity::query_post_id()
 		 *
 		 * @since 0.5.1
 		 *
@@ -1021,6 +1180,108 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 
 		// --<
 		return $custom_fields;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get the mapped Custom Field ID if present.
+	 *
+	 * @since 0.3.1
+	 *
+	 * @param array $field The existing field data array.
+	 * @return int|bool $custom_field_id The numeric ID of the Custom Field, or false if none.
+	 */
+	public function custom_field_id_get( $field ) {
+
+		// Init return.
+		$custom_field_id = false;
+
+		// Get the ACF CiviCRM Field key.
+		$acf_field_key = $this->civicrm->acf_field_key_get();
+
+		// Get the mapped Custom Field ID if present.
+		if ( isset( $field[$acf_field_key] ) ) {
+			if ( false !== strpos( $field[$acf_field_key], $this->custom_field_prefix ) ) {
+				$custom_field_id = absint( str_replace( $this->custom_field_prefix, '', $field[$acf_field_key] ) );
+			}
+		}
+
+		/**
+		 * Filter the Custom Field ID.
+		 *
+		 * @since 0.5
+		 *
+		 * @param int $custom_field_id The existing Custom Field ID.
+		 * @param array $field The array of ACF Field data.
+		 * @return int $custom_field_id The modified Custom Field ID.
+		 */
+		$custom_field_id = apply_filters( 'civicrm_acf_integration_contact_custom_field_id_get', $custom_field_id, $field );
+
+		// --<
+		return $custom_field_id;
+
+	}
+
+
+
+	/**
+	 * Return the "CiviCRM Field" ACF Settings Field when there is only Custom Field data.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $custom_fields The Custom Fields to populate the ACF Field with.
+	 * @return array $field The ACF Field data array.
+	 */
+	public function acf_field_get( $custom_fields = [] ) {
+
+		// Build choices array for dropdown.
+		$choices = [];
+
+		// Build Custom Field choices array for dropdown.
+		$custom_field_prefix = $this->civicrm->custom_field_prefix();
+		foreach( $custom_fields AS $custom_group_name => $custom_group ) {
+			$custom_fields_label = esc_attr( $custom_group_name );
+			foreach( $custom_group AS $custom_field ) {
+				$choices[$custom_fields_label][$custom_field_prefix . $custom_field['id']] = $custom_field['label'];
+			}
+		}
+
+		/**
+		 * Filter the choices to display in the "CiviCRM Field" select.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $choices The existing select options array.
+		 * @param array $choices The modified select options array.
+		 */
+		$choices = apply_filters( 'civicrm_acf_integration_civicrm_custom_field_choices', $choices );
+
+		// Define field.
+		$field = [
+			'key' => $this->civicrm->acf_field_key_get(),
+			'label' => __( 'CiviCRM Field', 'civicrm-acf-integration' ),
+			'name' => $this->civicrm->acf_field_key_get(),
+			'type' => 'select',
+			'instructions' => __( 'Choose the CiviCRM Field that this ACF Field should sync with. (Optional)', 'civicrm-acf-integration' ),
+			'default_value' => '',
+			'placeholder' => '',
+			'allow_null' => 1,
+			'multiple' => 0,
+			'ui' => 0,
+			'required' => 0,
+			'return_format' => 'value',
+			'parent' => $this->plugin->acf->field_group->placeholder_group_get(),
+			'choices' => $choices,
+		];
+
+		// --<
+		return $field;
 
 	}
 

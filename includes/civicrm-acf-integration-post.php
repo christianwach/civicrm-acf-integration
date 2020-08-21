@@ -49,6 +49,15 @@ class CiviCRM_ACF_Integration_Post {
 	 */
 	public $contact_id_key = '_civicrm_acf_integration_post_contact_id';
 
+	/**
+	 * Post meta Activity ID key.
+	 *
+	 * @since 0.7.3
+	 * @access public
+	 * @var object $plugin The Post meta Contact ID key.
+	 */
+	public $activity_id_key = '_civicrm_acf_integration_post_activity_id';
+
 
 
 	/**
@@ -145,8 +154,8 @@ class CiviCRM_ACF_Integration_Post {
 		add_action( 'page_row_actions', [ $this, 'menu_item_add_to_row_actions' ], 10, 2 );
 		add_action( 'post_row_actions', [ $this, 'menu_item_add_to_row_actions' ], 10, 2 );
 
-		// Listen for events from our Mapper that require Post updates.
-		//add_action( 'civicrm_acf_integration_mapper_contact_created', [ $this, 'contact_created' ], 10, 1 );
+		// Listen for Contact events from our Mapper that require Post updates.
+		add_action( 'civicrm_acf_integration_mapper_contact_created', [ $this, 'contact_created' ], 10, 1 );
 		add_action( 'civicrm_acf_integration_mapper_contact_edited', [ $this, 'contact_edited' ], 10, 1 );
 
 		// Maybe sync the Contact "Display Name" to the WordPress Post Title.
@@ -155,206 +164,12 @@ class CiviCRM_ACF_Integration_Post {
 		// Intercept calls to sync the Contact.
 		add_action( 'civicrm_acf_integration_admin_contact_sync', [ $this, 'contact_sync' ], 10, 1 );
 
-	}
+		// Listen for Activity events from our Mapper that require Post updates.
+		add_action( 'civicrm_acf_integration_mapper_activity_created', [ $this, 'activity_created' ], 10, 1 );
+		add_action( 'civicrm_acf_integration_mapper_activity_edited', [ $this, 'activity_edited' ], 10, 1 );
 
-
-
-	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * Create the WordPress Posts when a CiviCRM Contact is being synced.
-	 *
-	 * @since 0.6.4
-	 *
-	 * @param array $args The array of CiviCRM Contact data.
-	 */
-	public function contact_sync( $args ) {
-
-		// Bail if this is not a Contact.
-		$top_level_types = $this->plugin->civicrm->contact_type->types_get_top_level();
-		if ( ! in_array( $args['objectName'], $top_level_types ) ) {
-			return;
-		}
-
-		// Bail if none of this Contact's Contact Types is mapped.
-		$post_types = $this->plugin->civicrm->contact->is_mapped( $args['objectRef'] );
-		if ( $post_types === false ) {
-			return;
-		}
-
-		// Handle each Post Type in turn.
-		foreach( $post_types AS $post_type ) {
-			$this->contact_sync_to_post( $args, $post_type );
-		}
-
-	}
-
-
-
-	/**
-	 * Create a WordPress Post when a CiviCRM Contact is being synced.
-	 *
-	 * @since 0.7
-	 *
-	 * @param array $args The array of CiviCRM Contact data.
-	 * @param str $post_type The WordPress Post Type.
-	 */
-	public function contact_sync_to_post( $args, $post_type ) {
-
-		// Get the Post ID for this Contact.
-		$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $args['objectRef'], $post_type );
-
-		// Create the WordPress Post if it doesn't exist, otherwise update.
-		if ( $post_id === false ) {
-			$post_id = $this->create_from_contact( $args['objectRef'], $post_type );
-		} else {
-			$this->update_from_contact( $args['objectRef'], $post_id );
-		}
-
-		// Add our data to the params.
-		$args['post_type'] = $post_type;
-		$args['post_id'] = $post_id;
-
-		/**
-		 * Broadcast that a WordPress Post has been synced from Contact details.
-		 *
-		 * Used internally to:
-		 *
-		 * - Update the ACF Fields for the WordPress Post.
-		 * - Update the Terms for the WordPress Post.
-		 *
-		 * @since 0.6.4
-		 *
-		 * @param array $args The array of CiviCRM and discovered params.
-		 */
-		do_action( 'civicrm_acf_integration_post_contact_sync', $args );
-
-	}
-
-
-
-	/**
-	 * Create a WordPress Post when a CiviCRM Contact has been updated.
-	 *
-	 * @since 0.4.5
-	 *
-	 * @param array $args The array of CiviCRM params.
-	 */
-	public function contact_created( $args ) {
-
-		// Bail if this is not a Contact.
-		$top_level_types = $this->plugin->civicrm->contact_type->types_get_top_level();
-		if ( ! in_array( $args['objectName'], $top_level_types ) ) {
-			return;
-		}
-
-		// Bail if none of this Contact's Contact Types is mapped.
-		$post_types = $this->plugin->civicrm->contact->is_mapped( $args['objectRef'] );
-		if ( $post_types === false ) {
-			return;
-		}
-
-		// Handle each Post Type in turn.
-		foreach( $post_types AS $post_type ) {
-
-			// Create the WordPress Post.
-			$post_id = $this->create_from_contact( $args['objectRef'], $post_type );
-
-			// Add our data to the params.
-			$args['post_type'] = $post_type;
-			$args['post_id'] = $post_id;
-
-			/**
-			 * Broadcast that a WordPress Post has been updated from Contact details.
-			 *
-			 * Used internally to:
-			 *
-			 * - Update the ACF Fields for the WordPress Post
-			 *
-			 * @since 0.4.5
-			 *
-			 * @param array $args The array of CiviCRM and discovered params.
-			 */
-			do_action( 'civicrm_acf_integration_post_created', $args );
-
-		}
-
-	}
-
-
-
-	/**
-	 * Update a WordPress Post when a CiviCRM Contact has been updated.
-	 *
-	 * @since 0.4.5
-	 *
-	 * @param array $args The array of CiviCRM params.
-	 */
-	public function contact_edited( $args ) {
-
-		// Bail if this is not a Contact.
-		$top_level_types = $this->plugin->civicrm->contact_type->types_get_top_level();
-		if ( ! in_array( $args['objectName'], $top_level_types ) ) {
-			return;
-		}
-
-		// Get the full Contact data.
-		$contact = $this->plugin->civicrm->contact->get_by_id( $args['objectId'] );
-
-		// Bail if something went wrong.
-		if ( $contact === false ) {
-			return;
-		}
-
-		// Maybe retrieve "extra data" and reinstate.
-		if ( ! empty( $args['extra'] ) ) {
-			foreach( $args['extra'] AS $property => $value ) {
-				$contact[$property] = $value;
-			}
-		}
-
-		// Overwrite args with full Contact data.
-		$args['objectRef'] = (object) $contact;
-
-		// Bail if none of this Contact's Contact Types is mapped.
-		$post_types = $this->plugin->civicrm->contact->is_mapped( $args['objectRef'] );
-		if ( $post_types === false ) {
-			return;
-		}
-
-		// Handle each Post Type in turn.
-		foreach( $post_types AS $post_type ) {
-
-			// Get the Post ID for this Contact.
-			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $args['objectRef'], $post_type );
-
-			// Create the WordPress Post if it doesn't exist, otherwise update.
-			if ( $post_id === false ) {
-				$post_id = $this->create_from_contact( $args['objectRef'], $post_type );
-			} else {
-				$this->update_from_contact( $args['objectRef'], $post_id );
-			}
-
-			// Add our data to the params.
-			$args['post_type'] = $post_type;
-			$args['post_id'] = $post_id;
-
-			/**
-			 * Broadcast that a WordPress Post has been updated from Contact details.
-			 *
-			 * Used internally to:
-			 *
-			 * - Update the ACF Fields for the WordPress Post
-			 *
-			 * @since 0.4.5
-			 *
-			 * @param array $args The array of CiviCRM and discovered params.
-			 */
-			do_action( 'civicrm_acf_integration_post_edited', $args );
-
-		}
+		// Intercept calls to sync the Activity.
+		add_action( 'civicrm_acf_integration_admin_activity_sync', [ $this, 'activity_sync' ], 10, 1 );
 
 	}
 
@@ -780,6 +595,212 @@ class CiviCRM_ACF_Integration_Post {
 
 
 	/**
+	 * Create the WordPress Posts when a CiviCRM Contact is being synced.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param array $args The array of CiviCRM Contact data.
+	 */
+	public function contact_sync( $args ) {
+
+		// Bail if this is not a Contact.
+		$top_level_types = $this->plugin->civicrm->contact_type->types_get_top_level();
+		if ( ! in_array( $args['objectName'], $top_level_types ) ) {
+			return;
+		}
+
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $args['objectRef'] );
+		if ( $post_types === false ) {
+			return;
+		}
+
+		// Handle each Post Type in turn.
+		foreach( $post_types AS $post_type ) {
+			$this->contact_sync_to_post( $args, $post_type );
+		}
+
+	}
+
+
+
+	/**
+	 * Create a WordPress Post when a CiviCRM Contact is being synced.
+	 *
+	 * @since 0.7
+	 *
+	 * @param array $args The array of CiviCRM Contact data.
+	 * @param str $post_type The WordPress Post Type.
+	 */
+	public function contact_sync_to_post( $args, $post_type ) {
+
+		// Get the Post ID for this Contact.
+		$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $args['objectRef'], $post_type );
+
+		// Create the WordPress Post if it doesn't exist, otherwise update.
+		if ( $post_id === false ) {
+			$post_id = $this->create_from_contact( $args['objectRef'], $post_type );
+		} else {
+			$this->update_from_contact( $args['objectRef'], $post_id );
+		}
+
+		// Add our data to the params.
+		$args['post_type'] = $post_type;
+		$args['post_id'] = $post_id;
+
+		/**
+		 * Broadcast that a WordPress Post has been synced from Contact details.
+		 *
+		 * Used internally to:
+		 *
+		 * - Update the ACF Fields for the WordPress Post.
+		 * - Update the Terms for the WordPress Post.
+		 *
+		 * @since 0.6.4
+		 *
+		 * @param array $args The array of CiviCRM and discovered params.
+		 */
+		do_action( 'civicrm_acf_integration_post_contact_sync', $args );
+
+	}
+
+
+
+	/**
+	 * Create a WordPress Post when a CiviCRM Contact has been created.
+	 *
+	 * @since 0.4.5
+	 *
+	 * @param array $args The array of CiviCRM params.
+	 */
+	public function contact_created( $args ) {
+
+		// Bail if this is not a Contact.
+		$top_level_types = $this->plugin->civicrm->contact_type->types_get_top_level();
+		if ( ! in_array( $args['objectName'], $top_level_types ) ) {
+			return;
+		}
+
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $args['objectRef'] );
+		if ( $post_types === false ) {
+			return;
+		}
+
+		// Handle each Post Type in turn.
+		foreach( $post_types AS $post_type ) {
+
+			// Check if the Post ID for this Contact already exists.
+			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $args['objectRef'], $post_type );
+
+			// Create the WordPress Post.
+			if ( $post_id === false ) {
+				$post_id = $this->create_from_contact( $args['objectRef'], $post_type );
+			}
+
+			// Add our data to the params.
+			$args['post_type'] = $post_type;
+			$args['post_id'] = $post_id;
+
+			/**
+			 * Broadcast that a WordPress Post has been updated from Contact details.
+			 *
+			 * Used internally to:
+			 *
+			 * - Update the ACF Fields for the WordPress Post
+			 *
+			 * @since 0.4.5
+			 *
+			 * @param array $args The array of CiviCRM and discovered params.
+			 */
+			do_action( 'civicrm_acf_integration_post_created', $args );
+
+		}
+
+	}
+
+
+
+	/**
+	 * Update a WordPress Post when a CiviCRM Contact has been updated.
+	 *
+	 * @since 0.4.5
+	 *
+	 * @param array $args The array of CiviCRM params.
+	 */
+	public function contact_edited( $args ) {
+
+		// Bail if this is not a Contact.
+		$top_level_types = $this->plugin->civicrm->contact_type->types_get_top_level();
+		if ( ! in_array( $args['objectName'], $top_level_types ) ) {
+			return;
+		}
+
+		// Get the full Contact data.
+		$contact = $this->plugin->civicrm->contact->get_by_id( $args['objectId'] );
+
+		// Bail if something went wrong.
+		if ( $contact === false ) {
+			return;
+		}
+
+		// Maybe retrieve "extra data" and reinstate.
+		if ( ! empty( $args['extra'] ) ) {
+			foreach( $args['extra'] AS $property => $value ) {
+				$contact[$property] = $value;
+			}
+		}
+
+		// Overwrite args with full Contact data.
+		$args['objectRef'] = (object) $contact;
+
+		// Bail if none of this Contact's Contact Types is mapped.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $args['objectRef'] );
+		if ( $post_types === false ) {
+			return;
+		}
+
+		// Handle each Post Type in turn.
+		foreach( $post_types AS $post_type ) {
+
+			// Get the Post ID for this Contact.
+			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $args['objectRef'], $post_type );
+
+			// Create the WordPress Post if it doesn't exist, otherwise update.
+			if ( $post_id === false ) {
+				$post_id = $this->create_from_contact( $args['objectRef'], $post_type );
+			} else {
+				$this->update_from_contact( $args['objectRef'], $post_id );
+			}
+
+			// Add our data to the params.
+			$args['post_type'] = $post_type;
+			$args['post_id'] = $post_id;
+
+			/**
+			 * Broadcast that a WordPress Post has been updated from Contact details.
+			 *
+			 * Used internally to:
+			 *
+			 * - Update the ACF Fields for the WordPress Post
+			 *
+			 * @since 0.4.5
+			 *
+			 * @param array $args The array of CiviCRM and discovered params.
+			 */
+			do_action( 'civicrm_acf_integration_post_edited', $args );
+
+		}
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
 	 * Create a CiviCRM Contact from a WordPress Post.
 	 *
 	 * @since 0.2.1
@@ -877,6 +898,449 @@ class CiviCRM_ACF_Integration_Post {
 		if ( ! is_null( $post ) AND $post instanceof WP_Post ) {
 			if ( empty( $post->post_title ) ) {
 				$args['post_name'] = sanitize_title( $contact['display_name'] );
+			}
+		}
+
+		// Update the Post.
+		$post_id = wp_update_post( $args, true );
+
+		// Bail on failure.
+		if ( is_wp_error( $post_id ) ) {
+			return false;
+		}
+
+		// --<
+		return $post_id;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Check if a Post is mapped to an Activity.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return int|bool $is_mapped The ID of the CiviCRM Activity if the Post is mapped, false otherwise.
+	 */
+	public function is_mapped_to_activity( $post_id ) {
+
+		// Get the Activity ID (or boolean false) from Post meta.
+		$is_mapped = $this->activity_id_get( $post_id );
+
+		// --<
+		return $is_mapped;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get the CiviCRM Activity ID for a given WordPress Post ID.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return int $activity_id The CiviCRM Activity ID, or false if none exists.
+	 */
+	public function activity_id_get( $post_id ) {
+
+		// Get the Activity ID.
+		$existing_id = get_post_meta( $post_id, $this->activity_id_key, true );
+
+		// Does this Post have an Activity ID?
+		if ( empty( $existing_id ) ) {
+			$activity_id = false;
+		} else {
+			$activity_id = $existing_id;
+		}
+
+		// --<
+		return $activity_id;
+
+	}
+
+
+
+	/**
+	 * Set the CiviCRM Activity ID for a given WordPress Post ID.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int $activity_id The CiviCRM Activity ID.
+	 */
+	public function activity_id_set( $post_id, $activity_id ) {
+
+		// Store the Activity ID.
+		add_post_meta( $post_id, $this->activity_id_key, $activity_id, true );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get the WordPress Post ID for a given CiviCRM Activity ID and Post Type.
+	 *
+	 * If no Post Type is provided then an array of all synced Posts is returned.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param int $activity_id The CiviCRM Activity ID.
+	 * @param str $post_type The WordPress Post Type.
+	 * @return array|bool $posts An array of Post IDs, or false on failure.
+	 */
+	public function get_by_activity_id( $activity_id, $post_type = 'any' ) {
+
+		// Init as failed.
+		$posts = false;
+
+		// Bail if there's no Activity ID.
+		if ( empty( $activity_id ) ) {
+			return $posts;
+		}
+
+		// Define args for query.
+		$args = [
+			'post_type' => $post_type,
+			//'post_status' => 'publish',
+			'no_found_rows' => true,
+			'meta_key' => $this->activity_id_key,
+			'meta_value' => (string) $activity_id,
+			'posts_per_page' => -1,
+		];
+
+		// Do query.
+		$query = new WP_Query( $args );
+
+		// Do the loop.
+		if ( $query->have_posts() ) {
+			foreach( $query->get_posts() AS $found ) {
+
+				// Add if we want *all* Posts.
+				if ( $post_type === 'any' ) {
+					$posts[] = $found->ID;
+
+				// Grab what should be the only Post.
+				} elseif ( $found->post_type == $post_type ) {
+					$posts[] = $found->ID;
+					break;
+				}
+
+			}
+		}
+
+		// --<
+		return $posts;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Create the WordPress Post when a CiviCRM Activity is being synced.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $args The array of CiviCRM Activity data.
+	 */
+	public function activity_sync( $args ) {
+
+		// Bail if this is not an Activity.
+		if ( $args['objectName'] != 'Activity' ) {
+			return;
+		}
+
+		// Bail if this Activity's Activity Type is not mapped.
+		$post_type = $this->plugin->civicrm->activity->is_mapped( $args['objectRef'] );
+		if ( $post_type === false ) {
+			return;
+		}
+
+		// Handle the Post Type.
+		$this->activity_sync_to_post( $args, $post_type );
+
+	}
+
+
+
+	/**
+	 * Create a WordPress Post when a CiviCRM Activity is being synced.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $args The array of CiviCRM Activity data.
+	 * @param str $post_type The WordPress Post Type.
+	 */
+	public function activity_sync_to_post( $args, $post_type ) {
+
+		// Bail if this is not an Activity.
+		if ( $args['objectName'] != 'Activity' ) {
+			return;
+		}
+
+		// Backfill the Activity data.
+		$args['objectRef'] = $this->plugin->civicrm->activity->backfill( $args['objectRef'] );
+
+		// Get the Post ID for this Activity.
+		$post_id = $this->plugin->civicrm->activity->is_mapped_to_post( $args['objectRef'], $post_type );
+
+		// Create the WordPress Post if it doesn't exist, otherwise update.
+		if ( $post_id === false ) {
+			$post_id = $this->create_from_activity( $args['objectRef'], $post_type );
+		} else {
+			$this->update_from_activity( $args['objectRef'], $post_id );
+		}
+
+		// Add our data to the params.
+		$args['post_type'] = $post_type;
+		$args['post_id'] = $post_id;
+
+		/**
+		 * Broadcast that a WordPress Post has been synced from Activity details.
+		 *
+		 * Used internally to:
+		 *
+		 * - Update the ACF Fields for the WordPress Post.
+		 * - Update the Terms for the WordPress Post.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM and discovered params.
+		 */
+		do_action( 'civicrm_acf_integration_post_activity_sync', $args );
+
+	}
+
+
+
+	/**
+	 * Create a WordPress Post when a CiviCRM Activity has been created.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $args The array of CiviCRM params.
+	 */
+	public function activity_created( $args ) {
+
+		// Bail if this is not an Activity.
+		if ( $args['objectName'] != 'Activity' ) {
+			return;
+		}
+
+		// Backfill the Activity data.
+		$args['objectRef'] = $this->plugin->civicrm->activity->backfill( $args['objectRef'] );
+
+		// Bail if this Activity's Activity Type is not mapped.
+		$post_type = $this->plugin->civicrm->activity->is_mapped( $args['objectRef'] );
+		if ( $post_type === false ) {
+			return;
+		}
+
+		// Check if the Post ID for this Activity already exists.
+		$post_id = $this->plugin->civicrm->activity->is_mapped_to_post( $args['objectRef'], $post_type );
+
+		// Create the WordPress Post.
+		if ( $post_id === false ) {
+			$post_id = $this->create_from_activity( $args['objectRef'], $post_type );
+		}
+
+		// Add our data to the params.
+		$args['post_type'] = $post_type;
+		$args['post_id'] = $post_id;
+
+		/**
+		 * Broadcast that a WordPress Post has been updated from Activity details.
+		 *
+		 * Used internally to:
+		 *
+		 * - Update the ACF Fields for the WordPress Post
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM and discovered params.
+		 */
+		do_action( 'civicrm_acf_integration_post_activity_created', $args );
+
+	}
+
+
+
+	/**
+	 * Update a WordPress Post when a CiviCRM Activity has been updated.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $args The array of CiviCRM params.
+	 */
+	public function activity_edited( $args ) {
+
+		// Bail if this is not an Activity.
+		if ( $args['objectName'] != 'Activity' ) {
+			return;
+		}
+
+		// Backfill the Activity data.
+		$args['objectRef'] = $this->plugin->civicrm->activity->backfill( $args['objectRef'] );
+
+		// Bail if this Activity's Activity Type is not mapped.
+		$post_type = $this->plugin->civicrm->activity->is_mapped( $args['objectRef'] );
+		if ( $post_type === false ) {
+			return;
+		}
+
+		// Get the Post ID for this Activity.
+		$post_id = $this->plugin->civicrm->activity->is_mapped_to_post( $args['objectRef'], $post_type );
+
+		// Create the WordPress Post if it doesn't exist, otherwise update.
+		if ( $post_id === false ) {
+			$post_id = $this->create_from_activity( $args['objectRef'], $post_type );
+		} else {
+			$this->update_from_activity( $args['objectRef'], $post_id );
+		}
+
+		// Add our data to the params.
+		$args['post_type'] = $post_type;
+		$args['post_id'] = $post_id;
+
+		/**
+		 * Broadcast that a WordPress Post has been updated from Activity details.
+		 *
+		 * Used internally to:
+		 *
+		 * - Update the ACF Fields for the WordPress Post
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM and discovered params.
+		 */
+		do_action( 'civicrm_acf_integration_post_activity_edited', $args );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Create a CiviCRM Activity from a WordPress Post.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $activity The CiviCRM Activity data.
+	 * @param str $post_type The name of Post Type.
+	 * @return int|bool $post_id The WordPress Post ID, or false on failure.
+	 */
+	public function create_from_activity( $activity, $post_type ) {
+
+		// Maybe cast Activity data as object.
+		if ( is_array( $activity ) ) {
+			$activity = (object) $activity;
+		}
+
+		// De-nullify critical values.
+		$activity->subject = $this->plugin->civicrm->denullify( $activity->subject );
+		$activity->details = $this->plugin->civicrm->denullify( $activity->details );
+
+		// Define basic Post data.
+		$args = [
+			'post_status' => 'publish',
+			'post_parent' => 0,
+			'comment_status' => 'closed',
+			'ping_status' => 'closed',
+			'to_ping' => '', // Quick fix for Windows.
+			'pinged' => '', // Quick fix for Windows.
+			'post_content_filtered' => '', // Quick fix for Windows.
+			'post_excerpt' => '', // Quick fix for Windows.
+			'menu_order' => 0,
+			'post_type' => $post_type,
+			'post_title' => $activity->subject,
+			'post_content' => $activity->details,
+		];
+
+		// Insert the Post into the database.
+		$post_id = wp_insert_post( $args );
+
+		// Bail on failure.
+		if ( is_wp_error( $post_id ) ) {
+			return false;
+		}
+
+		// Save correspondence.
+		$this->activity_id_set( $post_id, $activity->id );
+
+		// We need to force ACF to create Fields for the Post.
+
+		// Get the ACF Fields for this Post.
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
+
+		// If there are some, prime them with an empty string.
+		if ( ! empty( $acf_fields ) ) {
+			foreach( $acf_fields AS $field_group ) {
+				foreach( $field_group AS $selector => $activity_field ) {
+					$this->plugin->acf->field->value_update( $selector, '', $post_id );
+				}
+			}
+		}
+
+		// --<
+		return $post_id;
+
+	}
+
+
+
+	/**
+	 * Sync a CiviCRM Activity with a WordPress Post.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $activity The CiviCRM Activity data.
+	 * @param int $existing_id The numeric ID of the Post.
+	 * @param WP_Post $post The WordPress Post object if it exists.
+	 * @return int|bool $post_id The WordPress Post ID, or false on failure.
+	 */
+	public function update_from_activity( $activity, $existing_id, $post = null ) {
+
+		// Maybe cast Activity data as object.
+		if ( is_array( $activity ) ) {
+			$activity = (object) $activity;
+		}
+
+		// De-nullify critical values.
+		$activity->subject = $this->plugin->civicrm->denullify( $activity->subject );
+		$activity->details = $this->plugin->civicrm->denullify( $activity->details );
+
+		// Define args to update the Post.
+		$args = [
+			'ID' => $existing_id,
+			'post_title' => $activity->subject,
+			'post_content' => $activity->details,
+		];
+
+		// Overwrite Permalink if the current Post Title is empty.
+		if ( ! is_null( $post ) AND $post instanceof WP_Post ) {
+			if ( empty( $post->post_title ) ) {
+				$args['post_name'] = sanitize_title( $activity->subject );
 			}
 		}
 

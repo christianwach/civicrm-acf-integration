@@ -41,15 +41,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 	public $civicrm;
 
 	/**
-	 * "CiviCRM Contact Type" field key.
-	 *
-	 * @since 0.3
-	 * @access public
-	 * @var str $acf_field_key The key of the "CiviCRM Contact Type" field.
-	 */
-	public $acf_field_key = 'field_cacf_civicrm_contact_type';
-
-	/**
 	 * Top-level Contact Types which can be mapped.
 	 *
 	 * @since 0.2.1
@@ -745,26 +736,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 
 		// --<
 		return $is_mapped;
-
-	}
-
-
-
-	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * Getter method for the "CiviCRM Field" key.
-	 *
-	 * @since 0.4.1
-	 *
-	 * @return str $acf_field_key The key of the "CiviCRM Contact Type" in the ACF Field Group data.
-	 */
-	public function acf_field_key_get() {
-
-		// --<
-		return $this->acf_field_key;
 
 	}
 

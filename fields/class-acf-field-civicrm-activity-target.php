@@ -1,64 +1,54 @@
 <?php
 /**
- * ACF "CiviCRM Yes/No Field" Class.
- *
- * Provides a "CiviCRM Yes/No Field" Custom ACF Field in ACF 5+.
+ * CiviCRM ACF Integration Custom ACF Field Type - CiviCRM Activity Target Reference Field.
  *
  * @package CiviCRM_ACF_Integration
- * @since 0.4.1
  */
 
+
+
 // Exit if accessed directly.
-defined( 'ABSPATH' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) exit;
 
 
 
 /**
- * CiviCRM ACF Integration Custom ACF Field Type - CiviCRM Yes/No Field.
+ * ACF "CiviCRM Activity Target" Class.
  *
- * A class that encapsulates a "CiviCRM Yes/No" Custom ACF Field in ACF 5+.
+ * A class that encapsulates a "CiviCRM Activity Target" Custom ACF Field in ACF 5+.
  *
- * @since 0.4.1
+ * @since 0.7.3
  */
-class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
+class CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Target extends acf_field {
 
 	/**
 	 * Plugin (calling) object.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 * @access public
 	 * @var object $plugin The plugin object.
 	 */
 	public $plugin;
 
 	/**
-	 * Advanced Custom Fields object.
+	 * Parent (calling) object.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 * @access public
-	 * @var object $cpt The Advanced Custom Fields object.
+	 * @var object $acf The parent object.
 	 */
 	public $acf;
-
-	/**
-	 * CiviCRM Utilities object.
-	 *
-	 * @since 0.6.4
-	 * @access public
-	 * @var object $civicrm The CiviCRM Utilities object.
-	 */
-	public $civicrm;
 
 	/**
 	 * Field Type name.
 	 *
 	 * Single word, no spaces. Underscores allowed.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 * @access public
 	 * @var str $name The Field Type name.
 	 */
-	public $name = 'civicrm_yes_no';
+	public $name = 'civicrm_activity_target';
 
 	/**
 	 * Field Type label.
@@ -67,7 +57,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 *
 	 * Multiple words, can include spaces, visible when selecting a field type.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 * @access public
 	 * @var str $label The Field Type label.
 	 */
@@ -80,11 +70,11 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 *
 	 * basic | content | choice | relational | jquery | layout | CUSTOM GROUP NAME
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 * @access public
 	 * @var str $label The Field Type category.
 	 */
-	public $category = 'choice';
+	public $category = 'relational';
 
 	/**
 	 * Field Type defaults.
@@ -92,23 +82,18 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * Array of default settings which are merged into the field object.
 	 * These are used later in settings.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 * @access public
 	 * @var array $defaults The Field Type defaults.
 	 */
-	public $defaults = [
-		'choices' => [],
-		'default_value' => '2', // '1' = Yes, '0' = No.
-		'allow_null' => 0,
-		'return_format' => 'value',
-	];
+	public $defaults = [];
 
 	/**
 	 * Field Type settings.
 	 *
 	 * Contains "version", "url" and "path" as references for use with assets.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 * @access public
 	 * @var array $settings The Field Type settings.
 	 */
@@ -126,9 +111,9 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * Array of strings that are used in JavaScript. This allows JS strings
 	 * to be translated in PHP and loaded via:
 	 *
-	 * var message = acf._e( 'civicrm_contact', 'error' );
+	 * var message = acf._e( 'civicrm_activity', 'error' );
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 * @access public
 	 * @var array $l10n The Field Type translations.
 	 */
@@ -139,7 +124,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	/**
 	 * Sets up the Field Type.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param object $parent The parent object reference.
 	 */
@@ -148,14 +133,11 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 		// Store reference to plugin.
 		$this->plugin = $parent->plugin;
 
-		// Store reference to ACF Utilities.
+		// Store reference to parent.
 		$this->acf = $parent;
 
-		// Store reference to CiviCRM Utilities.
-		$this->civicrm = $this->plugin->civicrm;
-
 		// Define label.
-		$this->label = __( 'CiviCRM Yes / No', 'civicrm-acf-integration' );
+		$this->label = __( 'CiviCRM Activity Target', 'civicrm-acf-integration' );
 
 		// Define translations.
 		$this->l10n = [
@@ -163,15 +145,12 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 			'error'	=> __( 'Error! Please enter a higher value.', 'civicrm-acf-integration' ),
 		];
 
-		// Define choices.
-		$this->defaults['choices'] = [
-			'1' => __( 'Yes', 'civicrm-acf-integration' ),
-			'0' => __( 'No', 'civicrm-acf-integration' ),
-			'2' => __( 'Unknown', 'civicrm-acf-integration' ),
-		];
-
 		// Call parent.
-		parent::__construct();
+    	parent::__construct();
+
+		// Define AJAX callbacks.
+		add_action( 'wp_ajax_acf/fields/' . $this->name . '/query', [ $this, 'ajax_query' ] );
+		add_action( 'wp_ajax_nopriv_acf/fields/' . $this->name . '/query', [ $this, 'ajax_query' ] );
 
 	}
 
@@ -182,34 +161,22 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 *
 	 * These extra Settings will be visible when editing a Field.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param array $field The Field being edited.
 	 */
 	public function render_field_settings( $field ) {
 
-		// Get the Custom Fields for this CiviCRM Contact Type.
-		$custom_fields = $this->civicrm->custom_field->get_for_acf_field( $field );
-
-		// Filter fields to include only "Yes/No".
-		$filtered_fields = [];
-		foreach( $custom_fields AS $custom_group_name => $custom_group ) {
-			foreach( $custom_group AS $custom_field ) {
-				if ( ! empty( $custom_field['data_type'] ) AND $custom_field['data_type'] == 'Boolean' ) {
-					if ( ! empty( $custom_field['html_type'] ) AND $custom_field['html_type'] == 'Radio' ) {
-						$filtered_fields[$custom_group_name][] = $custom_field;
-					}
-				}
-			}
-		}
+		// Get the Activity Fields for this ACF Field Type.
+		$activity_fields = $this->plugin->civicrm->activity_field->get_for_acf_field( $field );
 
 		// Bail if there are no fields.
-		if ( empty( $filtered_fields ) ) {
+		if ( empty( $activity_fields ) ) {
 			return;
 		}
 
 		// Get Setting field.
-		$setting = $this->civicrm->custom_field->acf_field_get( $filtered_fields );
+		$setting = $this->plugin->civicrm->activity->acf_field_get( [], $activity_fields );
 
 		// Now add it.
 		acf_render_field_setting( $field, $setting );
@@ -221,83 +188,178 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	/**
 	 * Creates the HTML interface for this Field Type.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param array $field The Field being rendered.
 	 */
 	public function render_field( $field ) {
 
-		// Change Field into a checkbox.
-		$field['type'] = 'radio';
-		$field['allow_null'] = 0;
+		// Change Field into a select.
+		$field['type'] = 'select';
+		$field['ui'] = 1;
+		$field['ajax'] = 1;
+		$field['allow_null'] = 1;
+		$field['multiple'] = 1;
 
-		// Define choices.
-		$field['choices'] = $this->defaults['choices'];
+		// Init choices array.
+		$field['choices'] = [];
 
-		// Init list definition.
-		$ul = [
-			'class' => 'acf-radio-list acf-hl',
-			'data-allow_null' => $field['allow_null'],
+		// Populate choices.
+		if ( ! empty( $field['value'] ) ) {
+
+			// Clean value into an array of IDs.
+			$contact_ids = array_map( 'intval', acf_array( $field['value'] ) );
+
+			// Get existing Contacts.
+			$contacts = $this->plugin->civicrm->contact->get_by_ids( $contact_ids );
+
+			// Maybe append them.
+			if ( ! empty( $contacts ) ) {
+				foreach( $contacts AS $contact ) {
+
+					// Add email address if present.
+					$name = $contact['display_name'];
+					if ( ! empty( $contact['email'] ) ) {
+						$name .= ' :: ' . $contact['email'];
+					}
+
+					// TODO: Permission to view Contact?
+
+					// Append Contact to choices.
+					$field['choices'][$contact['contact_id']] = $name;
+
+				}
+			}
+
+		}
+
+		// Render.
+		acf_render_field( $field );
+
+	}
+
+
+
+	/**
+	 * AJAX Query callback.
+	 *
+	 * @since 0.7.3
+	 */
+	public function ajax_query() {
+
+		// Validate.
+		if ( ! acf_verify_ajax() ) {
+			die();
+		}
+
+		// Get choices.
+		$response = $this->get_ajax_query( $_POST );
+
+		// Send results.
+		acf_send_ajax_results( $response );
+
+	}
+
+
+
+	/**
+	 * AJAX Query callback.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $options The options that define the query.
+	 * @return array $response The query results.
+	 */
+	public function get_ajax_query( $options = [] ) {
+
+		// Init response.
+		$response = [
+			'results' => [],
+			'limit' => 25,
 		];
 
-		// Select value.
-		$value = strval( $field['value'] );
+		// Init defaults.
+		$defaults = [
+			'post_id' => 0,
+			's' => '',
+			'field_key' => '',
+			'paged' => 1,
+		];
 
-		// Set checked item flag, override if already saved.
-		$checked = $this->defaults['default_value'];
-		if ( isset( $field['choices'][$value] ) ) {
-			$checked = $value;
+   		// Parse the incoming POST array.
+   		$options = acf_parse_args( $options, $defaults );
+
+		// Bail if there's no search string.
+		if ( empty( $options['s'] ) ) {
+			return $response;
 		}
 
-		// Ensure we have a string.
-		$checked = strval( $checked );
+ 		// Load field.
+		$field = acf_get_field( $options['field_key'] );
 
-		// Hidden input.
-		$html = acf_get_hidden_input( [ 'name' => $field['name'] ] );
-
-		// Open list.
-		$html .= '<ul ' . acf_esc_attr( $ul ) . '>';
-
-		// Init counter.
-		$i = 0;
-
-		// Loop through choices.
-		foreach( $field['choices'] as $value => $label ) {
-
-			// Ensure value is a string.
-			$value = strval( $value );
-
-			// Define input attributes.
-			$atts = [
-				'type' => 'radio',
-				'id' => $field['id'],
-				'name' => $field['name'],
-				'value' => $value,
-			];
-
-			// Maybe set checked.
-			$class = '';
-			if ( $value === $checked ) {
-				$atts['checked'] = 'checked';
-				$class = ' class="selected"';
-			}
-
-			// Bump counter.
-			$i++;
-			if ( $i > 1 ) {
-				$atts['id'] .= '-' . $value;
-			}
-
-			// Append radio button.
-			$html .= '<li><label' . $class . '><input ' . acf_esc_attr( $atts ) . '/>' . $label . '</label></li>';
-
+		// Bail if field did not load.
+		if ( ! $field ) {
+			return $response;
 		}
 
-		// Close list.
-		$html .= '</ul>';
+		// Grab the Post ID.
+		$post_id = absint( $options['post_id'] );
 
-		// Print to screen.
-		echo $html;
+		// Init args.
+		$args = [];
+
+		// Strip slashes - search may be an integer.
+		$args['search'] = wp_unslash( strval( $options['s'] ) );
+
+		// Get the "CiviCRM Field" key.
+		$acf_field_key = $this->plugin->civicrm->acf_field_key_get();
+
+		// Default to "Individual" Contact Type.
+		$args['contact_type'] = 'Individual';
+
+		/**
+		 * Maintain compatibility with the usual ACF filter schema.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of query arguments.
+		 * @param array $field The ACF Field data.
+		 * @param int $post_id The numeric ID of the WordPress post.
+		 */
+		$args = apply_filters( 'acf/fields/' . $this->name . '/query', $args, $field, $post_id );
+		$args = apply_filters( 'acf/fields/' . $this->name . "/query/name={$field['_name']}", $args, $field, $post_id );
+		$args = apply_filters( 'acf/fields/' . $this->name . "/query/key={$field['key']}", $args, $field, $post_id );
+
+		// Get Contacts.
+		$contacts = $this->plugin->civicrm->contact->get_by_search_string( $args['search'], $args['contact_type'] );
+
+		// Maybe append results.
+		$results = [];
+		if ( ! empty( $contacts ) ) {
+			foreach( $contacts AS $contact ) {
+
+				// Add email address if present.
+				$name = $contact['label'];
+				if ( ! empty( $contact['description'] ) ) {
+					$name .= ' :: ' . array_pop( $contact['description'] );
+				}
+
+				// TODO: Permission to view Contact?
+
+				// Append to results.
+				$results[] = [
+					'id' => $contact['id'],
+					'text' => $name,
+				];
+
+			}
+		}
+
+		// Overwrite array entry.
+		$response['results'] = $results;
+
+		// --<
+		return $response;
 
 	}
 
@@ -310,11 +372,19 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * Use this action to add CSS and JavaScript to assist your render_field()
 	 * action.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
+	 */
 	public function input_admin_enqueue_scripts() {
 
+		// Enqueue our JavaScript.
+		wp_enqueue_script(
+			'acf-input-' . $this->name,
+			plugins_url( 'assets/js/civicrm-activity-target-field.js', CIVICRM_ACF_INTEGRATION_FILE ),
+			[ 'acf-input' ],
+			CIVICRM_ACF_INTEGRATION_VERSION // Version.
+		);
+
 	}
-	 */
 
 
 
@@ -325,7 +395,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * Use this action to add CSS and JavaScript to assist your render_field()
 	 * action.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	public function input_admin_head() {
 
 	}
@@ -343,7 +413,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * always be called, and includes $args that related to the current screen
 	 * such as $args['post_id'].
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param array $args The arguments related to the current screen.
 	public function input_form_data( $args ) {
@@ -360,7 +430,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * Use this action to add CSS and JavaScript to assist your render_field()
 	 * action.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	public function input_admin_footer() {
 
 	}
@@ -375,7 +445,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * Use this action to add CSS and JavaScript to assist your
 	 * render_field_options() action.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	public function field_group_admin_enqueue_scripts() {
 
 	}
@@ -390,7 +460,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * Use this action to add CSS and JavaScript to assist your
 	 * render_field_options() action.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	public function field_group_admin_head() {
 
 	}
@@ -401,31 +471,26 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	/**
 	 * This filter is applied to the $value after it is loaded from the database.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param mixed $value The value found in the database.
 	 * @param int $post_id The Post ID from which the value was loaded.
 	 * @param array $field The field array holding all the field options.
 	 * @return mixed $value The modified value.
-	 */
 	public function load_value( $value, $post_id, $field ) {
-
-		// Must be single value.
-		if ( is_array( $value ) ) {
-			$value = array_pop( $value );
-		}
 
 		// --<
 		return $value;
 
 	}
+	 */
 
 
 
 	/**
 	 * This filter is applied to the $value before it is saved in the database.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param mixed $value The value found in the database.
 	 * @param int $post_id The Post ID from which the value was loaded.
@@ -445,22 +510,32 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * This filter is appied to the value after it is loaded from the database
 	 * and before it is returned to the template.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param mixed $value The value which was loaded from the database.
 	 * @param mixed $post_id The Post ID from which the value was loaded.
 	 * @param array $field The field array holding all the field options.
 	 * @return mixed $value The modified value.
-	 */
 	public function format_value( $value, $post_id, $field ) {
 
-		// Format the value.
-		$value = acf_get_field_type( 'select' )->format_value( $value, $post_id, $field );
+		// Bail early if no value.
+		if ( empty( $value ) ) {
+			return $value;
+		}
+
+		// Apply setting.
+		if ( $field['font_size'] > 12 ) {
+
+			// format the value
+			// $value = 'something';
+
+		}
 
 		// --<
 		return $value;
 
 	}
+	 */
 
 
 
@@ -471,7 +546,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * This allows you to validate and return messages to the user if the value
 	 * is not correct.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param bool $valid The validation status based on the value and the field's required setting.
 	 * @param mixed $value The $_POST value.
@@ -503,7 +578,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 *
 	 * Please note that saving a blank value is treated as an update, not a delete.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param int $post_id The Post ID from which the value was deleted.
 	 * @param str $key The meta key which the value was deleted.
@@ -517,7 +592,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	/**
 	 * This filter is applied to the Field after it is loaded from the database.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param array $field The field array holding all the field options.
 	 * @return array $field The modified field data.
@@ -534,7 +609,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	/**
 	 * This filter is applied to the Field before it is saved to the database.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param array $field The field array holding all the field options.
 	 * @return array $field The modified field data.
@@ -551,7 +626,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	/**
 	 * This action is fired after a Field is deleted from the database.
 	 *
-	 * @since 0.4.1
+	 * @since 0.7.3
 	 *
 	 * @param array $field The field array holding all the field options.
 	public function delete_field( $field ) {
