@@ -112,7 +112,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		add_action( 'civicrm_acf_integration_mapper_website_pre_edit', [ $this, 'website_pre_edit' ], 10, 1 );
 
 		// Intercept when a CiviCRM Website has been updated.
-		add_action( 'civicrm_acf_integration_mapper_website_edited', [ $this, 'website_edited' ], 10, 2 );
+		add_action( 'civicrm_acf_integration_mapper_website_edited', [ $this, 'website_edited' ], 10, 1 );
 
 		// Add any Website Fields attached to a Post.
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
