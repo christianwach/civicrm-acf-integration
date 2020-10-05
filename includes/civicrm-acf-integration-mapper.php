@@ -201,6 +201,12 @@ class CiviCRM_ACF_Integration_Mapper {
 		add_action( 'civicrm_pre', [ $this, 'website_pre_edit' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'website_edited' ], 10, 4 );
 
+		// Intercept Phone updates in CiviCRM.
+		add_action( 'civicrm_pre', [ $this, 'phone_pre_delete' ], 10, 4 );
+		add_action( 'civicrm_post', [ $this, 'phone_created' ], 10, 4 );
+		add_action( 'civicrm_post', [ $this, 'phone_edited' ], 10, 4 );
+		add_action( 'civicrm_post', [ $this, 'phone_deleted' ], 10, 4 );
+
 		// Intercept Relationship updates in CiviCRM.
 		add_action( 'civicrm_pre', [ $this, 'relationship_pre_edit' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'relationship_created' ], 10, 4 );
@@ -254,6 +260,12 @@ class CiviCRM_ACF_Integration_Mapper {
 		// Remove Website update hooks.
 		remove_action( 'civicrm_pre', [ $this, 'website_pre_edit' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'website_edited' ], 10 );
+
+		// Remove Phone update hooks.
+		remove_action( 'civicrm_post', [ $this, 'phone_created' ], 10 );
+		remove_action( 'civicrm_post', [ $this, 'phone_edited' ], 10 );
+		remove_action( 'civicrm_pre', [ $this, 'phone_pre_delete' ], 10 );
+		remove_action( 'civicrm_post', [ $this, 'phone_deleted' ], 10 );
 
 		// Remove Relationship update hooks.
 		remove_action( 'civicrm_pre', [ $this, 'relationship_pre_edit' ], 10 );
@@ -679,6 +691,206 @@ class CiviCRM_ACF_Integration_Mapper {
 		 * @param array $args The array of CiviCRM params.
 		 */
 		do_action( 'civicrm_acf_integration_mapper_website_edited', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Intercept when a CiviCRM Phone is created.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function phone_created( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if this is not a Phone.
+		if ( $objectName != 'Phone' ) {
+			return;
+		}
+
+		// Bail if not the context we want.
+		if ( $op != 'create' ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the CiviCRM params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a CiviCRM Phone has been created.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_phone_created', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Phone is updated.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function phone_edited( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if this is not a Phone.
+		if ( $objectName != 'Phone' ) {
+			return;
+		}
+
+		// Bail if not the context we want.
+		if ( $op != 'edit' ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the CiviCRM params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a CiviCRM Phone has been updated.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_phone_edited', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Phone is about to be deleted.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function phone_pre_delete( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if this is not a Phone.
+		if ( $objectName != 'Phone' ) {
+			return;
+		}
+
+		// Bail if not the context we want.
+		if ( $op != 'delete' ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a CiviCRM Phone is about to be deleted.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_phone_pre_delete', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Phone has been deleted.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function phone_deleted( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if this is not a Address.
+		if ( $objectName != 'Phone' ) {
+			return;
+		}
+
+		// Bail if not the context we want.
+		if ( $op != 'delete' ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a CiviCRM Phone has been deleted.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_phone_deleted', $args );
 
 		// Reinstate WordPress callbacks.
 		$this->hooks_wordpress_add();
