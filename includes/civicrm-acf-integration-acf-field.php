@@ -181,6 +181,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 				 * - Address
 				 * - Email
 				 * - Website
+				 * - Phone
 				 *
 				 * @since 0.4.5
 				 *
