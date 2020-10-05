@@ -515,7 +515,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 	public function website_pre_edit( $args ) {
 
 		// Always clear properties if set previously.
-		if ( isset( $this->website_pre ) ){
+		if ( isset( $this->website_pre ) ) {
 			unset( $this->website_pre );
 		}
 

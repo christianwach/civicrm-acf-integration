@@ -478,7 +478,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * @param array $field The field array holding all the field options.
 	 * @param str $input The corresponding input name for $_POST value.
 	 * @return bool|str $valid False if not valid, or string for error message.
-	public function validate_value( $valid, $value, $field, $input ){
+	public function validate_value( $valid, $value, $field, $input ) {
 
 		// Basic usage.
 		if ( $value < $field['custom_minimum_setting'] ) {

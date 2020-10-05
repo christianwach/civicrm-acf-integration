@@ -180,7 +180,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		$employer_id = CRM_Core_DAO::getFieldValue( 'CRM_Contact_DAO_Contact', $args['objectId'], 'employer_id' );
 
 		// If we get one, add it.
-		if ( ! isset( $args['objectRef']->employer_id ) ){
+		if ( ! isset( $args['objectRef']->employer_id ) ) {
 			$args['objectRef']->employer_id = $employer_id;
 		}
 

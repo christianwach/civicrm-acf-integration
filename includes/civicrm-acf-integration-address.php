@@ -183,7 +183,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		}
 
 		// Always clear properties if set previously.
-		if ( isset( $this->contact_addresses_pre ) ){
+		if ( isset( $this->contact_addresses_pre ) ) {
 			unset( $this->contact_addresses_pre );
 		}
 
@@ -375,7 +375,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	public function address_pre_edit( $args ) {
 
 		// Always clear properties if set previously.
-		if ( isset( $this->address_pre ) ){
+		if ( isset( $this->address_pre ) ) {
 			unset( $this->address_pre );
 		}
 
