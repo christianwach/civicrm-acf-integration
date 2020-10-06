@@ -387,7 +387,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 		// If there are no existing Instant Messenger Records.
 		if ( empty( $current ) ) {
 
-			// Create a Instant Messenger Record from each value.
+			// Create an Instant Messenger Record from each value.
 			foreach( $values AS $key => $value ) {
 
 				// Build required data.
@@ -443,7 +443,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 				continue;
 			}
 
-			// Records to update have a Instant Messenger ID.
+			// Records to update have an Instant Messenger ID.
 			if ( ! empty( $value['field_im_id'] ) ) {
 				$actions['update'][$key] = $value;
 				continue;

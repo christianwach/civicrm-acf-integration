@@ -874,7 +874,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	 */
 	public function phone_deleted( $op, $objectName, $objectId, $objectRef ) {
 
-		// Bail if this is not a Address.
+		// Bail if this is not an Address.
 		if ( $objectName != 'Phone' ) {
 			return;
 		}
@@ -1379,7 +1379,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	 */
 	public function address_pre_edit( $op, $objectName, $objectId, $objectRef ) {
 
-		// Bail if this is not a Address.
+		// Bail if this is not an Address.
 		if ( $objectName != 'Address' ) {
 			return;
 		}
@@ -1428,7 +1428,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	 */
 	public function address_created( $op, $objectName, $objectId, $objectRef ) {
 
-		// Bail if this is not a Address.
+		// Bail if this is not an Address.
 		if ( $objectName != 'Address' ) {
 			return;
 		}
@@ -1477,7 +1477,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	 */
 	public function address_edited( $op, $objectName, $objectId, $objectRef ) {
 
-		// Bail if this is not a Address.
+		// Bail if this is not an Address.
 		if ( $objectName != 'Address' ) {
 			return;
 		}
@@ -1526,7 +1526,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	 */
 	public function address_deleted( $op, $objectName, $objectId, $objectRef ) {
 
-		// Bail if this is not a Address.
+		// Bail if this is not an Address.
 		if ( $objectName != 'Address' ) {
 			return;
 		}
