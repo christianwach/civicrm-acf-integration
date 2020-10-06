@@ -880,6 +880,31 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 				// Get existing Field value.
 				$existing = get_field( $selector, $post_id );
 
+				// Before applying edits, make some checks.
+				if ( $args['op'] == 'edit' ) {
+
+					// If there is no existing Field value, treat as a 'create' op.
+					if ( empty( $existing ) ) {
+						$args['op'] = 'create';
+					} else {
+
+						// Grab the ACF Phone ID values.
+						$acf_phone_ids = wp_list_pluck( $existing, 'field_phone_id' );
+
+						// Sanitise array contents.
+						array_walk( $acf_phone_ids, function( &$item ) {
+							$item = intval( trim( $item ) );
+						} );
+
+						// If the ID is missing, treat as a 'create' op.
+						if ( ! in_array( $phone->id, $acf_phone_ids ) ) {
+							$args['op'] = 'create';
+						}
+
+					}
+
+				}
+
 				// Process array record.
 				switch( $args['op'] ) {
 
@@ -1138,6 +1163,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 	 */
 	public function phone_types_get() {
 
+		// Only do this once per Field Group.
+		static $pseudocache;
+		if ( isset( $pseudocache ) ) {
+			return $pseudocache;
+		}
+
 		// Init return.
 		$phone_types = [];
 
@@ -1156,6 +1187,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 
 		// Assign to return.
 		$phone_types = $phone_type_ids;
+
+		// Maybe add to pseudo-cache.
+		if ( ! isset( $pseudocache ) ) {
+			$pseudocache = $phone_types;
+		}
 
 		// --<
 		return $phone_types;

@@ -244,15 +244,6 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 			CIVICRM_ACF_INTEGRATION_VERSION // Version.
 		);
 
-		/*
-		// Enqueue our JavaScript.
-		wp_enqueue_script(
-			'acf-input-' . $this->name,
-			plugins_url( 'assets/js/civicrm-phone-field.js', CIVICRM_ACF_INTEGRATION_FILE ),
-			[ 'acf-pro-input' ],
-			CIVICRM_ACF_INTEGRATION_VERSION // Version.
-		)*/
-
 	}
 
 
