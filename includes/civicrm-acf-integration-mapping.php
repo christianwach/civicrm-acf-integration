@@ -241,8 +241,13 @@ class CiviCRM_ACF_Integration_Mapping {
 	 */
 	public function form_activity_type_build( $formName, &$form ) {
 
-		// Is this the Activity Type edit form?
+		// Is this the Options edit form?
 		if ( $formName != 'CRM_Admin_Form_Options' ) {
+			return;
+		}
+
+		// Is this the Activity Type edit form?
+		if ( $form->get( 'gName' ) != 'activity_type' ) {
 			return;
 		}
 
