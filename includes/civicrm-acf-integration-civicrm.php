@@ -86,6 +86,15 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	public $phone;
 
 	/**
+	 * CiviCRM Instant Messenger object.
+	 *
+	 * @since 0.7.3
+	 * @access public
+	 * @var object $phone The CiviCRM Instant Messenger object.
+	 */
+	public $im;
+
+	/**
 	 * CiviCRM Contact Field object.
 	 *
 	 * @since 0.3
@@ -236,6 +245,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-email.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-website.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-phone.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-im.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity-type.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity-field.php';
@@ -268,6 +278,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 		$this->email = new CiviCRM_ACF_Integration_CiviCRM_Email( $this );
 		$this->website = new CiviCRM_ACF_Integration_CiviCRM_Website( $this );
 		$this->phone = new CiviCRM_ACF_Integration_CiviCRM_Phone( $this );
+		$this->im = new CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger( $this );
 
 		// Init Activity Type.
 		$this->activity_type = new CiviCRM_ACF_Integration_CiviCRM_Activity_Type( $this );

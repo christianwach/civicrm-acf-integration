@@ -207,6 +207,12 @@ class CiviCRM_ACF_Integration_Mapper {
 		add_action( 'civicrm_post', [ $this, 'phone_edited' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'phone_deleted' ], 10, 4 );
 
+		// Intercept Instant Messenger updates in CiviCRM.
+		add_action( 'civicrm_pre', [ $this, 'im_pre_delete' ], 10, 4 );
+		add_action( 'civicrm_post', [ $this, 'im_created' ], 10, 4 );
+		add_action( 'civicrm_post', [ $this, 'im_edited' ], 10, 4 );
+		add_action( 'civicrm_post', [ $this, 'im_deleted' ], 10, 4 );
+
 		// Intercept Relationship updates in CiviCRM.
 		add_action( 'civicrm_pre', [ $this, 'relationship_pre_edit' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'relationship_created' ], 10, 4 );
@@ -266,6 +272,12 @@ class CiviCRM_ACF_Integration_Mapper {
 		remove_action( 'civicrm_post', [ $this, 'phone_edited' ], 10 );
 		remove_action( 'civicrm_pre', [ $this, 'phone_pre_delete' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'phone_deleted' ], 10 );
+
+		// Remove Instant Messenger update hooks.
+		remove_action( 'civicrm_post', [ $this, 'im_created' ], 10 );
+		remove_action( 'civicrm_post', [ $this, 'im_edited' ], 10 );
+		remove_action( 'civicrm_pre', [ $this, 'im_pre_delete' ], 10 );
+		remove_action( 'civicrm_post', [ $this, 'im_deleted' ], 10 );
 
 		// Remove Relationship update hooks.
 		remove_action( 'civicrm_pre', [ $this, 'relationship_pre_edit' ], 10 );
@@ -891,6 +903,206 @@ class CiviCRM_ACF_Integration_Mapper {
 		 * @param array $args The array of CiviCRM params.
 		 */
 		do_action( 'civicrm_acf_integration_mapper_phone_deleted', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Intercept when a CiviCRM Instant Messenger is created.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function im_created( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if this is not an Instant Messenger.
+		if ( $objectName != 'IM' ) {
+			return;
+		}
+
+		// Bail if not the context we want.
+		if ( $op != 'create' ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the CiviCRM params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a CiviCRM Instant Messenger has been created.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_im_created', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Instant Messenger is updated.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function im_edited( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if this is not an Instant Messenger.
+		if ( $objectName != 'IM' ) {
+			return;
+		}
+
+		// Bail if not the context we want.
+		if ( $op != 'edit' ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the CiviCRM params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a CiviCRM Instant Messenger has been updated.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_im_edited', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Instant Messenger is about to be deleted.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function im_pre_delete( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if this is not an Instant Messenger.
+		if ( $objectName != 'IM' ) {
+			return;
+		}
+
+		// Bail if not the context we want.
+		if ( $op != 'delete' ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a CiviCRM Instant Messenger is about to be deleted.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_im_pre_delete', $args );
+
+		// Reinstate WordPress callbacks.
+		$this->hooks_wordpress_add();
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Instant Messenger has been deleted.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function im_deleted( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if this is not an Instant Messenger.
+		if ( $objectName != 'IM' ) {
+			return;
+		}
+
+		// Bail if not the context we want.
+		if ( $op != 'delete' ) {
+			return;
+		}
+
+		// Remove WordPress callbacks to prevent recursion.
+		$this->hooks_wordpress_remove();
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+			'objectRef' => $objectRef,
+		];
+
+		/**
+		 * Broadcast that a CiviCRM Instant Messenger has been deleted.
+		 *
+		 * @since 0.7.3
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_im_deleted', $args );
 
 		// Reinstate WordPress callbacks.
 		$this->hooks_wordpress_add();

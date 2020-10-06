@@ -71,8 +71,12 @@ function cacf_get_age_from_acf_field( $selector, $post_id = null ) {
 
 
 
+// -----------------------------------------------------------------------------
+
+
+
 /**
- * Get the Phone Numbers by Type from a given ACF Field.
+ * Get the Phone Numbers from a given ACF Field.
  *
  * If you are calling this from outside The Loop, pass a Post ID as well.
  *
@@ -176,7 +180,7 @@ function cacf_get_phone_numbers( $selector, $post_id = null ) {
  * @since 0.7.3
  *
  * @param int $location_type_id The numeric ID of the CiviCRM Phone Location Type.
- * @param int $phone_type_id The numeric ID of the CiviCRM Phone Phone Type.
+ * @param int $phone_type_id The numeric ID of the CiviCRM Phone Type.
  * @param str $return Return an HTML list or comma-delimited string. Default 'list'.
  * @param str $selector The ACF field selector.
  * @param int $post_id The numeric ID of the WordPress Post.
@@ -515,5 +519,440 @@ function cacf_get_phone_records( $selector, $post_id = null ) {
 	return $records;
 
 }
+
+
+
+// -----------------------------------------------------------------------------
+
+
+
+/**
+ * Get the Instant Messengers from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.7.3
+ *
+ * @param str $selector The ACF field selector.
+ * @param int $post_id The numeric ID of the WordPress Post.
+ * @return str $ims The formatted Instant Messenger "Names".
+ */
+function cacf_get_ims( $selector, $post_id = null ) {
+
+	// Init return.
+	$ims = '';
+
+	// Get the Instant Messenger Records.
+	$records = cacf_get_im_records( $selector, $post_id );
+
+	// Bail if we don't get an Instant Messenger Record.
+	if ( empty( $records ) ) {
+		return $ims;
+	}
+
+	// Get reference to plugin.
+	$cacf = civicrm_acf_integration();
+
+	// Get Location Types.
+	$location_types = $cacf->civicrm->im->location_types_get();
+
+	// Build Location Types array for reference.
+	$locations = [];
+	foreach( $location_types AS $location_type ) {
+		$locations[$location_type['id']] = esc_html( $location_type['display_name'] );
+	}
+
+	// Get Instant Messenger Providers.
+	$im_providers = $cacf->civicrm->im->im_providers_get();
+
+	// Format them.
+	foreach( $records AS $record ) {
+
+		// Skip if the Instant Messenger is empty.
+		if ( empty( $record['field_im_name'] ) ) {
+			continue;
+		}
+
+		// Build string from Locations, Providers and Instant Messenger.
+		$im = sprintf(
+			__( '%1$s (%2$s): %3$s', 'civicrm-acf-integration' ),
+			strval( $im_providers[$record['field_im_provider']] ),
+			strval( $locations[$record['field_im_location']] ),
+			strval( $record['field_im_name'] )
+		);
+
+		// Add to filtered array.
+		$filtered[] = $im;
+
+	}
+
+	// Open the list.
+	$ims .= '<ul><li>';
+
+	// Format the list.
+	$ims .= implode( '</li><li>', $filtered );
+
+	// Close the list.
+	$ims .= '</li></ul>';
+
+	/**
+	 * Allow the Instant Messengers to be filtered.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param str $ims The existing Instant Messenger "Names".
+	 * @param str $selector The ACF field selector.
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return str $ims The modified Instant Messenger "Names".
+	 */
+	$ims = apply_filters( 'cacf_get_im_names', $ims, $selector, $post_id );
+
+	// --<
+	return $ims;
+
+}
+
+
+
+/**
+ * Get the Instant Messengers by Type from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.7.3
+ *
+ * @param int $location_type_id The numeric ID of the CiviCRM Instant Messenger Location Type.
+ * @param int $im_provider_id The numeric ID of the Instant Messenger Provider.
+ * @param str $return Return an HTML list or comma-delimited string. Default 'list'.
+ * @param str $selector The ACF field selector.
+ * @param int $post_id The numeric ID of the WordPress Post.
+ * @return str $im The formatted Instant Messenger.
+ */
+function cacf_get_ims_by_type_ids( $location_type_id, $im_provider_id, $return = 'list', $selector, $post_id = null ) {
+
+	// Init return.
+	$ims = '';
+
+	// Get the Instant Messenger Records.
+	$records = cacf_get_im_records_by_type_ids( $location_type_id, $im_provider_id, $selector, $post_id );
+
+	// Bail if we don't get an Instant Messenger Record.
+	if ( empty( $records ) ) {
+		return $ims;
+	}
+
+	// Init filtered array.
+	$filtered = [];
+
+	// Format them.
+	foreach( $records AS $record ) {
+
+		// Skip if the Instant Messenger is empty.
+		if ( empty( $record['field_im_name'] ) ) {
+			continue;
+		}
+
+		// Assign Instant Messenger to return.
+		$im = strval( $record['field_im_name'] );
+
+		// Add to filtered array.
+		$filtered[] = $im;
+
+	}
+
+	// Bail if we don't get any Instant Messenger Records.
+	if ( empty( $filtered ) ) {
+		return $ims;
+	}
+
+	// Format the return.
+	if ( $return === 'list' ) {
+
+		// Open the list.
+		$ims .= '<ul><li>';
+
+		// Format the list.
+		$ims .= implode( '</li><li>', $filtered );
+
+		// Close the list.
+		$ims .= '</li></ul>';
+
+	} else {
+
+		// Format the string.
+		$ims .= implode( ', ', $filtered );
+
+	}
+
+	/**
+	 * Allow the Instant Messengers to be filtered.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param str $ims The existing Instant Messengers.
+	 * @param str $selector The ACF field selector.
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return str $ims The modified Instant Messengers.
+	 */
+	$ims = apply_filters( 'cacf_get_ims_by_type_ids', $ims, $selector, $post_id );
+
+	// --<
+	return $ims;
+
+}
+
+
+
+/**
+ * Get Instant Messenger Records by Type(s) from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.7.3
+ *
+ * @param int $location_type_id The numeric ID of the CiviCRM Instant Messenger Location Type.
+ * @param int $im_provider_id The numeric ID of the CiviCRM IM Provider.
+ * @param str $selector The ACF field selector.
+ * @param int $post_id The numeric ID of the WordPress Post.
+ * @return array $ims The array of Instant Messenger Record data.
+ */
+function cacf_get_im_records_by_type_ids( $location_type_id, $im_provider_id, $selector, $post_id = null ) {
+
+	// Init return.
+	$ims = [];
+
+	// Get the Instant Messenger Records.
+	$records = cacf_get_im_records( $selector, $post_id );
+
+	// Bail if we don't get an Instant Messenger Record.
+	if ( empty( $records ) ) {
+		return $ims;
+	}
+
+	// If we are looking for just the Location Type ID.
+	if ( ! empty( $location_type_id ) AND empty( $im_provider_id ) ) {
+
+		// Try and find the Instant Messenger Records that match the Location Type ID.
+		foreach( $records AS $record ) {
+			if ( $record['field_im_location'] == $location_type_id ) {
+				$ims[] = $record;
+			}
+		}
+
+	}
+
+	// If we are looking for just the Provider ID.
+	if ( empty( $location_type_id ) AND ! empty( $im_provider_id ) ) {
+
+		// Try and find the Instant Messenger Records that match the Provider ID.
+		foreach( $records AS $record ) {
+			if ( $record['field_im_provider'] == $im_provider_id ) {
+				$ims[] = $record;
+			}
+		}
+
+	}
+
+	// If we are looking for just the Provider ID.
+	if ( ! empty( $location_type_id ) AND ! empty( $im_provider_id ) ) {
+
+		// Try and find the Instant Messenger Records that match both the Location and Provider IDs.
+		foreach( $records AS $record ) {
+			if (
+				$record['field_im_location'] == $location_type_id
+				AND
+				$record['field_im_provider'] == $im_provider_id
+			) {
+				$ims[] = $record;
+			}
+		}
+
+	}
+
+	/**
+	 * Allow the Instant Messenger Records to be filtered.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $ims The existing Instant Messenger Records.
+	 * @param int $location_type_id The numeric ID of the CiviCRM Instant Messenger Location Type.
+	 * @param int $im_provider_id The numeric ID of the CiviCRM Instant Messenger Provider.
+	 * @param str $selector The ACF field selector.
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return array $ims The modified Instant Messenger Records.
+	 */
+	$ims = apply_filters( 'cacf_get_im_records_by_type_ids', $ims, $location_type_id, $im_provider_id, $selector, $post_id );
+
+	// --<
+	return $ims;
+
+}
+
+
+
+/**
+ * Get the "Primary" Instant Messenger from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.7.3
+ *
+ * @param str $selector The ACF field selector.
+ * @param int $post_id The numeric ID of the WordPress Post.
+ * @return str $im The formatted Instant Messenger.
+ */
+function cacf_get_primary_im( $selector, $post_id = null ) {
+
+	// Init return.
+	$im = '';
+
+	// Get the Instant Messenger Record.
+	$record = cacf_get_primary_im_record( $selector, $post_id );
+
+	// Bail if we don't get an Instant Messenger Record.
+	if ( empty( $record ) ) {
+		return $im;
+	}
+
+	// Bail if the Instant Messenger is empty.
+	if ( empty( $record['field_im_name'] ) ) {
+		return $im;
+	}
+
+	// Get reference to plugin.
+	$cacf = civicrm_acf_integration();
+
+	// Get Instant Messenger Providers.
+	$im_providers = $cacf->civicrm->im->im_providers_get();
+
+	// Build string from Providers and Instant Messenger.
+	$im = sprintf(
+		__( '%1$s: %2$s', 'civicrm-acf-integration' ),
+		strval( $im_providers[$record['field_im_provider']] ),
+		strval( $record['field_im_name'] )
+	);
+
+	/**
+	 * Allow the Instant Messenger to be filtered.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param str $im The existing Primary Instant Messenger.
+	 * @param str $selector The ACF field selector.
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return str $im The modified Primary Instant Messenger.
+	 */
+	$im = apply_filters( 'cacf_get_primary_im_name', $im, $selector, $post_id );
+
+	// --<
+	return $im;
+
+}
+
+
+
+/**
+ * Get the "Primary" Instant Messenger Record from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.7.3
+ *
+ * @param str $selector The ACF field selector.
+ * @param int $post_id The numeric ID of the WordPress Post.
+ * @return array $im The array of Instant Messenger Record data.
+ */
+function cacf_get_primary_im_record( $selector, $post_id = null ) {
+
+	// Init return.
+	$im = [];
+
+	// Get the Instant Messenger Record.
+	$records = cacf_get_im_records( $selector, $post_id );
+
+	// Now try and find the Primary Instant Messenger Record.
+	foreach( $records AS $record ) {
+		if ( $record['field_im_primary'] == '1' ) {
+			$im = $record;
+			break;
+		}
+	}
+
+	/**
+	 * Allow the Instant Messenger Record to be filtered.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $im The existing Primary Instant Messenger data.
+	 * @param str $selector The ACF field selector.
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return array $im The modified Primary Instant Messenger data.
+	 */
+	$im = apply_filters( 'cacf_get_primary_im_record', $im, $selector, $post_id );
+
+	// --<
+	return $im;
+
+}
+
+
+/**
+ * Get the Instant Messenger Records from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.7.3
+ *
+ * @param str $selector The ACF field selector.
+ * @param int $post_id The numeric ID of the WordPress Post.
+ * @return array $records The array of Instant Messenger Record data.
+ */
+function cacf_get_im_records( $selector, $post_id = null ) {
+
+	// Init return.
+	$records = [];
+
+	// Try the global if no Post ID.
+	if ( empty( $post_id ) ) {
+		global $post;
+		if ( ! ( $post instanceof WP_Post ) ) {
+			return $im;
+		}
+		$post_id = $post->ID;
+	}
+
+	// Get field settings.
+	$acf_settings = get_field_object( $selector, $post_id );
+
+	// Bail if we don't get any settings.
+	if ( empty( $acf_settings ) ) {
+		return $records;
+	}
+
+	 // Bail if it's not a CiviCRM Instant Messenger Field.
+	 if ( $acf_settings['type'] != 'civicrm_im' ) {
+		return $records;
+	 }
+
+	// Get Field value.
+	$records = get_field( $selector, $post_id );
+
+	/**
+	 * Allow the Instant Messenger Record to be filtered.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $records The existing Instant Messenger Record data.
+	 * @param str $selector The ACF field selector.
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return array $records The modified Instant Messenger Record data.
+	 */
+	$records = apply_filters( 'cacf_get_im_records', $records, $selector, $post_id );
+
+	// --<
+	return $records;
+
+}
+
 
 

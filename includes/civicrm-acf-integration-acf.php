@@ -166,6 +166,7 @@ class CiviCRM_ACF_Integration_ACF {
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-target.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-assignee.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-phone.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-im.php';
 
 		// Create fields.
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field( $this );
@@ -176,6 +177,7 @@ class CiviCRM_ACF_Integration_ACF {
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Target( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Assignee( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Instant_Messenger( $this );
 
 	}
 
