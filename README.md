@@ -12,9 +12,7 @@ CiviCRM ACF Integration
 
 Enables integration between CiviCRM Entities and WordPress Entities with data synced via Advanced Custom Fields.
 
----
-
-### Description ###
+## Description
 
 *CiviCRM ACF Integration* is a WordPress plugin that enables integration between CiviCRM Entities and WordPress Entities with data synced via Advanced Custom Fields.
 
@@ -24,17 +22,13 @@ So if, for now, you want to display (or create) a Contact Type on your WordPress
 
 This plugin recommends a minimum of *WordPress 4.9*, *Advanced Custom Fields 5.8* or *Advanced Custom Fields Pro 5.8* and *CiviCRM 5.13*. YMMV.
 
----
-
-### Preparing for integration ###
+## Preparing for integration
 
 In general, think of this plugin as a way to make data in CiviCRM visible in WordPress via ACF Fields. It is therefore recommended that you configure CiviCRM the way you want it first - so, for example, you should create your Contact Types, Custom Groups and Custom Fields before implementing links between Entities and Fields because (although CiviCRM allows you to alter your setup at any time) *CiviCRM ACF Integration* may not recognised your changes and may not automatically sync the structural changes to WordPress or ACF.
 
 In addition, given that this plugin is still at an early stage of development, it is highly recommended that you try it out on a test site to gain familiarity with how it works. Test early, test often and make backups. Okay, now that we're clear about that, onwards...
 
----
-
-### Links between entities ###
+## Links between entities
 
 At present the *CiviCRM ACF Integration* plugin allows you to specify links between:
 
@@ -42,27 +36,25 @@ At present the *CiviCRM ACF Integration* plugin allows you to specify links betw
 * CiviCRM Events and Event Organiser Events
 * More entity links to follow...
 
-#### CiviCRM Contact Types and WordPress Custom Post Types ####
+### CiviCRM Contact Types and WordPress Custom Post Types
 
 To link these together, in CiviCRM go to *Administer* —> *Customize Data and Screens* —> *Contact Types* and edit a Contact Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Contact Type you are editing. Choose one and save the Contact Type.
 
 From now on, each time you create a Contact of the Contact Type that you have linked, a new WordPress Post will be created. The "Display Name" of the Contact will become the WordPress Post Title. And - in the reverse direction - each time you create a WordPress Post which is of the Post Type you have linked to a Contact Type, a new Contact will be created with their "Display Name" set to the Title of the new Post.
 
-#### CiviCRM Events and Event Organiser Events ####
+### CiviCRM Events and Event Organiser Events
 
 If you want to make the same kind of links between Events in WordPress and CiviCRM, this plugin is compatible with [CiviCRM Event Organiser](https://github.com/christianwach/civicrm-event-organiser) and enables integration of Custom Fields on CiviCRM Events with ACF Fields attached to the Event Organiser "Event" Post Type.
 
 *Important note:* Please make sure you have *CiviCRM Event Organiser* version 0.5.3 or greater.
 
-#### CiviCRM Activities and WordPress Custom Post Types ####
+### CiviCRM Activities and WordPress Custom Post Types
 
 To link these together, in CiviCRM go to *Administer* —> *Customize Data and Screens* —> *Activity Types* and edit an Activity Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Activity Type you are editing. Choose one and save the Activity Type.
 
 From now on, each time you create an Activity of the Activity Type that you have linked, a new WordPress Post will be created. The "Subject" of the Activity will become the WordPress Post Title. And - in the reverse direction - each time you create a WordPress Post which is of the Post Type you have linked to an Activity Type, a new Activity will be created with their "Subject" set to the Title of the new Post.
 
----
-
-### Links between fields ###
+## Links between Fields
 
 Once the link between a Contact Type and a Post Type has been made, go to the edit screen of an ACF Field Group. Create a Location Rule that places it on the edit screen of your linked Post Type. Now you can edit your ACF Fields themselves to integrate them with the Contact's data fields. These are split into two kinds:
 
@@ -79,7 +71,7 @@ Please note that in order to link some kinds of Fields, you may have to save the
 
 In each of these cases, choose the ACF Field Type, modify the Field Settings as required, save the Field Group, then re-edit the Field. The "CiviCRM Field" setting should then appear and populate appropriately.
 
-#### CiviCRM Contact Fields ####
+### CiviCRM Contact Fields
 
 The following are the Contact Fields and the kind of ACF Field needed to map them to CiviCRM:
 
@@ -98,27 +90,27 @@ The following are the Contact Fields and the kind of ACF Field needed to map the
 
 When you select a Field Type for an ACF Field, the "CiviCRM Field" dropdown in the ACF Field's Settings will only show you those CiviCRM Contact Fields which can be mapped to this type of ACF Field.
 
-#### CiviCRM Custom Fields ####
+### CiviCRM Custom Fields
 
 When creating a Custom Field in CiviCRM, you need to specify the kind of Data Type that it is - e.g. "Alphanumeric", "Integer", "Number", etc - followed by the Field Type - e.g. "Text", "Select", "Radio", etc. The Field Type pretty much corresponds to the kind of ACF Field that will map to the Custom Field. When you select a Field Type for an ACF Field, the "CiviCRM Field" dropdown in the ACF Field's Settings will only show you those CiviCRM Custom Fields which can be mapped to this type of ACF Field.
 
-#### ACF Custom Fields ####
+### ACF Custom Fields
 
 The *CiviCRM ACF Integration* plugin also provides three custom ACF Fields which you will see as choices in the "Field Type" dropdown when you add a new ACF Field to a Field Group. These are:
 
-##### CiviCRM Contact #####
+#### CiviCRM Contact
 
 Syncs with either a CiviCRM "Contact Reference" Custom Field or the "Current Employer" Contact Field.
 
-##### CiviCRM Relationship #####
+#### CiviCRM Relationship
 
 Syncs between the ACF Field and a CiviCRM Relationship.
 
-##### CiviCRM Yes/No #####
+#### CiviCRM Yes/No
 
 Syncs between the ACF Field and a CiviCRM Yes/No Custom Field. This Field Type is necessary because a CiviCRM Yes/No Custom Field is actually a Yes/No/Unknown field and the ACF True-False Field does not allow Unknown.
 
-##### CiviCRM Phone #####
+#### CiviCRM Phone
 
 **NOTE: Requires ACF Pro.** Syncs with all the CiviCRM "Phone" Contact Fields. Use the supplied template functions to display particular Phone Numbers in your templates. Here are some examples:
 
@@ -148,7 +140,7 @@ Syncs between the ACF Field and a CiviCRM Yes/No Custom Field. This Field Type i
 <?php echo cacf_get_phone_numbers( 'phone_field' ); ?>
 ```
 
-##### CiviCRM Instant Messenger #####
+#### CiviCRM Instant Messenger
 
 **NOTE: Requires ACF Pro.** Syncs with all the CiviCRM "Instant Messenger" Contact Fields. As with the "CiviCRM Phone" Field, use the supplied template functions to display particular Instant Messenger Records in your templates. Here are some examples:
 
@@ -160,64 +152,58 @@ Syncs between the ACF Field and a CiviCRM Yes/No Custom Field. This Field Type i
 <?php echo cacf_get_ims( 'im_field' ); ?>
 ```
 
----
+## Outstanding Issues
 
-### Outstanding Issues ###
-
-#### Bulk changes via the CiviCRM Contact Edit screen #####
+### Bulk changes via the CiviCRM Contact Edit screen
 
 Wholesale changes via the CiviCRM Contact Edit screen may not yet be fully supported. Please [open an issue](https://github.com/christianwach/civicrm-acf-integration/issues) if you find anything that needs fixing.
 
-#### Changes to Custom Field settings #####
+### Changes to Custom Field settings
 
 If you alter the settings of a CiviCRM Custom Field then the ACF Field(s) that are mapped to it will not automatically pick up those changes. For the time being, you will need to manually check that the settings on both sides are what you would expect them to be.
 
-##### File Field #####
+### File Field
 
 There is no mapping between the CiviCRM "File" and the ACF "File" Field Types yet.
 
-##### Address Field #####
+### Address Field
 
 There is no "Address Field" in ACF or ACF Pro although there are some somewhat outdated plugins ([here](https://github.com/GCX/acf-address-field) and [here](https://github.com/strickdj/acf-field-address), plus [this article](https://acfextras.com/simple-address-with-schema-markup/)) that do offer this. A future version of this plugin could provide a Custom Field Type (with Sub-fields) that allows CiviCRM Addresses to be sync to ACF Fields. Its settings would allow the choice of which fields to render.
 
-##### Current Employer #####
+### Current Employer
 
 There are oddities in CiviCRM's relationships, particularly the "Employer Of" relationship - which is both a "Relationship" and a "Contact Field". The ID of a Contact's "Current Employer" may be present in the `current_employer` field when retrieved via the CiviCRM API and can be set by populating the `employer_id` field.
 
 The "Current Employer" can be mapped using an ACF Select Field, but sync will only take place when the ACF Field's value is changed or when the "Current Employer" field on the Contact is changed. It will not sync when the "Employer Of"/"Employee Of" Relationship is edited.
 
-##### Expired Relationships #####
+### Expired Relationships
 
 CiviCRM's Relationships can be time-limited and the "Inactive Relationships" list on a Contact's Relationships tab shows both relationships that are Disabled and those that have a past End Date. An ACF Field mapped to such a Relationship will only update when the "Disable expired relationships" Scheduled Job runs and sets the Relationship's `is_active` property.
 
-##### Country & State/Province #####
+### Country & State/Province
 
 These work when using either the "Select" or "Multi-Select" options in CiviCRM, however the "choices" in the ACF Field are dependent upon the Countries and State/Provinces that have been enabled in CiviCRM. If you change these settings, you will have to re-save the ACF Field Groups that contain the Fields that are mapped to them.
 
-##### WordPress Post Content #####
+### WordPress Post Content
 
 Since CiviCRM Contacts do not have a WYSIWYG field attached to them by default, there are (as yet) no options for syncing the Post Content to a Contact. To do something equivalent, use an ACF Field of type "Wysiwyg Editor" and map it to a CiviCRM Custom Field of type "Note/RichTextEditor". You can use the setting of an ACF Field Group to hide the Content Editor.
 
-##### CiviCRM Stylesheets #####
+### CiviCRM Stylesheets
 
 Unless you disable the CiviCRM Shortcode on a Post Type (via the settings page in CiviCRM Admin Utilities) then the CiviCRM Stylesheets load on the edit screen for that Post Type and interfere with the styling of ACF Select2 elements. It seems unlikely that the CiviCRM Shortcode would be useful in the Post Content of a linked Post Type, so disable it unless it's absolutely necessary.
 
----
-
-#### Credits ####
+## Credits
 
 Many thanks to:
 
 * [Ryan Waterbury](https://github.com/onedogsolutions) of [One Dog Solutions](https://onedog.solutions/) for funding the initial development of this plugin.
 * [Tadpole Collective](https://tadpole.cc/) for funding the integration of CiviCRM Groups with WordPress Terms and the development of Manual Sync functionality.
 
----
-
-#### Installation ####
+## Installation
 
 There are two ways to install from GitHub:
 
-###### ZIP Download ######
+#### ZIP Download
 
 If you have downloaded *CiviCRM ACF Integration* as a ZIP file from the git repository, do the following to install and activate the plugin:
 
@@ -225,6 +211,6 @@ If you have downloaded *CiviCRM ACF Integration* as a ZIP file from the git repo
 2. Activate the plugin
 3. You are done!
 
-###### git clone ######
+#### git clone
 
 If you have cloned the code from the git repository, it is assumed that you know what you're doing.
