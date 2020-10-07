@@ -240,7 +240,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 
 
 	/**
-	 * This filter is appied to the value after it is loaded from the database
+	 * This filter is applied to the value after it is loaded from the database
 	 * and before it is returned to the template.
 	 *
 	 * @since 0.6.4
