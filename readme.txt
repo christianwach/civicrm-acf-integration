@@ -56,6 +56,12 @@ If you want to make the same kind of links between Events in WordPress and CiviC
 
 *Important note:* Please make sure you have *CiviCRM Event Organiser* version 0.5.3 or greater.
 
+#### CiviCRM Activities and WordPress Custom Post Types
+
+To link these together, in CiviCRM go to *Administer* —> *Customize Data and Screens* —> *Activity Types* and edit an Activity Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Activity Type you are editing. Choose one and save the Activity Type.
+
+From now on, each time you create an Activity of the Activity Type that you have linked, a new WordPress Post will be created. The "Subject" of the Activity will become the WordPress Post Title. And - in the reverse direction - each time you create a WordPress Post which is of the Post Type you have linked to an Activity Type, a new Activity will be created with their "Subject" set to the Title of the new Post.
+
 
 
 ### Links between Fields
@@ -90,6 +96,8 @@ The following are the Contact Fields and the kind of ACF Field needed to map the
 * Deceased - ACF True/False
 * Job Title, Source & Nickname - ACF Text
 * Employer - ACF CiviCRM Contact (see "Custom ACF Fields" below)
+* Phone - ACF CiviCRM Phone (see "Custom ACF Fields" below)
+* Instant Messenger - ACF CiviCRM Instant Messenger (see "Custom ACF Fields" below)
 
 When you select a Field Type for an ACF Field, the "CiviCRM Field" dropdown in the ACF Field's Settings will only show you those CiviCRM Contact Fields which can be mapped to this type of ACF Field.
 
@@ -103,9 +111,57 @@ When creating a Custom Field in CiviCRM, you need to specify the kind of Data Ty
 
 The *CiviCRM ACF Integration* plugin also provides three custom ACF Fields which you will see as choices in the "Field Type" dropdown when you add a new ACF Field to a Field Group. These are:
 
-* "CiviCRM Contact" - syncs with either a CiviCRM "Contact Reference" Custom Field or the "Current Employer" Contact Field
-* "CiviCRM Relationship" - syncs between the ACF Field and a CiviCRM Relationship
-* "CiviCRM Yes/No" - syncs between the ACF Field and a CiviCRM Yes/No Custom Field (necessary because a CiviCRM Yes/No Custom Field is actually a Yes/No/Unknown field and the ACF True-False Field does not allow Unknown)
+##### CiviCRM Contact
+
+Syncs with either a CiviCRM "Contact Reference" Custom Field or the "Current Employer" Contact Field.
+
+##### CiviCRM Relationship
+
+Syncs between the ACF Field and a CiviCRM Relationship.
+
+##### CiviCRM Yes/No
+
+Syncs between the ACF Field and a CiviCRM Yes/No Custom Field. This Field Type is necessary because a CiviCRM Yes/No Custom Field is actually a Yes/No/Unknown field and the ACF True-False Field does not allow Unknown.
+
+##### CiviCRM Phone
+
+**NOTE: Requires ACF Pro.** Syncs with all the CiviCRM "Phone" Contact Fields. Use the supplied template functions to display particular Phone Numbers in your templates. Here are some examples:
+
+`<p><strong><?php echo __( 'Primary Phone Number: ', 'your-slug' ); ?></strong>
+<?php echo cacf_get_primary_phone_number( 'phone_field' ); ?></p>
+
+<p><strong><?php _e( 'All Home Phone Numbers as list: ', 'your-slug' ). ' '; ?></strong></p>
+<?php echo cacf_get_phone_numbers_by_type_ids( 1, null, 'list', 'phone_field' ); ?>
+
+<p><strong><?php echo __( 'All Home Phone Numbers as string: ', 'your-slug' ); ?></strong><br />
+<?php echo cacf_get_phone_numbers_by_type_ids( 1, null, 'commas', 'phone_field' );
+?></p>
+
+<p><strong><?php _e( 'All Home Mobile Numbers as list: ', 'your-slug' ). ' '; ?></strong></p>
+<?php echo cacf_get_phone_numbers_by_type_ids( 1, 2, 'list', 'phone_field' ); ?>
+
+<p><strong><?php echo __( 'All Home Mobile Numbers as string: ', 'your-slug' ); ?></strong><br />
+<?php echo cacf_get_phone_numbers_by_type_ids( 1, 2, null, 'phone_field' );
+?></p>
+
+<p><strong><?php echo __( 'Voicemail:', 'your-slug' ). ' '; ?></strong>
+<?php echo cacf_get_phone_numbers_by_type_ids( 0, 5, null, 'phone_field' );
+?></p>
+
+<p><strong><?php _e( 'All Numbers as list: ', 'your-slug' ). ' '; ?></strong></p>
+<?php echo cacf_get_phone_numbers( 'phone_field' ); ?>
+`
+
+##### CiviCRM Instant Messenger
+
+**NOTE: Requires ACF Pro.** Syncs with all the CiviCRM "Instant Messenger" Contact Fields. As with the "CiviCRM Phone" Field, use the supplied template functions to display particular Instant Messenger Records in your templates. Here are some examples:
+
+`<p><strong><?php _e( 'All Skype IMs as list: ', 'your-slug' ). ' '; ?></strong></p>
+<?php echo cacf_get_ims_by_type_ids( null, 6, 'list', 'im_field' ); ?>
+
+<p><strong><?php _e( 'All IMs as list: ', 'your-slug' ). ' '; ?></strong></p>
+<?php echo cacf_get_ims( 'im_field' ); ?>
+`
 
 ### Outstanding Issues
 
