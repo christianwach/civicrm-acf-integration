@@ -236,6 +236,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	 */
 	public function acf_fields_saved( $args ) {
 
+		// Bail early if the ACF Fields are not attached to a Post Type.
+		if ( ! isset( $this->do_not_sync ) ) {
+			return;
+		}
+
 		// Bail early if this Post Type shouldn't be synced.
 		// @see self::post_saved()
 		if ( $this->do_not_sync === true ) {
