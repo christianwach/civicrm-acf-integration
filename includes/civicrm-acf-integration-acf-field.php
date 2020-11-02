@@ -449,6 +449,11 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		// Get the Contact Fields for this CiviCRM Contact Type.
 		$contact_fields = $this->plugin->civicrm->contact_field->get_for_acf_field( $field );
 
+		// Bail if there are conflicting fields.
+		if ( ! empty( $contact_fields ) AND ! empty( $activity_fields ) ) {
+			return;
+		}
+
 		// Get the Custom Fields for this CiviCRM Contact Type.
 		$custom_fields = $this->plugin->civicrm->custom_field->get_for_acf_field( $field );
 
@@ -457,11 +462,6 @@ class CiviCRM_ACF_Integration_ACF_Field {
 
 		// Bail if there are no fields.
 		if ( empty( $filtered_fields ) AND empty( $contact_fields ) AND empty( $activity_fields ) ) {
-			return;
-		}
-
-		// Bail if there are conflicting fields.
-		if ( ! empty( $contact_fields ) AND ! empty( $activity_fields ) ) {
 			return;
 		}
 
@@ -893,6 +893,11 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		// Get the Contact Fields for this ACF Field.
 		$contact_fields = $this->plugin->civicrm->contact_field->get_for_acf_field( $field );
 
+		// Bail if there are conflicting fields.
+		if ( ! empty( $contact_fields ) AND ! empty( $activity_fields ) ) {
+			return;
+		}
+
 		// Get the Custom Fields for this ACF Field.
 		$custom_fields = $this->plugin->civicrm->custom_field->get_for_acf_field( $field );
 
@@ -901,11 +906,6 @@ class CiviCRM_ACF_Integration_ACF_Field {
 
 		// Bail if there are no fields.
 		if ( empty( $filtered_fields ) AND empty( $contact_fields ) AND empty( $activity_fields ) ) {
-			return;
-		}
-
-		// Bail if there are conflicting fields.
-		if ( ! empty( $contact_fields ) AND ! empty( $activity_fields ) ) {
 			return;
 		}
 
@@ -1130,6 +1130,11 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		// Get the Contact Fields for this CiviCRM Contact Type.
 		$contact_fields = $this->plugin->civicrm->contact_field->get_for_acf_field( $field );
 
+		// Bail if there are conflicting fields.
+		if ( ! empty( $contact_fields ) AND ! empty( $activity_fields ) ) {
+			return;
+		}
+
 		// Get the Custom Fields for this CiviCRM Contact Type.
 		$custom_fields = $this->plugin->civicrm->custom_field->get_for_acf_field( $field );
 
@@ -1138,11 +1143,6 @@ class CiviCRM_ACF_Integration_ACF_Field {
 
 		// Bail if there are no fields.
 		if ( empty( $filtered_fields ) AND empty( $contact_fields ) AND empty( $activity_fields ) ) {
-			return;
-		}
-
-		// Bail if there are conflicting fields.
-		if ( ! empty( $contact_fields ) AND ! empty( $activity_fields ) ) {
 			return;
 		}
 
