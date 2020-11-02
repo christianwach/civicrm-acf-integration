@@ -1167,7 +1167,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity {
 		// Define field.
 		$field = [
 			'key' => $this->civicrm->acf_field_key_get(),
-			'label' => __( 'CiviCRM Activity Field', 'civicrm-acf-integration' ),
+			'label' => __( 'CiviCRM Field', 'civicrm-acf-integration' ),
 			'name' => $this->civicrm->acf_field_key_get(),
 			'type' => 'select',
 			'instructions' => __( 'Choose the CiviCRM Field that this ACF Field should sync with. (Optional)', 'civicrm-acf-integration' ),
