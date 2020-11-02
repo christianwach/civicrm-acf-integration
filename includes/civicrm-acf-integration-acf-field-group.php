@@ -145,6 +145,7 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 		 * Internally, this is used by:
 		 *
 		 * @see CiviCRM_ACF_Integration_CiviCRM_Contact::query_field_group_mapped()
+		 * @see CiviCRM_ACF_Integration_CiviCRM_Activity::query_field_group_mapped()
 		 *
 		 * @since 0.5.1
 		 *
@@ -300,7 +301,10 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 			return false;
 		}
 
-		// Loop through location groups.
+		// Init OR group match.
+		$or_group_match = false;
+
+		// Loop through location OR groups.
 		foreach( $field_group['location'] AS $group ) {
 
 			// Skip group if it has no rules.
@@ -308,28 +312,52 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 				continue;
 			}
 
-			// Loop over the rules and determine if "post type" rules match.
-			$match_group = true;
+			// Init AND group match.
+			$and_group_match = true;
+
+			// Init flag to ensure our queried Entity is present.
+			$queried_entity_present = false;
+
+			/*
+			 * Loop over the rules and determine if we have a match.
+			 *
+			 * We are checking for any WordPress Entities that can sync to CiviCRM
+			 * Entities - therefore if a Location Rule references that Entity and
+			 * we get a match to the requested Entity in the params passed in, then
+			 * the Field Group may be visible and should return `true`.
+			 */
 			foreach( $group AS $rule ) {
 
-				// Skip any rules which do not reference the "post type".
-				if ( $rule['param'] != 'post_type' ) {
-					continue;
-				}
+				// Check any rules which reference a "post type".
+				if ( $rule['param'] == 'post_type' AND ! empty( $params['post_type'] ) ) {
 
-				// Test the "post type" rule.
-				if ( ! acf_match_location_rule( $rule, $params, $field_group ) ) {
-					$match_group = false;
-					break;
+					// Regardless of match, a rules references the
+					$queried_entity_present = true;
+
+					// Test the "post type" rule.
+					if ( ! acf_match_location_rule( $rule, $params, $field_group ) ) {
+
+						// Any failure means the AND check fails.
+						$and_group_match = false;
+						break;
+
+					}
+
 				}
 
 			}
 
-			// If this group matches, it is a visible Field Group.
-			if ( $match_group ) {
-				return true;
+			// Apply AND group to the OR group match.
+			if ( $and_group_match === true AND $queried_entity_present === true ) {
+				$or_group_match = true;
+				break;
 			}
 
+		}
+
+		// If any OR group matches, it is a visible Field Group.
+		if ( $or_group_match ) {
+			return true;
 		}
 
 		// Fallback.

@@ -460,6 +460,11 @@ class CiviCRM_ACF_Integration_ACF_Field {
 			return;
 		}
 
+		// Bail if there are conflicting fields.
+		if ( ! empty( $contact_fields ) AND ! empty( $activity_fields ) ) {
+			return;
+		}
+
 		// Get Setting field based on Entity.
 		if ( ! empty( $activity_fields ) ) {
 			$setting = $this->plugin->civicrm->activity->acf_field_get( $filtered_fields, $activity_fields );
@@ -899,6 +904,11 @@ class CiviCRM_ACF_Integration_ACF_Field {
 			return;
 		}
 
+		// Bail if there are conflicting fields.
+		if ( ! empty( $contact_fields ) AND ! empty( $activity_fields ) ) {
+			return;
+		}
+
 		// Get Setting field based on Entity.
 		if ( ! empty( $activity_fields ) ) {
 			$setting = $this->plugin->civicrm->activity->acf_field_get( $filtered_fields, $activity_fields );
@@ -1128,6 +1138,11 @@ class CiviCRM_ACF_Integration_ACF_Field {
 
 		// Bail if there are no fields.
 		if ( empty( $filtered_fields ) AND empty( $contact_fields ) AND empty( $activity_fields ) ) {
+			return;
+		}
+
+		// Bail if there are conflicting fields.
+		if ( ! empty( $contact_fields ) AND ! empty( $activity_fields ) ) {
 			return;
 		}
 

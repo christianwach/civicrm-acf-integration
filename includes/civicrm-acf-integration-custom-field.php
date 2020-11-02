@@ -936,6 +936,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 		 * Internally, this is used by:
 		 *
 		 * @see CiviCRM_ACF_Integration_CiviCRM_Contact::query_custom_fields()
+		 * @see CiviCRM_ACF_Integration_CiviCRM_Activity::query_custom_fields()
 		 *
 		 * @since 0.5.1
 		 *
