@@ -593,10 +593,22 @@ class CiviCRM_ACF_Integration_Post {
 		// Init as failed.
 		$posts = false;
 
-		// Define args for query.
+		/*
+		 * Define args for query.
+		 *
+		 * We need to query multiple Post Statuses because we need to keep the
+		 * linkage between the CiviCRM Entity and the Post throughout its
+		 * life cycle, e.g.
+		 *
+		 * - Published: The default status for our purposes.
+		 * - Trash: Because we want to avoid a duplicate Post being created.
+		 * - Draft: When Posts are moved out of the Trash, this is their status.
+		 *
+		 * This may need to be revisited.
+		 */
 		$args = [
 			'post_type' => $post_type,
-			//'post_status' => 'publish',
+			'post_status' => [ 'publish', 'trash', 'draft' ],
 			'no_found_rows' => true,
 			'meta_key' => $this->contact_id_key,
 			'meta_value' => (string) $contact_id,
@@ -804,8 +816,6 @@ class CiviCRM_ACF_Integration_Post {
 
 				// Get the Post ID for this Contact.
 				$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $args['objectRef'], $post_type );
-
-				// TODO: If it's a Post that originated this, allow other Posts to update?
 
 				// Exclude "reverse" edits when a Post is the originator.
 				if ( $entity['entity'] === 'post' AND $post_id == $entity['id'] ) {
