@@ -49,6 +49,15 @@ class CiviCRM_ACF_Integration_ACF {
 	 */
 	public $field;
 
+	/**
+	 * ACF Blocks object.
+	 *
+	 * @since 0.8
+	 * @access public
+	 * @var object $blocks The ACF Blocks object.
+	 */
+	//public $blocks;
+
 
 
 	/**
@@ -112,6 +121,7 @@ class CiviCRM_ACF_Integration_ACF {
 		// Include class files.
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-acf-field-group.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-acf-field.php';
+		//include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-acf-blocks.php';
 
 	}
 
@@ -129,6 +139,9 @@ class CiviCRM_ACF_Integration_ACF {
 
 		// Init Field object.
 		$this->field = new CiviCRM_ACF_Integration_ACF_Field( $this );
+
+		// Init Blocks object.
+		//$this->blocks = new CiviCRM_ACF_Integration_ACF_Blocks( $this );
 
 	}
 
