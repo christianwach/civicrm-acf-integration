@@ -104,6 +104,15 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	public $contact_field;
 
 	/**
+	 * CiviCRM Custom Group object.
+	 *
+	 * @since 0.8
+	 * @access public
+	 * @var object $custom_group The CiviCRM Custom Group object.
+	 */
+	//public $custom_group;
+
+	/**
 	 * CiviCRM Custom Field object.
 	 *
 	 * @since 0.3
@@ -239,6 +248,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-contact.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-contact-field.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-civicrm-group.php';
+		//include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-custom-group.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-custom-field.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-relationship.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-address.php';
@@ -272,6 +282,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 		$this->group = new CiviCRM_ACF_Integration_CiviCRM_Group( $this );
 
 		// Init Other Entities.
+		//$this->custom_group = new CiviCRM_ACF_Integration_CiviCRM_Custom_Group( $this );
 		$this->custom_field = new CiviCRM_ACF_Integration_CiviCRM_Custom_Field( $this );
 		$this->relationship = new CiviCRM_ACF_Integration_CiviCRM_Relationship( $this );
 		$this->address = new CiviCRM_ACF_Integration_CiviCRM_Address( $this );

@@ -911,6 +911,57 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 
 
 
+	/**
+	 * Get the CiviCRM Custom Field data for a given Custom Group ID.
+	 *
+	 * @since 0.8
+	 *
+	 * @param int $custom_group_id The numeric ID of the Custom Group.
+	 * @return array $fields An array of Custom Field data.
+	 */
+	public function get_by_group_id( $custom_group_id ) {
+
+		// Init return.
+		$fields = [];
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $fields;
+		}
+
+		// Build params to get Custom Group data.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+			'custom_group_id' => $custom_group_id,
+			'options' => [
+				'limit' => 0, // No limit.
+			],
+		];
+
+		// Call the CiviCRM API.
+		$result = civicrm_api( 'CustomField', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $fields;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $fields;
+		}
+
+		// The result set is what we want.
+		$fields = $result['values'];
+
+		// --<
+		return $fields;
+
+	}
+
+
+
 	// -------------------------------------------------------------------------
 
 
