@@ -171,7 +171,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 		if ( ! empty( $field['value'] ) ) {
 
 			// Cast value to an integer.
-			$contact_id = intval( $field['value'] );
+			$contact_id = (int) $field['value'];
 
 			// Apply Contact ID to field.
 			$field['value'] = $contact_id;

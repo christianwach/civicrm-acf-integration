@@ -1366,7 +1366,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		// Set the mapped Contact Field name if present.
 		if ( isset( $field[$acf_field_key] ) ) {
 			if ( false !== strpos( $field[$acf_field_key], $this->contact_field_prefix ) ) {
-				$contact_field_name = strval( str_replace( $this->contact_field_prefix, '', $field[$acf_field_key] ) );
+				$contact_field_name = (string) str_replace( $this->contact_field_prefix, '', $field[$acf_field_key] );
 			}
 		}
 

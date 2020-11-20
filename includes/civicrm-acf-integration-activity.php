@@ -1243,7 +1243,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity {
 		// Set the mapped Activity Field name if present.
 		if ( isset( $field[$acf_field_key] ) ) {
 			if ( false !== strpos( $field[$acf_field_key], $this->activity_field_prefix ) ) {
-				$activity_field_name = strval( str_replace( $this->activity_field_prefix, '', $field[$acf_field_key] ) );
+				$activity_field_name = (string) str_replace( $this->activity_field_prefix, '', $field[$acf_field_key] );
 			}
 		}
 

@@ -485,7 +485,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 
 		// Sanitise array contents.
 		array_walk( $acf_im_ids, function( &$item ) {
-			$item = intval( trim( $item ) );
+			$item = (int) trim( $item );
 		} );
 
 		// Records to delete are missing from the ACF data.
@@ -615,8 +615,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 
 		// Convert ACF data to CiviCRM data.
 		$im_data['is_primary'] = empty( $value['field_im_primary'] ) ? '0' : '1';
-		$im_data['location_type_id'] = intval( $value['field_im_location'] );
-		$im_data['provider_id'] = intval( $value['field_im_provider'] );
+		$im_data['location_type_id'] = (int) $value['field_im_location'];
+		$im_data['provider_id'] = (int) $value['field_im_provider'];
 		$im_data['name'] = trim( $value['field_im_name'] );
 
 		// --<
@@ -646,10 +646,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 
 		// Convert CiviCRM data to ACF data.
 		$im_data['field_im_name'] = trim( $value->name );
-		$im_data['field_im_location'] = intval( $value->location_type_id );
-		$im_data['field_im_provider'] = intval( $value->provider_id );
+		$im_data['field_im_location'] = (int) $value->location_type_id;
+		$im_data['field_im_provider'] = (int) $value->provider_id;
 		$im_data['field_im_primary'] = empty( $value->is_primary ) ? '0' : '1';
-		$im_data['field_im_id'] = intval( $value->id );
+		$im_data['field_im_id'] = (int) $value->id;
 
 		// --<
 		return $im_data;
@@ -806,7 +806,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 		}
 
 		// We just need the Instant Messenger ID.
-		$im_id = intval( $args['objectId'] );
+		$im_id = (int) $args['objectId'];
 
 		// Grab the Instant Messenger Record data from the database.
 		$im_pre = $this->im_get_by_id( $im_id );
@@ -837,7 +837,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 		}
 
 		// We just need the Instant Messenger ID.
-		$im_id = intval( $args['objectId'] );
+		$im_id = (int) $args['objectId'];
 
 		// Sanity check.
 		if ( $im_id != $this->im_pre->id ) {
@@ -949,7 +949,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 
 					// Sanitise array contents.
 					array_walk( $acf_im_ids, function( &$item ) {
-						$item = intval( trim( $item ) );
+						$item = (int) trim( $item );
 					} );
 
 					// If the ID is missing, treat as a 'create' op.

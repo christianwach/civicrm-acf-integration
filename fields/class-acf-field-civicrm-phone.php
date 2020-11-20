@@ -390,7 +390,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 
 		// Sanitise array contents.
 		array_walk( $primary_values, function( &$item ) {
-			$item = intval( trim( $item ) );
+			$item = (int) trim( $item );
 		} );
 
 		// Check that we have a Primary Number.
@@ -404,7 +404,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 
 		// Sanitise array contents.
 		array_walk( $phones, function( &$item ) {
-			$item = strval( trim( $item ) );
+			$item = (string) trim( $item );
 		} );
 
 		// Check that all Number Fields are populated.

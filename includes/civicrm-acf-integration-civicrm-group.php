@@ -541,7 +541,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Group {
 		}
 
 		// --<
-		return empty( $result['count'] ) ? 0 : intval( $result['count'] );
+		return empty( $result['count'] ) ? 0 : (int) $result['count'];
 
 	}
 

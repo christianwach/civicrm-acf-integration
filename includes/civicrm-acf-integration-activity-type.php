@@ -140,7 +140,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity_Type {
 		$option_group = array_pop( $result['values'] );
 
 		// Assign the ID.
-		$option_group_id = intval( $option_group['id'] );
+		$option_group_id = (int) $option_group['id'];
 
 		// --<
 		return $option_group_id;
@@ -315,7 +315,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity_Type {
 		}
 
 		// --<
-		return empty( $result['count'] ) ? 0 : intval( $result['count'] );
+		return empty( $result['count'] ) ? 0 : (int) $result['count'];
 
 	}
 

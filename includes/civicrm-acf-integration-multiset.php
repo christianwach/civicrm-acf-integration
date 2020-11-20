@@ -428,7 +428,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Multiple_Record_Set extends CiviCRM_ACF_In
 
 		// Sanitise array contents.
 		array_walk( $acf_multiset_ids, function( &$item ) {
-			$item = intval( trim( $item ) );
+			$item = (int) trim( $item );
 		} );
 
 		// Records to delete are missing from the ACF data.
@@ -558,8 +558,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Multiple_Record_Set extends CiviCRM_ACF_In
 
 		// Convert ACF data to CiviCRM data.
 		$multiset_data['is_primary'] = empty( $value['field_multiset_primary'] ) ? '0' : '1';
-		$multiset_data['location_type_id'] = intval( $value['field_multiset_location'] );
-		$multiset_data['provider_id'] = intval( $value['field_multiset_provider'] );
+		$multiset_data['location_type_id'] = (int) $value['field_multiset_location'];
+		$multiset_data['provider_id'] = (int) $value['field_multiset_provider'];
 		$multiset_data['name'] = trim( $value['field_multiset_name'] );
 
 		// --<
@@ -589,10 +589,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Multiple_Record_Set extends CiviCRM_ACF_In
 
 		// Convert CiviCRM data to ACF data.
 		$multiset_data['field_multiset_name'] = trim( $value->name );
-		$multiset_data['field_multiset_location'] = intval( $value->location_type_id );
-		$multiset_data['field_multiset_provider'] = intval( $value->provider_id );
+		$multiset_data['field_multiset_location'] = (int) $value->location_type_id;
+		$multiset_data['field_multiset_provider'] = (int) $value->provider_id;
 		$multiset_data['field_multiset_primary'] = empty( $value->is_primary ) ? '0' : '1';
-		$multiset_data['field_multiset_id'] = intval( $value->id );
+		$multiset_data['field_multiset_id'] = (int) $value->id;
 
 		// --<
 		return $multiset_data;
@@ -748,7 +748,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Multiple_Record_Set extends CiviCRM_ACF_In
 		}
 
 		// We just need the PHone ID.
-		$multiset_id = intval( $args['objectId'] );
+		$multiset_id = (int) $args['objectId'];
 
 		// Grab the Multiple Record Set data from the database.
 		$multiset_pre = $this->multiset_get_by_id( $multiset_id );
@@ -779,7 +779,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Multiple_Record_Set extends CiviCRM_ACF_In
 		}
 
 		// We just need the Multiple Record Set ID.
-		$multiset_id = intval( $args['objectId'] );
+		$multiset_id = (int) $args['objectId'];
 
 		// Sanity check.
 		if ( $multiset_id != $this->multiset_pre->id ) {
@@ -861,7 +861,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Multiple_Record_Set extends CiviCRM_ACF_In
 
 						// Sanitise array contents.
 						array_walk( $acf_multiset_ids, function( &$item ) {
-							$item = intval( trim( $item ) );
+							$item = (int) trim( $item );
 						} );
 
 						// If the ID is missing, treat as a 'create' op.

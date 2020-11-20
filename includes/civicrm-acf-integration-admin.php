@@ -821,7 +821,7 @@ class CiviCRM_ACF_Integration_Admin {
 			}
 
 			// Set from and to flags.
-			$data['from'] = intval( $offset );
+			$data['from'] = (int) $offset;
 			$data['to'] = $data['from'] + $diff;
 
 			// Remove CiviCRM callbacks to prevent recursion.
@@ -909,9 +909,9 @@ class CiviCRM_ACF_Integration_Admin {
 
 		// Sanitise input.
 		if ( ! wp_doing_ajax() ) {
-			$contact_type_id = is_numeric( $entity ) ? intval( $entity ) : 0;
+			$contact_type_id = is_numeric( $entity ) ? (int) $entity : 0;
 		} else {
-			$contact_type_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+			$contact_type_id = isset( $_POST['entity_id'] ) ? (int) $_POST['entity_id'] : 0;
 		}
 
 		// Build key.
@@ -986,7 +986,7 @@ class CiviCRM_ACF_Integration_Admin {
 			}
 
 			// Set "from" and "to" flags.
-			$data['from'] = intval( $offset );
+			$data['from'] = (int) $offset;
 			$data['to'] = $data['from'] + $diff;
 
 			// Remove WordPress callbacks to prevent recursion.
@@ -1048,9 +1048,9 @@ class CiviCRM_ACF_Integration_Admin {
 
 		// Sanitise input.
 		if ( ! wp_doing_ajax() ) {
-			$group_id = is_numeric( $entity ) ? intval( $entity ) : 0;
+			$group_id = is_numeric( $entity ) ? (int) $entity : 0;
 		} else {
-			$group_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+			$group_id = isset( $_POST['entity_id'] ) ? (int) $_POST['entity_id'] : 0;
 		}
 
 		// Build key.
@@ -1125,7 +1125,7 @@ class CiviCRM_ACF_Integration_Admin {
 			}
 
 			// Set "from" and "to" flags.
-			$data['from'] = intval( $offset );
+			$data['from'] = (int) $offset;
 			$data['to'] = $data['from'] + $diff;
 
 			// Remove WordPress callbacks to prevent recursion.
@@ -1253,7 +1253,7 @@ class CiviCRM_ACF_Integration_Admin {
 			}
 
 			// Set from and to flags.
-			$data['from'] = intval( $offset );
+			$data['from'] = (int) $offset;
 			$data['to'] = $data['from'] + $diff;
 
 			// Remove CiviCRM callbacks to prevent recursion.
@@ -1340,9 +1340,9 @@ class CiviCRM_ACF_Integration_Admin {
 
 		// Sanitise input.
 		if ( ! wp_doing_ajax() ) {
-			$activity_type_id = is_numeric( $entity ) ? intval( $entity ) : 0;
+			$activity_type_id = is_numeric( $entity ) ? (int) $entity : 0;
 		} else {
-			$activity_type_id = isset( $_POST['entity_id'] ) ? intval( $_POST['entity_id'] ) : 0;
+			$activity_type_id = isset( $_POST['entity_id'] ) ? (int) $_POST['entity_id'] : 0;
 		}
 
 		// Build key.
@@ -1417,7 +1417,7 @@ class CiviCRM_ACF_Integration_Admin {
 			}
 
 			// Set "from" and "to" flags.
-			$data['from'] = intval( $offset );
+			$data['from'] = (int) $offset;
 			$data['to'] = $data['from'] + $diff;
 
 			// Remove WordPress callbacks to prevent recursion.
@@ -1486,7 +1486,7 @@ class CiviCRM_ACF_Integration_Admin {
 		} else {
 
 			// Use the existing value.
-			$offset = intval( get_option( $option, '0' ) );
+			$offset = (int) get_option( $option, '0' );
 
 		}
 

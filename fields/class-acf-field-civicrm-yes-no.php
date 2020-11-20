@@ -241,7 +241,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 		];
 
 		// Select value.
-		$value = strval( $field['value'] );
+		$value = (string) $field['value'];
 
 		// Set checked item flag, override if already saved.
 		$checked = $this->defaults['default_value'];
@@ -250,7 +250,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 		}
 
 		// Ensure we have a string.
-		$checked = strval( $checked );
+		$checked = (string) $checked;
 
 		// Hidden input.
 		$html = acf_get_hidden_input( [ 'name' => $field['name'] ] );
@@ -265,7 +265,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 		foreach( $field['choices'] as $value => $label ) {
 
 			// Ensure value is a string.
-			$value = strval( $value );
+			$value = (string) $value;
 
 			// Define input attributes.
 			$atts = [

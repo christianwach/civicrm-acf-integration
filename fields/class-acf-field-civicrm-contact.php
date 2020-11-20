@@ -337,7 +337,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 		$args = [];
 
 		// Strip slashes - search may be an integer.
-		$args['search'] = wp_unslash( strval( $options['s'] ) );
+		$args['search'] = wp_unslash( (string) $options['s'] );
 
 		// Get the "CiviCRM Field" key.
 		$acf_field_key = $this->civicrm->acf_field_key_get();

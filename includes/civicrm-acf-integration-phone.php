@@ -485,7 +485,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 
 		// Sanitise array contents.
 		array_walk( $acf_phone_ids, function( &$item ) {
-			$item = intval( trim( $item ) );
+			$item = (int) trim( $item );
 		} );
 
 		// Records to delete are missing from the ACF data.
@@ -615,8 +615,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 
 		// Convert ACF data to CiviCRM data.
 		$phone_data['is_primary'] = empty( $value['field_phone_primary'] ) ? '0' : '1';
-		$phone_data['location_type_id'] = intval( $value['field_phone_location'] );
-		$phone_data['phone_type_id'] = intval( $value['field_phone_type'] );
+		$phone_data['location_type_id'] = (int) $value['field_phone_location'];
+		$phone_data['phone_type_id'] = (int) $value['field_phone_type'];
 		$phone_data['phone'] = trim( $value['field_phone_number'] );
 		$phone_data['phone_ext'] = trim( $value['field_phone_extension'] );
 
@@ -651,10 +651,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 		// Convert CiviCRM data to ACF data.
 		$phone_data['field_phone_number'] = trim( $value->phone );
 		$phone_data['field_phone_extension'] = $this->plugin->civicrm->denullify( $phone_ext );
-		$phone_data['field_phone_location'] = intval( $value->location_type_id );
-		$phone_data['field_phone_type'] = intval( $value->phone_type_id );
+		$phone_data['field_phone_location'] = (int) $value->location_type_id;
+		$phone_data['field_phone_type'] = (int) $value->phone_type_id;
 		$phone_data['field_phone_primary'] = empty( $value->is_primary ) ? '0' : '1';
-		$phone_data['field_phone_id'] = intval( $value->id );
+		$phone_data['field_phone_id'] = (int) $value->id;
 
 		// --<
 		return $phone_data;
@@ -810,7 +810,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 		}
 
 		// We just need the Phone ID.
-		$phone_id = intval( $args['objectId'] );
+		$phone_id = (int) $args['objectId'];
 
 		// Grab the Phone Record data from the database.
 		$phone_pre = $this->phone_get_by_id( $phone_id );
@@ -841,7 +841,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 		}
 
 		// We just need the Phone ID.
-		$phone_id = intval( $args['objectId'] );
+		$phone_id = (int) $args['objectId'];
 
 		// Sanity check.
 		if ( $phone_id != $this->phone_pre->id ) {
@@ -953,7 +953,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 
 					// Sanitise array contents.
 					array_walk( $acf_phone_ids, function( &$item ) {
-						$item = intval( trim( $item ) );
+						$item = (int) trim( $item );
 					} );
 
 					// If the ID is missing, treat as a 'create' op.

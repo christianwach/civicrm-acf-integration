@@ -125,9 +125,9 @@ function cacf_get_phone_numbers( $selector, $post_id = null ) {
 		// Build string from Location, Phone Types and Phone Number.
 		$phone = sprintf(
 			__( '%1$s %2$s: %3$s', 'civicrm-acf-integration' ),
-			strval( $locations[$record['field_phone_location']] ),
-			strval( $phone_types[$record['field_phone_type']] ),
-			strval( $record['field_phone_number'] )
+			(string) $locations[$record['field_phone_location']],
+			(string) $phone_types[$record['field_phone_type']],
+			(string) $record['field_phone_number']
 		);
 
 		// Maybe add Extension.
@@ -135,7 +135,7 @@ function cacf_get_phone_numbers( $selector, $post_id = null ) {
 			$phone = sprintf(
 				__( '%1$s Ext. %2$s', 'civicrm-acf-integration' ),
 				$phone,
-				strval( $record['field_phone_extension'] )
+				(string) $record['field_phone_extension']
 			);
 		}
 
@@ -211,14 +211,14 @@ function cacf_get_phone_numbers_by_type_ids( $location_type_id, $phone_type_id, 
 		}
 
 		// Assign Phone Number to return.
-		$phone = strval( $record['field_phone_number'] );
+		$phone = (string) $record['field_phone_number'];
 
 		// Maybe add Extension.
 		if ( ! empty( $record['field_phone_extension'] ) ) {
 			$phone = sprintf(
 				__( '%1$s Ext. %2$s', 'civicrm-acf-integration' ),
 				$phone,
-				strval( $record['field_phone_extension'] )
+				(string) $record['field_phone_extension']
 			);
 		}
 
@@ -387,14 +387,14 @@ function cacf_get_primary_phone_number( $selector, $post_id = null ) {
 	}
 
 	// Assign Phone Number to return.
-	$phone = strval( $record['field_phone_number'] );
+	$phone = (string) $record['field_phone_number'];
 
 	// Maybe add Extension.
 	if ( ! empty( $record['field_phone_extension'] ) ) {
 		$phone = sprintf(
 			__( '%1$s Ext. %2$s', 'civicrm-acf-integration' ),
 			$phone,
-			strval( $record['field_phone_extension'] )
+			(string) $record['field_phone_extension']
 		);
 	}
 
@@ -576,9 +576,9 @@ function cacf_get_ims( $selector, $post_id = null ) {
 		// Build string from Locations, Providers and Instant Messenger.
 		$im = sprintf(
 			__( '%1$s (%2$s): %3$s', 'civicrm-acf-integration' ),
-			strval( $im_providers[$record['field_im_provider']] ),
-			strval( $locations[$record['field_im_location']] ),
-			strval( $record['field_im_name'] )
+			(string) $im_providers[$record['field_im_provider']],
+			(string) $locations[$record['field_im_location']],
+			(string) $record['field_im_name']
 		);
 
 		// Add to filtered array.
@@ -653,7 +653,7 @@ function cacf_get_ims_by_type_ids( $location_type_id, $im_provider_id, $return =
 		}
 
 		// Assign Instant Messenger to return.
-		$im = strval( $record['field_im_name'] );
+		$im = (string) $record['field_im_name'];
 
 		// Add to filtered array.
 		$filtered[] = $im;
@@ -828,8 +828,8 @@ function cacf_get_primary_im( $selector, $post_id = null ) {
 	// Build string from Providers and Instant Messenger.
 	$im = sprintf(
 		__( '%1$s: %2$s', 'civicrm-acf-integration' ),
-		strval( $im_providers[$record['field_im_provider']] ),
-		strval( $record['field_im_name'] )
+		(string) $im_providers[$record['field_im_provider']],
+		(string) $record['field_im_name']
 	);
 
 	/**

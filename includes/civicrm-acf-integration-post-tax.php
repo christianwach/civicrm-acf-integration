@@ -290,7 +290,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		}
 
 		// Sanitise input.
-		$group_id = intval( $_POST['cai-civicrm-group'] );
+		$group_id = (int) $_POST['cai-civicrm-group'];
 
 		// Bail if Group ID is zero.
 		if ( $group_id == 0 ) {
@@ -349,7 +349,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		}
 
 		// Sanitise input.
-		$group_id = intval( $_POST['cai-civicrm-group'] );
+		$group_id = (int) $_POST['cai-civicrm-group'];
 
 		// Assume we have no edited term.
 		$old_term = null;
@@ -439,7 +439,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		}
 
 		// --<
-		return intval( $group_id );
+		return (int) $group_id;
 
 	}
 
@@ -457,7 +457,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	public function term_meta_add( $term_id, $group_id ) {
 
 		// Add the Group ID to the term's meta.
-		$meta_id = add_term_meta( $term_id, $this->term_meta_key, intval( $group_id ), true );
+		$meta_id = add_term_meta( $term_id, $this->term_meta_key, (int) $group_id, true );
 
 		// Log something if there's an error.
 		if ( $meta_id === false ) {
@@ -519,7 +519,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	public function term_meta_update( $term_id, $group_id ) {
 
 		// Update the Group ID in the term's meta data.
-		$meta_id = update_term_meta( $term_id, $this->term_meta_key, intval( $group_id ) );
+		$meta_id = update_term_meta( $term_id, $this->term_meta_key, (int) $group_id );
 
 		// Return early on successful update.
 		if ( $meta_id === true ) {

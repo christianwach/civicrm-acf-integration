@@ -403,7 +403,7 @@ class CiviCRM_ACF_Integration_Mapping {
 		}
 
 		// Store ID (actually "value") locally for use in form_activity_type_process().
-		$this->saved_activity_type_id = intval( $activity_type['value'] );
+		$this->saved_activity_type_id = (int) $activity_type['value'];
 
 	}
 
@@ -441,7 +441,7 @@ class CiviCRM_ACF_Integration_Mapping {
 
 		// Get Activity Type ID if not present in the form.
 		if ( ! empty( $values['value'] ) ) {
-			$activity_type_id = intval( $values['value'] );
+			$activity_type_id = (int) $values['value'];
 		} else {
 			if ( isset( $this->saved_activity_type_id ) ) {
 				$activity_type_id = $this->saved_activity_type_id;

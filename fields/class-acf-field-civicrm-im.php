@@ -387,7 +387,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Instant_Messenger extends acf_field
 
 		// Sanitise array contents.
 		array_walk( $primary_values, function( &$item ) {
-			$item = intval( trim( $item ) );
+			$item = (int) trim( $item );
 		} );
 
 		// Check that we have a Primary Number.
@@ -401,7 +401,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Instant_Messenger extends acf_field
 
 		// Sanitise array contents.
 		array_walk( $ims, function( &$item ) {
-			$item = strval( trim( $item ) );
+			$item = (string) trim( $item );
 		} );
 
 		// Check that all "Name" Fields are populated.

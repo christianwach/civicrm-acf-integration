@@ -530,7 +530,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 		}
 
 		// --<
-		return empty( $result['count'] ) ? 0 : intval( $result['count'] );
+		return empty( $result['count'] ) ? 0 : (int) $result['count'];
 
 	}
 
@@ -706,7 +706,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 		if ( is_numeric( $contact_type ) ) {
 
 			// Assign the numeric ID.
-			$contact_type_id = $contact_type = intval( $contact_type );
+			$contact_type_id = $contact_type = (int) $contact_type;
 
 		}
 
