@@ -135,16 +135,16 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 		add_action( 'civicrm_acf_integration_mapper_custom_edited', [ $this, 'custom_edited' ], 10 );
 
 		// Intercept Post synced from Contact events.
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
 
 		// Intercept Post synced from Activity events.
 		//add_action( 'civicrm_acf_integration_post_activity_sync', [ $this, 'activity_sync_to_post' ], 10 );
 
 		// Intercept CiviCRM Add/Edit Custom Field postSave hook.
-		//add_action( 'civicrm_postSave_civicrm_custom_field', [ $this, 'custom_field_edited' ], 10, 1 );
+		//add_action( 'civicrm_postSave_civicrm_custom_field', [ $this, 'custom_field_edited' ], 10 );
 
 		// Intercept CiviCRM Add/Edit Option Value postSave hook.
-		//add_action( 'civicrm_postSave_civicrm_option_value', [ $this, 'option_value_edited' ], 10, 1 );
+		//add_action( 'civicrm_postSave_civicrm_option_value', [ $this, 'option_value_edited' ], 10 );
 
 	}
 
@@ -638,60 +638,70 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 		 *
 		 * @since 0.5.1
 		 *
-		 * @param bool $post_id False, since we're asking for a Post ID.
+		 * @param bool $post_ids False, since we're asking for Post IDs.
 		 * @param array $args The array of CiviCRM Custom Fields params.
 		 * @return array|bool $post_ids The array of mapped Post IDs, or false if not mapped.
 		 */
 		$post_ids = apply_filters( 'civicrm_acf_integration_query_post_id', $post_ids, $args );
 
-		// Skip if not mapped or Post doesn't yet exist.
-		if ( $post_ids === false ) {
-			return;
-		}
+		// Process the Post IDs that we get.
+		if ( $post_ids !== false ) {
 
-		// Handle each Post ID in turn.
-		foreach( $post_ids AS $post_id ) {
+			// Handle each Post ID in turn.
+			foreach( $post_ids AS $post_id ) {
 
-			// Get the ACF Fields for this Post.
-			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
+				// Get the ACF Fields for this Post.
+				$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
 
-			// Bail if we don't have any Custom Fields.
-			if ( empty( $acf_fields['custom'] ) ) {
-				continue;
-			}
-
-			// Build a reference array for Custom Fields.
-			$custom_fields = [];
-			foreach( $args['custom_fields'] AS $key => $field ) {
-				$custom_fields[$key] = $field['custom_field_id'];
-			}
-
-			// Let's look at each ACF Field in turn.
-			foreach( $acf_fields['custom'] AS $selector => $custom_field_ref ) {
-
-				// Skip if it isn't mapped to a Custom Field.
-				if ( ! in_array( $custom_field_ref, $custom_fields ) ) {
+				// Bail if we don't have any Custom Fields.
+				if ( empty( $acf_fields['custom'] ) ) {
 					continue;
 				}
 
-				// Get the corresponding Custom Field.
-				$args_key = array_search( $custom_field_ref, $custom_fields );
-				$field = $args['custom_fields'][$args_key];
+				// Build a reference array for Custom Fields.
+				$custom_fields = [];
+				foreach( $args['custom_fields'] AS $key => $field ) {
+					$custom_fields[$key] = $field['custom_field_id'];
+				}
 
-				// Modify values for ACF prior to update.
-				$value = $this->value_get_for_acf(
-					$field['value'],
-					$field,
-					$selector,
-					$post_id
-				);
+				// Let's look at each ACF Field in turn.
+				foreach( $acf_fields['custom'] AS $selector => $custom_field_ref ) {
 
-				// Update it.
-				$this->plugin->acf->field->value_update( $selector, $value, $post_id );
+					// Skip if it isn't mapped to a Custom Field.
+					if ( ! in_array( $custom_field_ref, $custom_fields ) ) {
+						continue;
+					}
+
+					// Get the corresponding Custom Field.
+					$args_key = array_search( $custom_field_ref, $custom_fields );
+					$field = $args['custom_fields'][$args_key];
+
+					// Modify values for ACF prior to update.
+					$value = $this->value_get_for_acf(
+						$field['value'],
+						$field,
+						$selector,
+						$post_id
+					);
+
+					// Update it.
+					$this->plugin->acf->field->value_update( $selector, $value, $post_id );
+
+				}
 
 			}
 
 		}
+
+		/**
+		 * Broadcast that a set of CiviCRM Custom Fields may have been updated.
+		 *
+		 * @since 0.8
+		 *
+		 * @param array|bool $post_ids The array of mapped Post IDs, or false if not mapped.
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_civicrm_custom_field_custom_edited', $post_ids, $args );
 
 	}
 
@@ -709,7 +719,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 * @param mixed $value The Custom Field value.
 	 * @param array $field The Custom Field data.
 	 * @param str $selector The ACF Field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return mixed $value The formatted field value.
 	 */
 	public function value_get_for_acf( $value, $field, $selector, $post_id ) {
@@ -996,26 +1006,94 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 
 
 	/**
+	 * Get all the Custom Fields for all CiviCRM Contact Types/Subtypes.
+	 *
+	 * @since 0.8
+	 *
+	 * @return array $custom_fields The array of Custom Fields.
+	 */
+	public function get_for_all_contact_types() {
+
+		// Init array to build.
+		$custom_fields = [];
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $custom_fields;
+		}
+
+		// Construct params.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+			'is_active' => 1,
+			'options' => [
+				'limit' => 0,
+			],
+			'api.CustomField.get' => [
+				'is_active' => 1,
+				'options' => [
+					'limit' => 0,
+				]
+			],
+			'extends' => [
+				'IN' => [ "Individual", "Organization", "Household" ],
+			],
+		];
+
+		// Call the API.
+		$result = civicrm_api( 'CustomGroup', 'get', $params );
+
+		// Override return if we get some.
+		if (
+			$result['is_error'] == 0 AND
+			isset( $result['values'] ) AND
+			count( $result['values'] ) > 0
+		) {
+
+			// We only need the results from the chained API data.
+			foreach( $result['values'] as $key => $value ) {
+
+				// Add the Custom Fields.
+				foreach( $value['api.CustomField.get']['values'] as $subkey => $item ) {
+					$custom_fields[$value['title']][] = $item;
+				}
+
+			}
+
+		}
+
+		// --<
+		return $custom_fields;
+
+	}
+
+
+
+	/**
 	 * Get the Custom Fields for a CiviCRM Contact Type/Subtype.
 	 *
 	 * @since 0.6.4
 	 *
 	 * @param str $type The Contact Type that the Option Group applies to.
 	 * @param str $subtype The Contact Sub-type that the Option Group applies to.
-	 * @return array $custom_fields The array of custom fields.
+	 * @return array $custom_fields The array of Custom Fields.
 	 */
 	public function get_for_contact_type( $type = '', $subtype = '' ) {
 
+		// TODO: Maybe write a get_all() method and parse from there?
+		// See Profile Sync, which queries *all* Contact Types :(
+
 		// Maybe set a key for the subtype.
-		$key = $subtype;
+		$index = $subtype;
 		if ( empty( $subtype ) ) {
-			$key = 'none';
+			$index = 'none';
 		}
 
 		// Only do this once per Entity Type.
 		static $pseudocache;
-		if ( isset( $pseudocache[$type][$key] ) ) {
-			return $pseudocache[$type][$key];
+		if ( isset( $pseudocache[$type][$index] ) ) {
+			return $pseudocache[$type][$index];
 		}
 
 		// Init array to build.
@@ -1073,8 +1151,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 		}
 
 		// Maybe add to pseudo-cache.
-		if ( ! isset( $pseudocache[$type][$key] ) ) {
-			$pseudocache[$type][$key] = $custom_fields;
+		if ( ! isset( $pseudocache[$type][$index] ) ) {
+			$pseudocache[$type][$index] = $custom_fields;
 		}
 
 		// --<
@@ -1104,20 +1182,20 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 	 *
 	 * @param str $type The Entity Type that the Option Group applies to.
 	 * @param str $subtype The Entity Sub-type that the Option Group applies to.
-	 * @return array $custom_fields The array of custom fields.
+	 * @return array $custom_fields The array of Custom Fields.
 	 */
 	public function get_for_entity_type( $type = '', $subtype = '' ) {
 
 		// Maybe set a key for the subtype.
-		$key = $subtype;
+		$index = $subtype;
 		if ( empty( $subtype ) ) {
-			$key = 'none';
+			$index = 'none';
 		}
 
 		// Only do this once per Entity Type.
-		static $pseudocache;
-		if ( isset( $pseudocache[$type][$key] ) ) {
-			return $pseudocache[$type][$key];
+		static $pseudocache = [];
+		if ( isset( $pseudocache[$type][$index] ) ) {
+			return $pseudocache[$type][$index];
 		}
 
 		// Init array to build.
@@ -1175,8 +1253,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 		}
 
 		// Maybe add to pseudo-cache.
-		if ( ! isset( $pseudocache[$type][$key] ) ) {
-			$pseudocache[$type][$key] = $custom_fields;
+		if ( ! isset( $pseudocache[$type][$index] ) ) {
+			$pseudocache[$type][$index] = $custom_fields;
 		}
 
 		// --<

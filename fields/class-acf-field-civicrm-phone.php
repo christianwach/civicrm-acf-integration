@@ -286,9 +286,17 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 	 */
 	public function load_value( $value, $post_id, $field ) {
 
-		// Strip keys and re-index.
+		// Make sure we have an array.
+		if ( empty( $value ) AND ! is_array( $value ) ) {
+			$value = [];
+		}
+
+		// Process the data if it's an array.
 		if ( is_array( $value ) ) {
+
+			// Strip keys and re-index.
 			$value = array_values( $value );
+
 		}
 
 		// --<
@@ -307,13 +315,18 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 	 * @param int $post_id The Post ID from which the value was loaded.
 	 * @param array $field The field array holding all the field options.
 	 * @return mixed $value The modified value.
+	 */
 	public function update_value( $value, $post_id, $field ) {
+
+		// Make sure we have an array.
+		if ( empty( $value ) AND ! is_array( $value ) ) {
+			$value = [];
+		}
 
 		// --<
 		return $value;
 
 	}
-	 */
 
 
 

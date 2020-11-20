@@ -114,10 +114,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 	 */
 	public function register_hooks() {
 
-		// Intercept when a CiviCRM Contact's Relationship has been updated.
-		add_action( 'civicrm_acf_integration_mapper_relationship_created', [ $this, 'relationship_edited' ], 10, 2 );
-		add_action( 'civicrm_acf_integration_mapper_relationship_edited', [ $this, 'relationship_edited' ], 10, 2 );
-		add_action( 'civicrm_acf_integration_mapper_relationship_deleted', [ $this, 'relationship_edited' ], 10, 2 );
+		// Always register Mapper hooks.
+		$this->register_mapper_hooks();
 
 		// Process activation and deactivation.
 		add_action( 'civicrm_acf_integration_relationship_created', [ $this, 'relationship_activate' ], 10, 2 );
@@ -128,7 +126,39 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
 		// Intercept Post synced from Contact events.
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Register callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function register_mapper_hooks() {
+
+		// Listen for events from our Mapper that require Relationship updates.
+		add_action( 'civicrm_acf_integration_mapper_relationship_created', [ $this, 'relationship_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_relationship_edited', [ $this, 'relationship_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_relationship_deleted', [ $this, 'relationship_edited' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Unregister callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function unregister_mapper_hooks() {
+
+		// Remove all Mapper listeners.
+		remove_action( 'civicrm_acf_integration_mapper_relationship_created', [ $this, 'relationship_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_relationship_edited', [ $this, 'relationship_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_relationship_deleted', [ $this, 'relationship_edited' ], 10 );
 
 	}
 
@@ -203,7 +233,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		foreach( $args['fields'] AS $field => $value ) {
 
 			// Get the field settings.
-			$settings = get_field_object( $field );
+			$settings = get_field_object( $field, $args['post_id'] );
 
 			// Maybe update a Relationship.
 			$success = $this->field_handled_update( $field, $value, $args['contact']['id'], $settings );
@@ -506,7 +536,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 			$params['is_active'] = '0';
 
 			// Do update.
-			$success = $this->relationship_update( $params );
+			$success = $this->relationship_edit( $params );
 
 			// Continue on failure.
 			if ( $success === false ) {
@@ -543,7 +573,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 			$params['is_active'] = '1';
 
 			// Do update.
-			$success = $this->relationship_update( $params );
+			$success = $this->relationship_edit( $params );
 
 			// Continue on failure.
 			if ( $success === false ) {
@@ -631,7 +661,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		$relationship = (object) $relationship;
 
 		// Do the update.
-		$this->acf_field_update( $contact_id, $relationship, 'edit' );
+		$this->relationship_update( $contact_id, $relationship, 'edit' );
 
 	}
 
@@ -664,7 +694,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		$relationship = (object) $relationship;
 
 		// Do the update.
-		$this->acf_field_update( $contact_id, $relationship, 'edit' );
+		$this->relationship_update( $contact_id, $relationship, 'edit' );
 
 	}
 
@@ -721,14 +751,14 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 
 
 	/**
-	 * Update a CiviCRM Relationship.
+	 * Edit a CiviCRM Relationship.
 	 *
 	 * @since 0.4.3
 	 *
 	 * @param array $params The params to update the Relationship with.
 	 * @return array|bool $relationship The array of Relationship data, or false on failure.
 	 */
-	public function relationship_update( $params = [] ) {
+	public function relationship_edit( $params = [] ) {
 
 		// Init return.
 		$relationship = false;
@@ -781,14 +811,204 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		$relationship = $args['objectRef'];
 
 		// We need to update the ACF Fields on both Posts since they may be synced.
-		$this->acf_field_update( $relationship->contact_id_a, $relationship, $args['op'] );
-		$this->acf_field_update( $relationship->contact_id_b, $relationship, $args['op'] );
+		$this->relationship_update( $relationship->contact_id_a, $relationship, $args['op'] );
+		$this->relationship_update( $relationship->contact_id_b, $relationship, $args['op'] );
+
+	}
+
+
+
+	/**
+	 * Update the Relationship ACF Field on a Post mapped to a Contact ID.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param int $contact_id The numeric ID of the Contact.
+	 * @param array|object $relationship The Relationship data.
+	 * @param string $op The type of database operation.
+	 */
+	public function relationship_update( $contact_id, $relationship, $op ) {
+
+		// Grab Contact.
+		$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
+
+		// Test if any of this Contact's Contact Types is mapped.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact );
+		if ( $post_types !== false ) {
+
+			// Handle each Post Type in turn.
+			foreach( $post_types AS $post_type ) {
+
+				// Get the Post ID that this Contact is mapped to.
+				$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
+
+				// Skip if not mapped.
+				if ( $post_id === false ) {
+					continue;
+				}
+
+				// Update the ACF Fields for this Post.
+				$this->fields_update( $post_id, $relationship, $op );
+
+			}
+
+		}
+
+		/**
+		 * Broadcast that a Relationship ACF Field may have been edited.
+		 *
+		 * @since 0.8
+		 *
+		 * @param int $contact_id The numeric ID of the Contact.
+		 * @param array|object $relationship The Relationship data.
+		 * @param string $op The type of database operation.
+		 */
+		do_action( 'civicrm_acf_integration_relationship_relationship_update', $contact_id, $relationship, $op );
+
+	}
+
+
+
+	/**
+	 * Update the Relationship ACF Fields on an Entity mapped to a Contact ID.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @param int $post_id The ACF "Post ID".
+	 * @param array|object $relationship The Relationship data.
+	 * @param string $op The type of database operation.
+	 */
+	public function fields_update( $post_id, $relationship, $op ) {
+
+		// Get the ACF Fields for this Post.
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
+
+		// Bail if we don't have any Relationship Fields.
+		if ( empty( $acf_fields['relationship'] ) ) {
+			return;
+		}
+
+		// Let's look at each ACF Field in turn.
+		foreach( $acf_fields['relationship'] AS $selector => $value ) {
+
+			// Get the Relationship data.
+			$relationship_data = explode( '_', $value );
+			$relationship_type_id = absint( $relationship_data[0] );
+			$relationship_direction = $relationship_data[1];
+
+			// Skip if this Relationship is not mapped to the Field.
+			if ( $relationship_type_id != $relationship->relationship_type_id ) {
+				continue;
+			}
+
+			// Get the existing value, which should be an array.
+			$existing = get_field( $selector, $post_id );
+
+			// If it isn't one, let's make it an empty array.
+			if ( ! is_array( $existing ) OR empty( $existing ) ) {
+				$existing = [];
+			}
+
+			// Assign the correct Target Contact ID.
+			if ( $relationship_direction == 'ab' ) {
+				$target_contact_id = $relationship->contact_id_b;
+			} else {
+				$target_contact_id = $relationship->contact_id_a;
+			}
+
+			// If deleting the Relationship.
+			if ( $op == 'delete' ) {
+
+				// Remove Contact ID if it's there.
+				if ( in_array( $target_contact_id, $existing ) ) {
+					$existing = array_diff( $existing, [ $target_contact_id ] );
+				}
+
+			// If creating the Relationship.
+			} elseif ( $op == 'create' ) {
+
+				// Add Contact ID if it's not there.
+				if ( ! in_array( $target_contact_id, $existing ) ) {
+					$existing[] = $target_contact_id;
+				}
+
+			} else {
+
+				// If the Relationship is active.
+				if ( $relationship->is_active == '1' ) {
+
+					// Add Contact ID if it's not there.
+					if ( ! in_array( $target_contact_id, $existing ) ) {
+						$existing[] = $target_contact_id;
+					}
+
+				} else {
+
+					// Remove Contact ID if it's there.
+					if ( in_array( $target_contact_id, $existing ) ) {
+						$existing = array_diff( $existing, [ $target_contact_id ] );
+					}
+
+				}
+
+			}
+
+			// Overwrite the ACF Field data.
+			$this->plugin->acf->field->value_update( $selector, $existing, $post_id );
+
+		}
 
 	}
 
 
 
 	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get all Relationship Types.
+	 *
+	 * @since 0.4.3
+	 *
+	 * @return array $relationships The array of Relationship Types data.
+	 */
+	public function types_get_all() {
+
+		// Init return.
+		$relationships = [];
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $relationships;
+		}
+
+		// Params to get all Relationship Types.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+		];
+
+		// Call the CiviCRM API.
+		$result = civicrm_api( 'RelationshipType', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $relationships;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $relationships;
+		}
+
+ 		// The result set is what we're after.
+		$relationships = $result['values'];
+
+		// --<
+		return $relationships;
+
+	}
 
 
 
@@ -857,7 +1077,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		// Init return.
 		$relationships = [];
 
-		// Get field group for this field's parent.
+		// Get Field Group for this Field's parent.
 		$field_group = $this->plugin->acf->field_group->get_for_field( $field );
 
 		// Bail if there's no field group.
@@ -865,45 +1085,60 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 			return $relationships;
 		}
 
-		// Bail if this is not a Contact Field Group.
+		// Skip if this is not a Contact Field Group.
 		$is_contact_field_group = $this->civicrm->contact->is_contact_field_group( $field_group );
-		if ( $is_contact_field_group === false ) {
-			return $relationships;
+		if ( $is_contact_field_group !== false ) {
+
+			// Loop through the Post Types.
+			foreach( $is_contact_field_group AS $post_type_name ) {
+
+				// Get the Contact Type ID.
+				$contact_type_id = $this->civicrm->contact_type->id_get_for_post_type( $post_type_name );
+
+				// Get Contact Type hierarchy.
+				$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
+
+				// Get relationships for the top-level Contact Type.
+				$relationships_for_type = $this->relationships_get_for_contact_type( $contact_types['type'] );
+
+				/**
+				 * Filter the retrieved relationships.
+				 *
+				 * Used internally by the custom ACF "CiviCRM Relationship" Field.
+				 *
+				 * @since 0.4.3
+				 *
+				 * @param array $relationships The retrieved array of Relationship Types.
+				 * @param array $contact_types The array of Contact Types.
+				 * @param array $field The ACF Field data array.
+				 * @return array $relationships The modified array of Relationship Types.
+				 */
+				$relationships_for_type = apply_filters(
+					'civicrm_acf_integration_relationships_get_for_acf_field_for_type',
+					$relationships_for_type, $contact_types, $field
+				);
+
+				// Merge with return array.
+				$relationships = array_merge( $relationships, $relationships_for_type );
+
+			}
+
 		}
 
-		// Loop through the Post Types.
-		foreach( $is_contact_field_group AS $post_type_name ) {
-
-			// Get the Contact Type ID.
-			$contact_type_id = $this->civicrm->contact_type->id_get_for_post_type( $post_type_name );
-
-			// Get Contact Type hierarchy.
-			$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
-
-			// Get relationships for the top-level Contact Type.
-			$relationships_for_type = $this->relationships_get_for_contact_type( $contact_types['type'] );
-
-			/**
-			 * Filter the retrieved relationships.
-			 *
-			 * Used internally by the custom ACF "CiviCRM Relationship" Field.
-			 *
-			 * @since 0.4.3
-			 *
-			 * @param array $relationships The retrieved array of Relationship Types.
-			 * @param array $contact_types The array of Contact Types.
-			 * @param array $field The ACF Field data array.
-			 * @return array $relationships The modified array of Relationship Types.
-			 */
-			$relationships_for_type = apply_filters(
-				'civicrm_acf_integration_relationships_get_for_acf_field',
-				$relationships_for_type, $contact_types, $field
-			);
-
-			// Merge with return array.
-			$relationships = array_merge( $relationships, $relationships_for_type );
-
-		}
+		/**
+		 * Filter the Relationships for this Field.
+		 *
+		 * @since 0.8
+		 *
+		 * @param array $relationships The existing array of Relationship Types.
+		 * @param array $field_group The ACF Field Group data array.
+		 * @param array $field The ACF Field data array.
+		 * @return array $relationships The modified array of Relationship Types.
+		 */
+		$relationships = apply_filters(
+			'civicrm_acf_integration_relationships_get_for_acf_field',
+			$relationships, $field_group, $field
+		);
 
 		// --<
 		return $relationships;
@@ -1023,121 +1258,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 
 
 	// -------------------------------------------------------------------------
-
-
-
-	/**
-	 * Update the Relationship ACF Field on a Post mapped to a Contact ID.
-	 *
-	 * @since 0.4.3
-	 *
-	 * @param int $contact_id The numeric ID of the Contact.
-	 * @param array|object $relationship The Relationship data.
-	 * @param string $op The type of database operation.
-	 */
-	public function acf_field_update( $contact_id, $relationship, $op ) {
-
-		// Grab Contact.
-		$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
-
-		// Bail if none of this Contact's Contact Types is mapped.
-		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact );
-		if ( $post_types === false ) {
-			return;
-		}
-
-		// Handle each Post Type in turn.
-		foreach( $post_types AS $post_type ) {
-
-			// Get the Post ID that this Contact is mapped to.
-			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
-
-			// Skip if not mapped.
-			if ( $post_id === false ) {
-				continue;
-			}
-
-			// Get the ACF Fields for this Post.
-			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
-
-			// Bail if we don't have any Relationship Fields.
-			if ( empty( $acf_fields['relationship'] ) ) {
-				continue;
-			}
-
-			// Let's look at each ACF Field in turn.
-			foreach( $acf_fields['relationship'] AS $selector => $value ) {
-
-				// Get the Relationship data.
-				$relationship_data = explode( '_', $value );
-				$relationship_type_id = absint( $relationship_data[0] );
-				$relationship_direction = $relationship_data[1];
-
-				// Skip if this Relationship is not mapped to the Field.
-				if ( $relationship_type_id != $relationship->relationship_type_id ) {
-					continue;
-				}
-
-				// Get the existing value, which should be an array.
-				$existing = get_field( $selector, $post_id );
-
-				// If it isn't one, let's make it an empty array.
-				if ( ! is_array( $existing ) OR empty( $existing ) ) {
-					$existing = [];
-				}
-
-				// Assign the correct Target Contact ID.
-				if ( $relationship_direction == 'ab' ) {
-					$target_contact_id = $relationship->contact_id_b;
-				} else {
-					$target_contact_id = $relationship->contact_id_a;
-				}
-
-				// If deleting the Relationship.
-				if ( $op == 'delete' ) {
-
-					// Remove Contact ID if it's there.
-					if ( in_array( $target_contact_id, $existing ) ) {
-						$existing = array_diff( $existing, [ $target_contact_id ] );
-					}
-
-				// If creating the Relationship.
-				} elseif ( $op == 'create' ) {
-
-					// Add Contact ID if it's not there.
-					if ( ! in_array( $target_contact_id, $existing ) ) {
-						$existing[] = $target_contact_id;
-					}
-
-				} else {
-
-					// If the Relationship is active.
-					if ( $relationship->is_active == '1' ) {
-
-						// Add Contact ID if it's not there.
-						if ( ! in_array( $target_contact_id, $existing ) ) {
-							$existing[] = $target_contact_id;
-						}
-
-					} else {
-
-						// Remove Contact ID if it's there.
-						if ( in_array( $target_contact_id, $existing ) ) {
-							$existing = array_diff( $existing, [ $target_contact_id ] );
-						}
-
-					}
-
-				}
-
-				// Overwrite the ACF Field data.
-				$this->plugin->acf->field->value_update( $selector, $existing, $post_id );
-
-			}
-
-		}
-
-	}
 
 
 

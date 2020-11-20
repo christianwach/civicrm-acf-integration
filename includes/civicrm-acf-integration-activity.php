@@ -96,13 +96,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity {
 	 */
 	public function register_hooks() {
 
-		// Listen for events from our Mapper that require Activity updates.
-		add_action( 'civicrm_acf_integration_mapper_post_saved', [ $this, 'post_saved' ], 10, 1 );
-		add_action( 'civicrm_acf_integration_mapper_acf_fields_saved', [ $this, 'acf_fields_saved' ], 10, 1 );
+		// Always register Mapper hooks.
+		$this->register_mapper_hooks();
 
 		// Listen for events from Manual Sync that require Activity updates.
-		add_action( 'civicrm_acf_integration_admin_activity_post_sync', [ $this, 'post_sync' ], 10, 1 );
-		add_action( 'civicrm_acf_integration_admin_activity_acf_fields_sync', [ $this, 'acf_fields_sync' ], 10, 1 );
+		add_action( 'civicrm_acf_integration_admin_activity_post_sync', [ $this, 'post_sync' ], 10 );
+		add_action( 'civicrm_acf_integration_admin_activity_acf_fields_sync', [ $this, 'acf_fields_sync' ], 10 );
 
 		// Listen for queries from our Field Group class.
 		add_filter( 'civicrm_acf_integration_query_field_group_mapped', [ $this, 'query_field_group_mapped' ], 10, 2 );
@@ -112,6 +111,36 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity {
 
 		// Listen for queries from the Custom Field class.
 		add_filter( 'civicrm_acf_integration_query_post_id', [ $this, 'query_post_id' ], 10, 2 );
+
+	}
+
+
+
+	/**
+	 * Register callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function register_mapper_hooks() {
+
+		// Listen for events from our Mapper that require Activity updates.
+		add_action( 'civicrm_acf_integration_mapper_post_saved', [ $this, 'post_saved' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_acf_fields_saved', [ $this, 'acf_fields_saved' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Unregister callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function unregister_mapper_hooks() {
+
+		// Remove all Mapper listeners.
+		remove_action( 'civicrm_acf_integration_mapper_post_saved', [ $this, 'post_saved' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_acf_fields_saved', [ $this, 'acf_fields_saved' ], 10 );
 
 	}
 
@@ -244,6 +273,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity {
 		// Bail early if this Post Type shouldn't be synced.
 		// @see self::post_saved()
 		if ( $this->do_not_sync === true ) {
+			return;
+		}
+
+		// Bail if it's not a Post.
+		$entity = $this->plugin->acf->field->entity_type_get( $args['post_id'] );
+		if ( $entity !== 'post' ) {
 			return;
 		}
 
@@ -1296,21 +1331,16 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity {
 	/**
 	 * Listen for queries from the Custom Field class.
 	 *
-	 * This method responds with an array of Post IDs if it detects that the
+	 * This method responds with an array of "Post IDs" if it detects that the
 	 * set of Custom Fields maps to an Activity.
 	 *
 	 * @since 0.4.5
 	 *
-	 * @param bool $post_ids False, since we're asking for the Post IDs.
+	 * @param array|bool $post_ids The existing "Post IDs".
 	 * @param array $args The array of CiviCRM Custom Fields params.
-	 * @return array|bool $post_id The mapped Post IDs, or false if not mapped.
+	 * @return array|bool $post_id The mapped "Post IDs", or false if not mapped.
 	 */
 	public function query_post_id( $post_ids, $args ) {
-
-		// Bail early if a Post ID has been found.
-		if ( $post_ids !== false ) {
-			return $post_ids;
-		}
 
 		// Init Activity ID.
 		$activity_id = false;
@@ -1333,27 +1363,34 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity {
 
 		// Bail if there's no Activity ID.
 		if ( $activity_id === false ) {
-			return false;
+			return $post_ids;
 		}
 
 		// Grab Activity.
 		$activity = $this->get_by_id( $activity_id );
 		if ( $activity === false ) {
-			return false;
+			return $post_ids;
 		}
 
 		// Bail if this Activity's Activity Type is not mapped.
 		$post_type = $this->is_mapped( $activity, 'create' );
 		if ( $post_type === false ) {
-			return false;
+			return $post_ids;
 		}
 
 		// Get array of IDs for this Post Type.
-		$post_ids = $this->plugin->post->get_by_activity_id( $activity_id, $post_type );
+		$activity_post_ids = $this->plugin->post->get_by_activity_id( $activity_id, $post_type );
 
-		// Bail if no Post IDs are found.
-		if ( empty( $post_ids ) ) {
-			return false;
+		// Bail if no "Post IDs" are found.
+		if ( empty( $activity_post_ids ) ) {
+			return $post_ids;
+		}
+
+		// Add found "Post IDs" to return array.
+		if ( is_array( $post_ids ) ) {
+			$post_ids = array_merge( $post_ids, $activity_post_ids );
+		} else {
+			$post_ids = $activity_post_ids;
 		}
 
 		// --<

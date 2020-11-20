@@ -81,6 +81,8 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		// Customise "Google Map" Fields.
 		add_action( 'acf/render_field_settings/type=google_map', [ $this, 'google_map_setting_add' ] );
 		add_action( 'acf/render_field/type=google_map', [ $this, 'google_map_styles_add' ] );
+		add_action( 'acf/load_value/type=google_map', [ $this, 'google_map_value_modify' ], 10, 3 );
+		add_action( 'acf/update_value/type=google_map', [ $this, 'google_map_value_modify' ], 10, 3 );
 
 		// Customise "Select" Fields.
 		add_action( 'acf/render_field_settings/type=select', [ $this, 'select_setting_add' ] );
@@ -114,6 +116,112 @@ class CiviCRM_ACF_Integration_ACF_Field {
 
 
 	/**
+	 * Get the type of WordPress Entity that a Field refers to.
+	 *
+	 * @see https://www.advancedcustomfields.com/resources/get_fields/
+	 *
+	 * @since 0.8
+	 *
+	 * @param int|str $post_id The ACF "Post ID" parameter.
+	 * @return str The type of WordPress Entity that a Field refers to.
+	 */
+	public function entity_type_get( $post_id ) {
+
+		// If numeric, it's a Post.
+		if ( is_numeric( $post_id ) ) {
+			return 'post';
+		}
+
+		// Does it refer to a WordPress User?
+		if ( false !== strpos( $post_id, 'user_' ) ) {
+			return 'user';
+		}
+
+		// Does it refer to a WordPress Taxonomy?
+		if ( false !== strpos( $post_id, 'category_' ) ) {
+			return 'category';
+		}
+
+		// Does it refer to a WordPress Term?
+		if ( false !== strpos( $post_id, 'term_' ) ) {
+			return 'term';
+		}
+
+		// Does it refer to a WordPress Comment?
+		if ( false !== strpos( $post_id, 'comment_' ) ) {
+			return 'comment';
+		}
+
+		// Does it refer to an ACF Options Page?
+		if ( $post_id === 'options' ) {
+			return 'options';
+		}
+
+		// Does it refer to an ACF Option?
+		if ( $post_id === 'option' ) {
+			return 'option';
+		}
+
+		// Fallback.
+		return 'unknown';
+
+	}
+
+
+
+	/**
+	 * Query for the Contact ID that this ACF "Post ID" is mapped to.
+	 *
+	 * We have to query like this because the ACF "Post ID" is actually only a
+	 * Post ID if it's an integer. Other string values indicate other WordPress
+	 * Entities, some of which may be handled by other plugins.
+	 *
+	 * @see https://www.advancedcustomfields.com/resources/get_fields/
+	 *
+	 * @since 0.8
+	 *
+	 * @param bool $post_id The ACF "Post ID".
+	 * @return int|bool $contact_id The mapped Contact ID, or false if not mapped.
+	 */
+	public function query_contact_id( $post_id ) {
+
+		// Init return.
+		$contact_id = false;
+
+		// Get the WordPress Entity.
+		$entity = $this->entity_type_get( $post_id );
+
+		/**
+		 * Query for the Contact ID that this ACF "Post ID" is mapped to.
+		 *
+		 * This filter sends out a request for other classes to respond with a
+		 * Contact ID if they detect that this ACF "Post ID" maps to one.
+		 *
+		 * Internally, this is used by:
+		 *
+		 * @see CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field::load_value()
+		 *
+		 * @since 0.8
+		 *
+		 * @param bool $contact_id False, since we're asking for a Contact ID.
+		 * @param int|str $post_id The ACF "Post ID".
+		 * @param str $entity The kind of WordPress Entity.
+		 * @return int|bool $contact_id The mapped Contact ID, or false if not mapped.
+		 */
+		$contact_id = apply_filters( 'civicrm_acf_integration_query_contact_id', $contact_id, $post_id, $entity );
+
+		// --<
+		return $contact_id;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
 	 * Get all mapped ACF Fields attached to a Post.
 	 *
 	 * We have to do this because both `get_fields()` and `get_field_objects()`
@@ -128,7 +236,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 *
 	 * @since 0.3
 	 *
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $fields The mapped ACF Fields for this post.
 	 */
 	public function fields_get_for_post( $post_id ) {
@@ -142,8 +250,29 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		// Init return.
 		$acf_fields = [];
 
-		// Get all Field Groups for this Post.
-		$acf_field_groups = acf_get_field_groups( [ 'post_id' => $post_id ] );
+		// Get Entity reference.
+		$entity = $this->entity_type_get( $post_id );
+
+		// TODO: Make this a filter...
+
+		// Easy if it's a Post.
+		if ( $entity === 'post' ) {
+			$params = [
+				'post_id' => $post_id,
+			];
+		}
+
+		// If it's a User, we support the Edit Form.
+		if ( $entity === 'user' ) {
+			//$tmp = explode( '_', $post_id );
+			$params = [
+				//'user_id' => $tmp[1],
+				'user_form' => 'edit',
+			];
+		}
+
+		// Get all Field Groups for this ACF "Post ID".
+		$acf_field_groups = acf_get_field_groups( $params );
 
 		// Build our equivalent array to that returned by `get_fields()`.
 		foreach( $acf_field_groups AS $acf_field_group ) {
@@ -219,7 +348,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 *
 	 * @param str $selector The field name or key.
 	 * @param mixed $value The value to save in the database.
-	 * @param int $post_id The numeric value of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 */
 	public function value_update( $selector, $value, $post_id ) {
 
@@ -489,6 +618,12 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 */
 	public function select_setting_modify( $field ) {
 
+		// Skip if the CiviCRM Field key isn't there or isn't populated.
+		$key = $this->plugin->civicrm->acf_field_key_get();
+		if ( ! array_key_exists( $key, $field ) OR empty( $field[$key] ) ) {
+			return;
+		}
+
 		// Get the mapped Custom Field ID if present.
 		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
@@ -591,6 +726,12 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 */
 	public function radio_setting_modify( $field ) {
 
+		// Skip if the CiviCRM Field key isn't there or isn't populated.
+		$key = $this->plugin->civicrm->acf_field_key_get();
+		if ( ! array_key_exists( $key, $field ) OR empty( $field[$key] ) ) {
+			return;
+		}
+
 		// Get the mapped Custom Field ID if present.
 		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
@@ -679,6 +820,12 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 * @return array $field The modified field data array.
 	 */
 	public function checkbox_setting_modify( $field ) {
+
+		// Skip if the CiviCRM Field key isn't there or isn't populated.
+		$key = $this->plugin->civicrm->acf_field_key_get();
+		if ( ! array_key_exists( $key, $field ) OR empty( $field[$key] ) ) {
+			return;
+		}
 
 		// Get the mapped Custom Field ID if present.
 		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
@@ -824,6 +971,12 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 */
 	public function date_picker_setting_modify( $field ) {
 
+		// Skip if the CiviCRM Field key isn't there or isn't populated.
+		$key = $this->plugin->civicrm->acf_field_key_get();
+		if ( ! array_key_exists( $key, $field ) OR empty( $field[$key] ) ) {
+			return;
+		}
+
 		// Get the mapped Custom Field ID if present.
 		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
@@ -861,7 +1014,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 * @since 0.3
 	 *
 	 * @param str $value The field value.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @param array $field The existing field data array.
 	 * @return array $field The modified field data array.
 	 */
@@ -936,6 +1089,12 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 */
 	public function date_time_picker_setting_modify( $field ) {
 
+		// Skip if the CiviCRM Field key isn't there or isn't populated.
+		$key = $this->plugin->civicrm->acf_field_key_get();
+		if ( ! array_key_exists( $key, $field ) OR empty( $field[$key] ) ) {
+			return;
+		}
+
 		// Get the mapped Custom Field ID if present.
 		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );
 
@@ -970,7 +1129,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 * @since 0.3
 	 *
 	 * @param str $value The field value.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @param array $field The existing field data array.
 	 * @return array $field The modified field data array.
 	 */
@@ -1078,6 +1237,55 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		// Now add it.
 		acf_render_field_setting( $field, $setting );
 
+		/*
+		// Get "Disable Edit" Setting field.
+		$edit_setting = $this->plugin->civicrm->address->acf_field_edit_get( $address_fields );
+
+		// Now add it.
+		acf_render_field_setting( $field, $edit_setting );
+		*/
+
+	}
+
+
+
+	/**
+	 * Maybe modify the Setting of a "Google Map" Field.
+	 *
+	 * Only the Primary Address can be editable in the ACF Field because it is
+	 * the only CiviCRM Address that is guaranteed to be unique. There can be
+	 * multiple Addresses with the same Location Type but only one that is the
+	 * Primary Address.
+	 *
+	 * @since 0.8
+	 *
+	 * @param array $field The existing field data array.
+	 * @return array $field The modified field data array.
+	 */
+	public function google_map_setting_modify( $field ) {
+
+		// Bail if it's not a linked field.
+		$key = $this->plugin->civicrm->address->acf_field_key_get();
+		if ( empty( $field[$key] ) ) {
+			return;
+		}
+
+		// Get the "Make Read Only" key.
+		$edit_key = $this->plugin->civicrm->address->acf_field_key_edit_get();
+
+		// Always set to default if not set.
+		if ( ! isset( $field[$edit_key] ) ) {
+			$field[$edit_key] = 1;
+		}
+
+		// Always set to true if not a "Primary" Address.
+		if ( $field[$key] != 'primary' ) {
+			$field[$edit_key] = 1;
+		}
+
+		// --<
+		return $field;
+
 	}
 
 
@@ -1099,13 +1307,47 @@ class CiviCRM_ACF_Integration_ACF_Field {
 			return;
 		}
 
-		// Since Google Maps fields are CiviCRM -> ACF only, hide search.
+		// Get the "Make Read Only" key.
+		$edit_key = $this->plugin->civicrm->address->acf_field_key_edit_get();
+
+		// Only skip if it's explicitly *not* set to "Read Only".
+		if ( isset( $field[$edit_key] ) AND $field[$edit_key] !== 1 ) {
+			return;
+		}
+
+		// Hide search bar when "Read Only". Yeah I know it's a hack.
 		$style = '<style type="text/css">' .
 			'#' . $field['id'] . '.acf-google-map .title { display: none; }' .
 		'</style>';
 
 		// Write to page.
 		echo $style;
+
+	}
+
+
+
+	/**
+	 * Maybe modify the value of a "Google Map" Field.
+	 *
+	 * This merely ensures that we have an array to work with.
+	 *
+	 * @since 0.8
+	 *
+	 * @param mixed $value The existing value.
+	 * @param int $post_id The Post ID from which the value was loaded.
+	 * @param array $field The field array holding all the field options.
+	 * @return mixed $value The modified value.
+	 */
+	public function google_map_value_modify( $value, $post_id, $field ) {
+
+		// Make sure we have an array.
+		if ( empty( $value ) AND ! is_array( $value ) ) {
+			$value = [];
+		}
+
+		// --<
+		return $value;
 
 	}
 
@@ -1169,6 +1411,12 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 * @return array $field The modified field data array.
 	 */
 	public function text_setting_modify( $field ) {
+
+		// Skip if the CiviCRM Field key isn't there or isn't populated.
+		$key = $this->plugin->civicrm->acf_field_key_get();
+		if ( ! array_key_exists( $key, $field ) OR empty( $field[$key] ) ) {
+			return;
+		}
 
 		// Get the mapped Custom Field ID if present.
 		$custom_field_id = $this->plugin->civicrm->custom_field->custom_field_id_get( $field );

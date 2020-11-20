@@ -177,7 +177,7 @@ class CiviCRM_ACF_Integration_Mapping {
 		add_action( 'civicrm_postProcess', [ $this, 'form_contact_type_process' ], 10, 2 );
 
 		// Intercept CiviCRM Add/Edit Contact Type postSave hook.
-		add_action( 'civicrm_postSave_civicrm_contact_type', [ $this, 'form_contact_type_postSave' ], 10, 1 );
+		add_action( 'civicrm_postSave_civicrm_contact_type', [ $this, 'form_contact_type_postSave' ], 10 );
 
 		// Modify CiviCRM Add/Edit Activity Type form.
 		add_action( 'civicrm_buildForm', [ $this, 'form_activity_type_build' ], 10, 2 );
@@ -186,7 +186,7 @@ class CiviCRM_ACF_Integration_Mapping {
 		add_action( 'civicrm_postProcess', [ $this, 'form_activity_type_process' ], 10, 2 );
 
 		// Intercept CiviCRM Add/Edit Activity Type postSave hook.
-		add_action( 'civicrm_postSave_civicrm_option_value', [ $this, 'form_activity_type_postSave' ], 10, 1 );
+		add_action( 'civicrm_postSave_civicrm_option_value', [ $this, 'form_activity_type_postSave' ], 10 );
 
 	}
 

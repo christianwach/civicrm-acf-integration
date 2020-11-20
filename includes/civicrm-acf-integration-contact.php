@@ -96,13 +96,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	 */
 	public function register_hooks() {
 
-		// Listen for events from our Mapper that require Contact updates.
-		add_action( 'civicrm_acf_integration_mapper_post_saved', [ $this, 'post_saved' ], 10, 1 );
-		add_action( 'civicrm_acf_integration_mapper_acf_fields_saved', [ $this, 'acf_fields_saved' ], 10, 1 );
+		// Always register Mapper hooks.
+		$this->register_mapper_hooks();
 
 		// Listen for events from Manual Sync that require Contact updates.
-		add_action( 'civicrm_acf_integration_admin_contact_post_sync', [ $this, 'post_sync' ], 10, 1 );
-		add_action( 'civicrm_acf_integration_admin_contact_acf_fields_sync', [ $this, 'acf_fields_sync' ], 10, 1 );
+		add_action( 'civicrm_acf_integration_admin_contact_post_sync', [ $this, 'post_sync' ], 10 );
+		add_action( 'civicrm_acf_integration_admin_contact_acf_fields_sync', [ $this, 'acf_fields_sync' ], 10 );
 
 		// Listen for queries from our Field Group class.
 		add_filter( 'civicrm_acf_integration_query_field_group_mapped', [ $this, 'query_field_group_mapped' ], 10, 2 );
@@ -112,6 +111,36 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 		// Listen for queries from our Custom Field class.
 		add_filter( 'civicrm_acf_integration_query_post_id', [ $this, 'query_post_id' ], 10, 2 );
+
+	}
+
+
+
+	/**
+	 * Register callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function register_mapper_hooks() {
+
+		// Listen for events from our Mapper that require Contact updates.
+		add_action( 'civicrm_acf_integration_mapper_post_saved', [ $this, 'post_saved' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_acf_fields_saved', [ $this, 'acf_fields_saved' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Unregister callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function unregister_mapper_hooks() {
+
+		// Remove all Mapper listeners.
+		remove_action( 'civicrm_acf_integration_mapper_post_saved', [ $this, 'post_saved' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_acf_fields_saved', [ $this, 'acf_fields_saved' ], 10 );
 
 	}
 
@@ -162,14 +191,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 		// Get the Contact ID.
 		$contact_id = $this->plugin->post->contact_id_get( $post->ID );
-
-		/*
-		// Get previous values.
-		$prev_values = get_fields( $post_id );
-
-		// Get submitted values.
-		$values = acf_maybe_get_POST( 'acf' );
-		*/
 
 		// Does this Post have a Contact ID?
 		if ( $contact_id === false ) {
@@ -247,6 +268,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			return;
 		}
 
+		// Bail if it's not a Post.
+		$entity = $this->plugin->acf->field->entity_type_get( $args['post_id'] );
+		if ( $entity !== 'post' ) {
+			return;
+		}
+
 		// We need the Post itself.
 		$post = get_post( $args['post_id'] );
 
@@ -262,6 +289,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		if ( $contact_id === false ) {
 			return;
 		}
+
+		// Get originating Entity.
+		$originating_entity = $this->plugin->mapper->entity_get();
 
 		/*
 		 * Get existing field values.
@@ -653,14 +683,16 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 			if ( $post_ids === false AND $create_post === 'create' ) {
 
 				// Prevent recursion and the resulting unexpected Post creation.
-				if ( doing_action( 'civicrm_acf_integration_post_contact_sync' ) ) {
+				if ( doing_action( 'civicrm_acf_integration_post_contact_sync_to_post' ) ) {
 					continue;
 				}
 
 				// Get full Contact data.
 				$contact_data = $this->get_by_id( $contact_id );
 
-				// Remove WordPress callbacks to prevent recursion.
+				// TODO: Do we really need to remove CiviCRM hooks?
+
+				// Remove all callbacks to prevent recursion.
 				$this->plugin->mapper->hooks_wordpress_remove();
 				$this->plugin->mapper->hooks_civicrm_remove();
 
@@ -675,7 +707,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 				// Sync this Contact to the Post Type.
 				$this->plugin->post->contact_sync_to_post( $args, $post_type );
 
-				// Reinstate WordPress callbacks.
+				// Reinstate all callbacks.
 				$this->plugin->mapper->hooks_wordpress_add();
 				$this->plugin->mapper->hooks_civicrm_add();
 
@@ -1155,7 +1187,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	 * @since 0.2
 	 *
 	 * @param array $fields The ACF Field data.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array|bool $contact_data The CiviCRM Contact data.
 	 */
 	public function prepare_from_fields( $fields, $post_id = null ) {
@@ -1226,7 +1258,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	 *
 	 * @param int $contact_id The numeric ID of the Contact.
 	 * @param array $fields The ACF Field data.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array|bool $contact The CiviCRM Contact data, or false on failure.
 	 */
 	public function update_from_fields( $contact_id, $fields, $post_id = null ) {
@@ -1489,21 +1521,16 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 	/**
 	 * Listen for queries from the Custom Field class.
 	 *
-	 * This method responds with an array of Post IDs if it detects that the
+	 * This method responds with an array of "Post IDs" if it detects that the
 	 * set of Custom Fields maps to a Contact.
 	 *
 	 * @since 0.4.5
 	 *
-	 * @param bool $post_ids False, since we're asking for the Post IDs.
+	 * @param array|bool $post_ids The existing "Post IDs".
 	 * @param array $args The array of CiviCRM Custom Fields params.
-	 * @return array|bool $post_id The mapped Post IDs, or false if not mapped.
+	 * @return array|bool $post_id The mapped "Post IDs", or false if not mapped.
 	 */
 	public function query_post_id( $post_ids, $args ) {
-
-		// Bail early if a Post ID has been found.
-		if ( $post_ids !== false ) {
-			return $post_ids;
-		}
 
 		// Init Contact ID.
 		$contact_id = false;
@@ -1526,23 +1553,26 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 		// Bail if there's no Contact ID.
 		if ( $contact_id === false ) {
-			return false;
+			return $post_ids;
 		}
 
 		// Grab Contact.
 		$contact = $this->get_by_id( $contact_id );
 		if ( $contact === false ) {
-			return false;
+			return $post_ids;
 		}
 
 		// Bail if none of this Contact's Contact Types is mapped.
 		$post_types = $this->is_mapped( $contact, 'create' );
 		if ( $post_types === false ) {
-			return false;
+			return $post_ids;
 		}
 
-		// Init return.
-		$post_ids = [];
+		// Get originating Entity.
+		$entity = $this->plugin->mapper->entity_get();
+
+		// Init Contact Post IDs array.
+		$contact_post_ids = [];
 
 		// Get the Post IDs that this Contact is mapped to.
 		foreach( $post_types AS $post_type ) {
@@ -1555,9 +1585,28 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 				continue;
 			}
 
-			// Add to return array.
-			$post_ids = array_merge( $post_ids, $ids );
+			// Add to Contact Post IDs array.
+			foreach( $ids AS $id ) {
 
+				// Exclude "reverse" edits when a Post is the originator.
+				if ( $entity['entity'] !== 'post' OR $id != $entity['id'] ) {
+					$contact_post_ids[] = $id;
+				}
+
+			}
+
+		}
+
+		// Bail if no "Post IDs" are found.
+		if ( empty( $contact_post_ids ) ) {
+			return $post_ids;
+		}
+
+		// Add found "Post IDs" to return array.
+		if ( is_array( $post_ids ) ) {
+			$post_ids = array_merge( $post_ids, $contact_post_ids );
+		} else {
+			$post_ids = $contact_post_ids;
 		}
 
 		// --<

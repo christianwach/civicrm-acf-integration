@@ -50,6 +50,15 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	public $acf_field_key = 'field_cacf_civicrm_address';
 
 	/**
+	 * "Make Read Only" field key in the ACF Field data.
+	 *
+	 * @since 0.8
+	 * @access public
+	 * @var str $acf_field_edit_key The key of the "Make Read Only" in the ACF Field data.
+	 */
+	public $acf_field_edit_key = 'field_cacf_civicrm_address_readonly';
+
+	/**
 	 * Fields which must be handled separately.
 	 *
 	 * @since 0.4.4
@@ -108,31 +117,55 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 */
 	public function register_hooks() {
 
+		// Always register Mapper hooks.
+		$this->register_mapper_hooks();
+
 		// Customise "Google Map" Fields.
 		//add_action( 'acf/render_field_settings/type=google_map', [ $this, 'map_setting_add' ] );
-
-		// Intercept when a CiviCRM Address is about to be updated.
-		add_action( 'civicrm_acf_integration_mapper_address_pre_edit', [ $this, 'address_pre_edit' ], 10, 1 );
-
-		// Intercept when a CiviCRM Address has been created.
-		add_action( 'civicrm_acf_integration_mapper_address_created', [ $this, 'address_created' ], 10, 1 );
-
-		// Intercept when a CiviCRM Address has been edited.
-		add_action( 'civicrm_acf_integration_mapper_address_edited', [ $this, 'address_edited' ], 10, 1 );
-
-		// Intercept when a CiviCRM Address has been deleted.
-		add_action( 'civicrm_acf_integration_mapper_address_deleted', [ $this, 'address_deleted' ], 10, 1 );
 
 		// Add any Address Fields attached to a Post.
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
-		// Check Contact prior to Post update.
-		add_action( 'civicrm_acf_integration_mapper_contact_pre_edit', [ $this, 'contact_pre_edit' ], 10 );
+		// Check Contact prior to Post-Contact sync event.
+		//add_action( 'civicrm_acf_integration_post_contact_sync_to_post_pre', [ $this, 'contact_sync_to_post_pre' ], 10 );
 
-		// Intercept Post created, updated (or synced) from Contact events.
-		add_action( 'civicrm_acf_integration_post_created', [ $this, 'post_edited' ], 10 );
-		add_action( 'civicrm_acf_integration_post_edited', [ $this, 'post_edited' ], 10 );
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'post_edited' ], 10 );
+		// Intercept Post-Contact sync event.
+		//add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Register callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function register_mapper_hooks() {
+
+		// Listen for events from our Mapper that require Address updates.
+		add_action( 'civicrm_acf_integration_mapper_address_pre_edit', [ $this, 'address_pre_edit' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_address_created', [ $this, 'address_created' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_address_edited', [ $this, 'address_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_address_deleted', [ $this, 'address_deleted' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Unregister callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function unregister_mapper_hooks() {
+
+		// Remove all Mapper listeners.
+		remove_action( 'civicrm_acf_integration_mapper_address_pre_edit', [ $this, 'address_pre_edit' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_address_created', [ $this, 'address_created' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_address_edited', [ $this, 'address_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_address_deleted', [ $this, 'address_deleted' ], 10 );
+
 
 	}
 
@@ -145,14 +178,252 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	/**
 	 * Update a CiviCRM Contact's Fields with data from ACF Fields.
 	 *
-	 * Actually, don't since Addresses are currently CiviCRM --> ACF only.
-	 *
 	 * @since 0.4.5
 	 *
 	 * @param array $args The array of WordPress params.
 	 * @return bool True if updates were successful, or false on failure.
 	 */
 	public function fields_handled_update( $args ) {
+
+		// Init success.
+		$success = true;
+
+		// Bail if we have no field data to save.
+		if ( empty( $args['fields'] ) ) {
+			return $success;
+		}
+
+		// Loop through the field data.
+		foreach( $args['fields'] AS $field => $value ) {
+
+			// Get the field settings.
+			$settings = get_field_object( $field, $args['post_id'] );
+
+			// Maybe update an Address Record.
+			$success = $this->field_handled_update( $field, $value, $args['contact']['id'], $settings, $args );
+
+		}
+
+		// --<
+		return $success;
+
+	}
+
+
+
+	/**
+	 * Update a CiviCRM Contact's Address with data from an ACF Field.
+	 *
+	 * These Fields require special handling because they are not part
+	 * of the core Contact data.
+	 *
+	 * @since 0.8
+	 *
+	 * @param str $field The ACF Field selector.
+	 * @param mixed $value The ACF Field value.
+	 * @param int $contact_id The numeric ID of the Contact.
+	 * @param array $settings The ACF Field settings.
+	 * @param array $args The array of WordPress params.
+	 * @return bool True if updates were successful, or false on failure.
+	 */
+	public function field_handled_update( $field, $value, $contact_id, $settings, $args ) {
+
+		// Skip if it's not an ACF Field Type that this class handles.
+		if ( ! in_array( $settings['type'], $this->fields_handled ) ) {
+			return true;
+		}
+
+		// Skip if this Field isn't linked to a CiviCRM Address.
+		$key = $this->acf_field_key_get();
+		if ( empty( $settings[$key] ) ) {
+			return true;
+		}
+
+		// Skip if this Field isn't linked to a Primary Address.
+		if ( $settings[$key] !== 'primary' ) {
+			return true;
+		}
+
+		// Skip if "Make Read Only" has not been set yet.
+		$edit_key = $this->plugin->civicrm->address->acf_field_key_edit_get();
+		if ( ! isset( $settings[$edit_key] ) ) {
+			return true;
+		}
+
+		// Skip if it is "Make Read Only".
+		if ( $settings[$edit_key] == 1 ) {
+			return true;
+		}
+
+		// Make sure we have an array.
+		if ( empty( $value ) AND ! is_array( $value ) ) {
+			$value = [];
+		}
+
+		// Update the Address.
+		$success = $this->address_update( $field, $value, $contact_id, $settings, $args );
+
+		// --<
+		return $success;
+
+	}
+
+
+
+	/**
+	 * Update a CiviCRM Contact's Address.
+	 *
+	 * Work in progress...
+	 *
+	 * @since 0.8
+	 *
+	 * @param str $field The ACF Field selector.
+	 * @param mixed $value The ACF Field value.
+	 * @param int $contact_id The numeric ID of the Contact.
+	 * @param array $settings The ACF Field settings.
+	 * @param array $args The array of WordPress params.
+	 * @return bool True if updates were successful, or false on failure.
+	 */
+	public function address_update( $field, $value, $contact_id, $settings, $args ) {
+
+		// Disabled.
+		return true;
+
+		// Prepare the incoming Address data for CiviCRM.
+		$address = $this->address_prepare_from_map( $value );
+
+		// Don't process empty Addresses.
+		if ( empty( $address ) ) {
+			return true;
+		}
+
+		// --<
+		return true;
+
+	}
+
+
+
+	/**
+	 * Prepare CiviCRM Address data from the data in a Google Maps ACF Field.
+	 *
+	 * @since 0.8
+	 *
+	 * @param array|object $address The ACF Address data.
+	 * @return array $field_data The Address data prepared for CiviCRM.
+	 */
+	public function address_prepare_from_map( $address ) {
+
+		/*
+
+		[id] => 233
+		[contact_id] => 228
+		[location_type_id] => 1
+		[is_primary] => 1
+		[is_billing] => 0
+		[street_address] => 10 Walpole Road
+		[city] => Brighton
+		[state_province_id] => 2664
+		[postal_code] => BN2 0EA
+		[country_id] => 1226
+		[geo_code_1] => 50.8209349
+		[geo_code_2] => -0.1205826
+		[manual_geo_code] => 0
+
+		*/
+
+		/*
+
+		// Google-sourced data does not contain "city".
+		// What to do?
+
+		[address] => 10 Walpole Road, Brighton, UK
+		[lat] => 50.8209349
+		[lng] => -0.1205826
+		[zoom] => 14
+		[place_id] => ChIJpcTrIbyFdUgRIT9SCbGREI0
+		[name] => 10 Walpole Rd
+		[street_number] => 10
+		[street_name] => Walpole Road
+		[street_name_short] => Walpole Rd
+		[state] => England
+		[post_code] => BN2 0EA
+		[country] => United Kingdom
+		[country_short] => GB
+
+		*/
+
+		// If we have a "place_id" then the data comes from a Google lookup.
+		// Bail if we don't have it - because the data will have come from CiviCRM.
+		if ( ! isset( $address['place_id'] ) ) {
+			return [];
+		}
+
+		// Init CiviCRM data.
+		$address_data = [
+			'street_address' => '',
+			'street_number' => '',
+			'street_name' => '',
+			'city' => '',
+			'postal_code' => '',
+			'country_id' => '',
+			'geo_code_1' => '',
+			'geo_code_2' => '',
+		];
+
+		// Get basic entries.
+		if ( ! empty( $address['street_number'] ) ) {
+			$address_data['street_number'] = $address['street_number'];
+		}
+		if ( ! empty( $address['street_name'] ) ) {
+			$address_data['street_name'] = $address['street_name'];
+		}
+
+		/*
+		 * CiviCRM says about "street_address":
+		 *
+		 * "Concatenation of all routable street address components
+		 * (prefix, street number, street name, suffix, unit number OR P.O. Box)
+		 *
+		 * Apps should be able to determine physical location with this data
+		 * (for mapping, mail delivery, etc.)."
+		 *
+		 * It seems that "number" and "street name" are enough.
+		 */
+		if ( ! empty( $address['street_number'] ) AND ! empty( $address['street_name'] ) ) {
+			$address_data['street_address'] = $address['street_number'] . ' ' . $address['street_name'];
+		}
+
+		if ( ! empty( $address['city'] ) ) {
+			$address_data['city'] = $address['city'];
+		}
+		if ( ! empty( $address['post_code'] ) ) {
+			$address_data['postal_code'] = $address['post_code'];
+		}
+
+		// If we have a Country present.
+		if ( ! empty( $address['country_short'] ) ) {
+
+			// Add the Country data if we get one.
+			$country = $this->country_get_by_short( $address['country_short'] );
+			if ( ! empty( $country ) ) {
+				$address_data['country_id'] = $country['id'];
+				$address_data['country'] = $country['name'];
+				$address_data['iso_code'] = $country['iso_code'];
+			}
+
+		}
+
+		// Latitude and Longitude.
+		if ( ! empty( $address['lat'] ) ) {
+			$address_data['geo_code_1'] = $address['lat'];
+		}
+		if ( ! empty( $address['lng'] ) ) {
+			$address_data['geo_code_2'] = $address['lng'];
+		}
+
+		// --<
+		return $address_data;
 
 	}
 
@@ -175,24 +446,15 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 *
 	 * @param array $args The array of CiviCRM params.
 	 */
-	public function contact_pre_edit( $args ) {
-
-		// Bail if not an edit.
-		if ( $args['op'] != 'edit' ) {
-			return;
-		}
+	public function contact_sync_to_post_pre( $args ) {
 
 		// Always clear properties if set previously.
 		if ( isset( $this->contact_addresses_pre ) ) {
 			unset( $this->contact_addresses_pre );
 		}
 
-		// Maybe cast as an object.
-		if ( ! is_object( $args['objectRef'] ) ) {
-			$contact = (object) $args['objectRef'];
-		} else {
-			$contact = $args['objectRef'];
-		}
+		// Grab Contact object.
+		$contact = $args['objectRef'];
 
 		// Init empty property.
 		$this->contact_addresses_pre = [];
@@ -200,11 +462,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		// Override if the Contact has Address(es).
 		if ( ! empty( $contact->address ) AND is_array( $contact->address ) ) {
 
-			// Get the full Addresses data and add to property cast as object.
+			// Get the full Addresses data and add to property, cast as object.
 			$contact_addresses_pre = $this->addresses_get_by_contact_id( $contact->contact_id );
 			foreach( $contact_addresses_pre AS $contact_address ) {
-				$key = $contact_address['id'];
-				$this->contact_addresses_pre[$key] = (object) $contact_address;
+				$key = $contact_address->id;
+				$this->contact_addresses_pre[$key] = $contact_address;
 			}
 
 		}
@@ -222,9 +484,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 *
 	 * @param array $args The array of CiviCRM Contact and WordPress Post params.
 	 */
-	public function post_edited( $args ) {
+	public function contact_sync_to_post( $args ) {
 
-		// Get the ACF Fields for this Post.
+		// Get the ACF Fields for this ACF "Post ID".
 		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $args['post_id'] );
 
 		// Bail if there are no Address Fields.
@@ -232,19 +494,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 			return;
 		}
 
-		// Get the Contact ID depending on the operation.
-		if ( $args['op'] == 'create' ) {
-			$contact_id = $args['objectRef']->id;
-		} else {
-			$contact_id = $args['objectRef']->contact_id;
-		}
-
-		// Get the current Contact Addresses cast as objects.
+		// Get the current Contact Addresses.
 		$contact_addresses = [];
-		$current_addresses = $this->addresses_get_by_contact_id( $contact_id );
+		$current_addresses = $this->addresses_get_by_contact_id( $args['objectId'] );
 		foreach( $current_addresses AS $current_address ) {
-			$key = $current_address['id'];
-			$contact_addresses[$key] = (object) $current_address;
+			$key = $current_address->id;
+			$contact_addresses[$key] = $current_address;
 		}
 
 		// Bail if there are neither previous Addresses nor current Addresses.
@@ -301,7 +556,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 					}
 
 					// Update it.
-					$this->address_update( $address_shared, $previous_shared );
+					$this->address_fields_update( $address_shared, $previous_shared );
 
 				}
 				*/
@@ -327,12 +582,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 */
 	public function address_created( $args ) {
 
-		// Maybe cast as an object.
-		if ( ! is_object( $args['objectRef'] ) ) {
-			$address = (object) $args['objectRef'];
-		} else {
-			$address = $args['objectRef'];
-		}
+		// Grab the Address object.
+		$address = $args['objectRef'];
 
 		// We need a Contact ID in the edited Address.
 		if ( empty( $address->contact_id ) ) {
@@ -340,7 +591,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		}
 
 		// Do the Address update.
-		$this->address_update( $address );
+		$this->address_fields_update( $address );
 
 		// If this address has no "Master Address" then it might be one itself.
 		$addresses_shared = $this->addresses_shared_get_by_id( $address->id );
@@ -352,7 +603,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 
 		// Update all of them.
 		foreach( $addresses_shared AS $address_shared ) {
-			$this->address_update( $address_shared );
+			$this->address_fields_update( $address_shared );
 		}
 
 	}
@@ -379,12 +630,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 			unset( $this->address_pre );
 		}
 
-		// Maybe cast as an object.
-		if ( ! is_object( $args['objectRef'] ) ) {
-			$address = (object) $args['objectRef'];
-		} else {
-			$address = $args['objectRef'];
-		}
+		// Grab the Address object.
+		$address = $args['objectRef'];
 
 		// We need a Contact ID in the edited Address.
 		if ( empty( $address->contact_id ) ) {
@@ -392,14 +639,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		}
 
 		// Grab the previous Address data from the database via API.
-		$address_pre = $this->address_get_by_id( $address->id );
-
-		// Maybe cast previous Address data as object and stash in a property.
-		if ( ! is_object( $address_pre ) ) {
-			$this->address_pre = (object) $address_pre;
-		} else {
-			$this->address_pre = $address_pre;
-		}
+		$this->address_pre = $this->address_get_by_id( $address->id );
 
 	}
 
@@ -414,12 +654,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 */
 	public function address_edited( $args ) {
 
-		// Maybe cast as an object.
-		if ( ! is_object( $args['objectRef'] ) ) {
-			$address = (object) $args['objectRef'];
-		} else {
-			$address = $args['objectRef'];
-		}
+		// Grab the Address object.
+		$address = $args['objectRef'];
 
 		// We need a Contact ID in the edited Address.
 		if ( empty( $address->contact_id ) ) {
@@ -430,7 +666,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		$address = $this->address_properties_check( $address, $this->address_pre );
 
 		// Do the Address update.
-		$this->address_update( $address, $this->address_pre );
+		$this->address_fields_update( $address, $this->address_pre );
 
 		// If this address has no "Master Address" then it might be one itself.
 		$addresses_shared = $this->addresses_shared_get_by_id( $address->id );
@@ -442,7 +678,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 
 		// Update all of them.
 		foreach( $addresses_shared AS $address_shared ) {
-			$this->address_update( $address_shared, $this->address_pre );
+			$this->address_fields_update( $address_shared, $this->address_pre );
 		}
 
 	}
@@ -458,12 +694,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 */
 	public function address_deleted( $args ) {
 
-		// Maybe cast as an object.
-		if ( ! is_object( $args['objectRef'] ) ) {
-			$address = (object) $args['objectRef'];
-		} else {
-			$address = $args['objectRef'];
-		}
+		// Grab the Address object.
+		$address = $args['objectRef'];
 
 		// We need a Contact ID in the edited Address.
 		if ( empty( $address->contact_id ) ) {
@@ -474,7 +706,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		$address->to_delete = true;
 
 		// Clear the Address.
-		$this->address_update( $address );
+		$this->address_fields_update( $address );
 
 		// If this address has no "Master Address" then it might be one itself.
 		$addresses_shared = $this->addresses_shared_get_by_id( $address->id );
@@ -491,7 +723,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 			$address_shared->to_delete = true;
 
 			// Clear the ACF Field.
-			$this->address_update( $address_shared );
+			$this->address_fields_update( $address_shared );
 
 		}
 
@@ -566,7 +798,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 * @param array|object $address The current Address data.
 	 * @param object $previous The previous CiviCRM Address data.
 	 */
-	public function address_update( $address, $previous = null ) {
+	public function address_fields_update( $address, $previous = null ) {
 
 		// Maybe cast as an object.
 		if ( ! is_object( $address ) ) {
@@ -584,38 +816,68 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 			return;
 		}
 
-		// Bail if none of this Contact's Contact Types is mapped.
+		// Test if of this Contact's Contact Types is mapped to a Post Type.
 		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
-		if ( $post_types === false ) {
+		if ( $post_types !== false ) {
+
+			// Handle each Post Type in turn.
+			foreach( $post_types AS $post_type ) {
+
+				// Bail if this Contact has no mapped Post.
+				$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
+				if ( $post_id === false ) {
+					continue;
+				}
+
+				// Update the ACF Fields for this Post.
+				$this->fields_update( $post_id, $address, $previous );
+
+			}
+
+		}
+
+		/**
+		 * Broadcast that an Address ACF Field may have been edited.
+		 *
+		 * @since 0.8
+		 *
+		 * @param array $contact The array of CiviCRM Contact data.
+		 * @param object $address The current Address data.
+		 * @param object $previous The previous CiviCRM Address data.
+		 */
+		do_action( 'civicrm_acf_integration_address_address_update', $contact, $address, $previous );
+
+	}
+
+
+
+	/**
+	 * Update the Address ACF Field on an Entity mapped to a Contact ID.
+	 *
+	 * @since 0.8
+	 *
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @param object $address The current CiviCRM Address data.
+	 * @param object $previous The previous CiviCRM Address data.
+	 */
+	public function fields_update( $post_id, $address, $previous = null ) {
+
+		// Bail if there are no Address fields for this "Post ID".
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
+
+		if ( empty( $acf_fields['address'] ) ) {
 			return;
 		}
 
-		// Handle each Post Type in turn.
-		foreach( $post_types AS $post_type ) {
+		// Bail if there are no ACF Fields to update.
+		$fields_to_update = $this->fields_to_update_get( $acf_fields, $address, $previous );
+		if ( empty( $fields_to_update ) ) {
+			return;
+		}
 
-			// Bail if this Contact has no mapped Post.
-			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
-			if ( $post_id === false ) {
-				return;
-			}
-
-			// Bail if there are no Address fields for this Post.
-			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
-			if ( empty( $acf_fields['address'] ) ) {
-				return;
-			}
-
-			// Bail if there are no ACF Fields to update.
-			$fields_to_update = $this->fields_to_update_get( $acf_fields, $address, $previous );
-			if ( empty( $fields_to_update ) ) {
-				return;
-			}
-
-			// Update the found ACF Fields.
-			foreach( $fields_to_update AS $selector => $address_field ) {
-				$this->field_update( $address, $selector, $post_id, $address_field['action'] );
-			}
-
+		// Update the found ACF Fields.
+		foreach( $fields_to_update AS $selector => $address_field ) {
+			$this->field_update( $address, $selector, $post_id, $address_field['action'] );
 		}
 
 	}
@@ -629,7 +891,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 *
 	 * @param object $address The Address data.
 	 * @param str $selector The ACF Field selector.
-	 * @param int $post_id The numeric OD of the WordPress Post.
+	 * @param int $post_id The ACF "Post ID".
 	 * @param str $action The kind of action to perform on the ACF Field - 'update' or 'clear'.
 	 */
 	public function field_update( $address, $selector, $post_id, $action = '' ) {
@@ -643,17 +905,18 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		// Prepare the data.
 		switch( $settings['type'] ) {
 
-			// Prepare data for Google Map field.
-			case 'google_map' :
-				$field_data = $this->field_map_prepare( $address, $action );
-				break;
-
 			/*
 			// Other Address-type Fields catered for here.
 			case 'some_address' :
 				$field_data = $this->field_map_prepare( $address );
 				break;
 			*/
+
+			// Prepare data for Google Map field (our default).
+			case 'google_map' :
+			default :
+				$field_data = $this->field_map_prepare( $address, $action );
+				break;
 
 		}
 
@@ -1006,6 +1269,54 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 
 
 	/**
+	 * Get a Country by its "short name".
+	 *
+	 * @since 0.8
+	 *
+	 * @param int $country_short The "short name" of the Country.
+	 * @return array $country The array of Country data, empty on failure.
+	 */
+	public function country_get_by_short( $country_short ) {
+
+		// Init return.
+		$country = [];
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $country;
+		}
+
+		// Params to get the Address Type.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+			'iso_code' => $country_short,
+		];
+
+		// Call the CiviCRM API.
+		$result = civicrm_api( 'Country', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $country;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $country;
+		}
+
+ 		// The result set should contain only one item.
+		$country = array_pop( $result['values'] );
+
+		// --<
+		return $country;
+
+	}
+
+
+
+	/**
 	 * Get a State/Province by its numeric ID.
 	 *
 	 * @since 0.4.4
@@ -1028,6 +1339,54 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 			'version' => 3,
 			'sequential' => 1,
 			'state_province_id' => $state_province_id,
+		];
+
+		// Call the CiviCRM API.
+		$result = civicrm_api( 'StateProvince', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $state_province;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $state_province;
+		}
+
+ 		// The result set should contain only one item.
+		$state_province = array_pop( $result['values'] );
+
+		// --<
+		return $state_province;
+
+	}
+
+
+
+	/**
+	 * Get a State/Province by its "short name".
+	 *
+	 * @since 0.8
+	 *
+	 * @param str $abbreviation The short name of the State/Province.
+	 * @return array $state_province The array of State/Province data.
+	 */
+	public function state_province_get_by_short( $abbreviation ) {
+
+		// Init return.
+		$state_province = [];
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $state_province;
+		}
+
+		// Params to get the Address Type.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+			'abbreviation' => $abbreviation,
 		];
 
 		// Call the CiviCRM API.
@@ -1092,8 +1451,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 			return $shared;
 		}
 
- 		// Return the Addresses.
-		$shared = $result['values'];
+ 		// Return the result set as an array of objects.
+ 		foreach( $result['values'] AS $item ) {
+			$shared[] = (object) $item;
+		}
 
 		// --<
 		return $shared;
@@ -1108,12 +1469,12 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 	 * @since 0.4.4
 	 *
 	 * @param int $address_id The numeric ID of the Address.
-	 * @param array $address The array of Address data, or empty if none.
+	 * @param object|bool $address The Address data object, or false if none.
 	 */
 	public function address_get_by_id( $address_id ) {
 
 		// Init return.
-		$address = [];
+		$address = false;
 
 		// Try and init CiviCRM.
 		if ( ! $this->civicrm->is_initialised() ) {
@@ -1140,7 +1501,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 		}
 
  		// The result set should contain only one item.
-		$address = array_pop( $result['values'] );
+		$address = (object) array_pop( $result['values'] );
 
 		// --<
 		return $address;
@@ -1186,11 +1547,61 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 			return $addresses;
 		}
 
- 		// Extract the result set.
-		$addresses = $result['values'];
+ 		// Return the result set as an array of objects.
+ 		foreach( $result['values'] AS $item ) {
+			$addresses[] = (object) $item;
+		}
 
 		// --<
 		return $addresses;
+
+	}
+
+
+
+	/**
+	 * Get the Primary Address for a Contact ID.
+	 *
+	 * @since 0.8
+	 *
+	 * @param int $contact_id The numeric ID of the Contact.
+	 * @param array $address The Address data object, or false if none.
+	 */
+	public function address_get_primary_by_contact_id( $contact_id ) {
+
+		// Init return.
+		$address = false;
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $addresses;
+		}
+
+		// Construct API query.
+		$params = [
+			'version' => 3,
+			'is_primary' => 1,
+			'contact_id' => $contact_id,
+		];
+
+		// Get Address details via API.
+		$result = civicrm_api( 'Address', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $address;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $address;
+		}
+
+ 		// The result set should contain only one item.
+		$address = (object) array_pop( $result['values'] );
+
+		// --<
+		return $address;
 
 	}
 
@@ -1269,6 +1680,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 
 
 
+	// -------------------------------------------------------------------------
+
+
+
 	/**
 	 * Return the "CiviCRM Address" ACF Settings Field.
 	 *
@@ -1324,6 +1739,61 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 
 
 	/**
+	 * Return the "Make Read Only" ACF Settings Field.
+	 *
+	 * @since 0.8
+	 *
+	 * @param array $location_types The Location Types to populate the ACF Field with.
+	 * @return array $field The ACF Field data array.
+	 */
+	public function acf_field_edit_get( $location_types = [] ) {
+
+		// Bail if empty.
+		if ( empty( $location_types ) ) {
+			return;
+		}
+
+		// Define field.
+		$field = [
+			'key' => $this->acf_field_key_edit_get(),
+			'label' => __( 'Make Read Only', 'civicrm-acf-integration' ),
+			'name' => $this->acf_field_key_edit_get(),
+			'type' => 'true_false',
+			//'message' => __( 'More explaining.', 'civicrm-acf-integration' ),
+			'instructions' => __( 'Only CiviCRM can set the Location in this Field.', 'civicrm-acf-integration' ),
+			'ui' => 1,
+			'default_value' => 1,
+			'required' => 0,
+			'conditional_logic' => [
+				[
+					[
+						'field' => $this->acf_field_key_get(),
+						'operator' => '==',
+						'value' => 'primary',
+					],
+				],
+			],
+			'parent' => $this->plugin->acf->field_group->placeholder_group_get(),
+		];
+
+		/**
+		 * Filter the "Make Read Only" settings field.
+		 *
+		 * @since 0.8
+		 *
+		 * @param array $field The existing Field.
+		 * @return array $field The modified Field.
+		 */
+		$field = apply_filters( 'civicrm_acf_integration_address_acf_field_edit_get', $field );
+
+		// --<
+		return $field;
+
+	}
+
+
+
+	/**
 	 * Getter method for the "CiviCRM Address" key.
 	 *
 	 * @since 0.4.4
@@ -1334,6 +1804,22 @@ class CiviCRM_ACF_Integration_CiviCRM_Address extends CiviCRM_ACF_Integration_Ci
 
 		// --<
 		return $this->acf_field_key;
+
+	}
+
+
+
+	/**
+	 * Getter method for the "Make Read Only" key.
+	 *
+	 * @since 0.8
+	 *
+	 * @return str $acf_field_edit_key The key of the "Make Read Only" in the ACF Field data.
+	 */
+	public function acf_field_key_edit_get() {
+
+		// --<
+		return $this->acf_field_edit_key;
 
 	}
 

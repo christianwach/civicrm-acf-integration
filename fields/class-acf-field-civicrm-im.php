@@ -286,6 +286,11 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Instant_Messenger extends acf_field
 	 */
 	public function load_value( $value, $post_id, $field ) {
 
+		// Make sure we have an array.
+		if ( empty( $value ) AND ! is_array( $value ) ) {
+			$value = [];
+		}
+
 		// Strip keys and re-index.
 		if ( is_array( $value ) ) {
 			$value = array_values( $value );
@@ -307,13 +312,18 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Instant_Messenger extends acf_field
 	 * @param int $post_id The Post ID from which the value was loaded.
 	 * @param array $field The field array holding all the field options.
 	 * @return mixed $value The modified value.
+	 */
 	public function update_value( $value, $post_id, $field ) {
+
+		// Make sure we have an array.
+		if ( empty( $value ) AND ! is_array( $value ) ) {
+			$value = [];
+		}
 
 		// --<
 		return $value;
 
 	}
-	 */
 
 
 

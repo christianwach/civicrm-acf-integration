@@ -181,13 +181,13 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 	public function render_field_settings( $field ) {
 
 		// Add callback to filter the retrieved Relationships.
-		add_filter( 'civicrm_acf_integration_relationships_get_for_acf_field', [ $this, 'relationship_types_filter' ], 10, 3 );
+		add_filter( 'civicrm_acf_integration_relationships_get_for_acf_field_for_type', [ $this, 'relationship_types_filter' ], 10, 3 );
 
-		// Get the possible Relationships for this CiviCRM Contact Type.
+		// Get the possible Relationships for this Field Type.
 		$relationships = $this->civicrm->relationship->get_for_acf_field( $field );
 
 		// Remove callback.
-		remove_filter( 'civicrm_acf_integration_relationships_get_for_acf_field', [ $this, 'relationship_types_filter' ], 10 );
+		remove_filter( 'civicrm_acf_integration_relationships_get_for_acf_field_for_type', [ $this, 'relationship_types_filter' ], 10 );
 
 		// Bail if there are no fields.
 		if ( empty( $relationships ) ) {
@@ -321,8 +321,8 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 			return $response;
 		}
 
-		// Grab the Post ID.
-		$post_id = absint( $options['post_id'] );
+		// Grab the ACF "Post ID".
+		$post_id = $options['post_id'];
 
 		// Init args.
 		$args = [];
@@ -728,14 +728,20 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 					// Add to subtype optgroup if possible.
 					if ( ! empty( $relationship['contact_sub_type_a'] ) ) {
 						if ( $relationship['contact_sub_type_a'] == $contact_type['subtype'] ) {
-							$filtered[$contact_type['subtype']][$key] = $relationship['label_a_b'];
+							$filtered[$contact_type['subtype']][$key] = sprintf(
+								__( '%s (A-B)', 'civicrm-wp-profile-sync' ),
+								$relationship['label_a_b']
+							);
 						}
 					}
 
 					// Add to type optgroup if not already added - and no subtype.
 					if ( ! isset( $filtered[$contact_type['subtype']][$key] ) ) {
 						if ( empty( $relationship['contact_sub_type_a'] ) ) {
-							$filtered[$contact_type['type']][$key] = $relationship['label_a_b'];
+							$filtered[$contact_type['type']][$key] = sprintf(
+								__( '%s (A-B)', 'civicrm-wp-profile-sync' ),
+								$relationship['label_a_b']
+							);
 						}
 					}
 
@@ -750,16 +756,23 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship extends acf_field {
 					// Add to subtype optgroup if possible.
 					if ( ! empty( $relationship['contact_sub_type_b'] ) ) {
 						if ( $relationship['contact_sub_type_b'] == $contact_type['subtype'] ) {
-							$filtered[$contact_type['subtype']][$key] = $relationship['label_b_a'];
+							$filtered[$contact_type['subtype']][$key] = sprintf(
+								__( '%s (B-A)', 'civicrm-wp-profile-sync' ),
+								$relationship['label_b_a']
+							);
 						}
 					}
 
 					// Add to type optgroup if not already added - and no subtype.
 					if ( ! isset( $filtered[$contact_type['subtype']][$key] ) ) {
 						if ( empty( $relationship['contact_sub_type_b'] ) ) {
-							$filtered[$contact_type['type']][$key] = $relationship['label_b_a'];
+							$filtered[$contact_type['type']][$key] = sprintf(
+								__( '%s (B-A)', 'civicrm-wp-profile-sync' ),
+								$relationship['label_b_a']
+							);
 						}
 					}
+
 				}
 
 			}

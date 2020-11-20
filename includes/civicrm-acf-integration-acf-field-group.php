@@ -171,12 +171,6 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 		// Loop through Fields and save them.
 		foreach( $fields AS $field ) {
 
-			// Skip if the CiviCRM Field key isn't there or isn't populated.
-			$key = $this->plugin->civicrm->acf_field_key_get();
-			if ( ! array_key_exists( $key, $field ) OR empty( $field[$key] ) ) {
-				continue;
-			}
-
 			// Build method name.
 			$method = $field['type'] . '_setting_modify';
 
@@ -328,8 +322,14 @@ class CiviCRM_ACF_Integration_ACF_Field_Group {
 			 */
 			foreach( $group AS $rule ) {
 
-				// Check any rules which reference a "post type".
-				if ( $rule['param'] == 'post_type' AND ! empty( $params['post_type'] ) ) {
+				// TODO: Make the following a filter?
+
+				// Check any rules which reference a "post type" or "user form".
+				if (
+					( $rule['param'] == 'post_type' AND ! empty( $params['post_type'] ) )
+					OR
+					( $rule['param'] == 'user_form' AND ! empty( $params['user_form'] ) )
+				) {
 
 					// Regardless of match, a rules references the
 					$queried_entity_present = true;

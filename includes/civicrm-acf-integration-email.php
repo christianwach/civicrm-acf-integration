@@ -108,14 +108,46 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 	 */
 	public function register_hooks() {
 
-		// Intercept when a CiviCRM Contact's Email has been updated.
-		add_action( 'civicrm_acf_integration_mapper_email_edited', [ $this, 'email_edited' ], 10, 2 );
+		// Always register Mapper hooks.
+		$this->register_mapper_hooks();
 
 		// Add any Email Fields attached to a Post.
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
 		// Intercept Post created from Contact events.
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Register callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function register_mapper_hooks() {
+
+		// Listen for events from our Mapper that require Email updates.
+		add_action( 'civicrm_acf_integration_mapper_email_created', [ $this, 'email_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_email_edited', [ $this, 'email_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_email_deleted', [ $this, 'email_edited' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Unregister callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function unregister_mapper_hooks() {
+
+		// Remove all Mapper listeners.
+		remove_action( 'civicrm_acf_integration_mapper_email_created', [ $this, 'email_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_email_edited', [ $this, 'email_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_email_deleted', [ $this, 'email_edited' ], 10 );
 
 	}
 
@@ -147,7 +179,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 		foreach( $args['fields'] AS $field => $value ) {
 
 			// Get the field settings.
-			$settings = get_field_object( $field );
+			$settings = get_field_object( $field, $args['post_id'] );
 
 			// Maybe update a Contact Field.
 			$this->field_handled_update( $field, $value, $args['contact']['id'], $settings );
@@ -565,11 +597,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 		// Grab the Email data.
 		$email = $args['objectRef'];
 
-		// Maybe cast as object.
-		if ( ! is_object( $email ) ) {
-			$email = (object) $email;
-		}
-
 		// Bail if this is not a Contact's Email.
 		if ( empty( $email->contact_id ) ) {
 			return;
@@ -577,50 +604,80 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 
 		// Get the Contact data.
 		$contact = $this->plugin->civicrm->contact->get_by_id( $email->contact_id );
-
-		// Bail if none of this Contact's Contact Types is mapped.
-		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
-		if ( $post_types === false ) {
+		if ( $contact === false ) {
 			return;
 		}
 
-		// Handle each Post Type in turn.
-		foreach( $post_types AS $post_type ) {
+		// Test if any of this Contact's Contact Types is mapped to a Post Type.
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
+		if ( $post_types !== false ) {
 
-			// Get the Post ID for this Contact.
-			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
+			// Handle each Post Type in turn.
+			foreach( $post_types AS $post_type ) {
 
-			// Skip if not mapped or Post doesn't yet exist.
-			if ( $post_id === false ) {
-				continue;
-			}
+				// Get the Post ID for this Contact.
+				$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
 
-			// Get the ACF Fields for this Post.
-			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
-
-			// Bail if there are no Email Fields.
-			if ( empty( $acf_fields['email'] ) ) {
-				continue;
-			}
-
-			// Let's look at each ACF Field in turn.
-			foreach( $acf_fields['email'] AS $selector => $email_field ) {
-
-				// If this is mapped to the Primary Email.
-				if ( $email_field == 'primary' AND $email->is_primary == '1' ) {
-					$this->plugin->acf->field->value_update( $selector, $email->email, $post_id );
+				// Skip if not mapped or Post doesn't yet exist.
+				if ( $post_id === false ) {
 					continue;
 				}
 
-				// Skip if the Location Types don't match.
-				if ( $email_field != $email->location_type_id ) {
-					continue;
-				}
+				// Update the ACF Fields for this Post.
+				$this->fields_update( $post_id, $email );
 
-				// Update it.
+			}
+
+		}
+
+		/**
+		 * Broadcast that an Email ACF Field may have been edited.
+		 *
+		 * @since 0.8
+		 *
+		 * @param array $contact The array of CiviCRM Contact data.
+		 * @param object $email The CiviCRM Email object.
+		 */
+		do_action( 'civicrm_acf_integration_email_email_update', $contact, $email );
+
+	}
+
+
+
+	/**
+	 * Update an Email ACF Field on an Entity mapped to a Contact ID.
+	 *
+	 * @since 0.4.5
+	 *
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @param array $args The array of CiviCRM params.
+	 */
+	public function fields_update( $post_id, $email ) {
+
+		// Get the ACF Fields for this Post.
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
+
+		// Bail if there are no Email Fields.
+		if ( empty( $acf_fields['email'] ) ) {
+			return;
+		}
+
+		// Let's look at each ACF Field in turn.
+		foreach( $acf_fields['email'] AS $selector => $email_field ) {
+
+			// If this is mapped to the Primary Email.
+			if ( $email_field == 'primary' AND $email->is_primary == '1' ) {
 				$this->plugin->acf->field->value_update( $selector, $email->email, $post_id );
-
+				continue;
 			}
+
+			// Skip if the Location Types don't match.
+			if ( $email_field != $email->location_type_id ) {
+				continue;
+			}
+
+			// Update it.
+			$this->plugin->acf->field->value_update( $selector, $email->email, $post_id );
 
 		}
 
@@ -777,7 +834,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 	 *
 	 * @param array $acf_fields The existing ACF Fields array.
 	 * @param array $field The ACF Field.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $acf_fields The modified ACF Fields array.
 	 */
 	public function acf_fields_get_for_post( $acf_fields, $field, $post_id ) {

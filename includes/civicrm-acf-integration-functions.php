@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * @since 0.6.2
  *
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return str $age The age expressed as a string.
  */
 function cacf_get_age_from_acf_field( $selector, $post_id = null ) {
@@ -83,7 +83,7 @@ function cacf_get_age_from_acf_field( $selector, $post_id = null ) {
  * @since 0.7.3
  *
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return str $phones The formatted Phone Numbers.
  */
 function cacf_get_phone_numbers( $selector, $post_id = null ) {
@@ -160,7 +160,7 @@ function cacf_get_phone_numbers( $selector, $post_id = null ) {
 	 *
 	 * @param str $phones The existing Phone Numbers.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return str $phones The modified Phone Numbers.
 	 */
 	$phones = apply_filters( 'cacf_get_phone_numbers', $phones, $selector, $post_id );
@@ -183,7 +183,7 @@ function cacf_get_phone_numbers( $selector, $post_id = null ) {
  * @param int $phone_type_id The numeric ID of the CiviCRM Phone Type.
  * @param str $return Return an HTML list or comma-delimited string. Default 'list'.
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return str $phone The formatted Phone Number.
  */
 function cacf_get_phone_numbers_by_type_ids( $location_type_id, $phone_type_id, $return = 'list', $selector, $post_id = null ) {
@@ -258,7 +258,7 @@ function cacf_get_phone_numbers_by_type_ids( $location_type_id, $phone_type_id, 
 	 *
 	 * @param str $phones The existing Phone Numbers.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return str $phones The modified Phone Numbers.
 	 */
 	$phones = apply_filters( 'cacf_get_phone_numbers_by_type_ids', $phones, $selector, $post_id );
@@ -280,7 +280,7 @@ function cacf_get_phone_numbers_by_type_ids( $location_type_id, $phone_type_id, 
  * @param int $location_type_id The numeric ID of the CiviCRM Phone Location Type.
  * @param int $phone_type_id The numeric ID of the CiviCRM Phone Phone Type.
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return array $phones The array of Phone Record data.
  */
 function cacf_get_phone_records_by_type_ids( $location_type_id, $phone_type_id, $selector, $post_id = null ) {
@@ -345,7 +345,7 @@ function cacf_get_phone_records_by_type_ids( $location_type_id, $phone_type_id, 
 	 * @param int $location_type_id The numeric ID of the CiviCRM Phone Location Type.
 	 * @param int $phone_type_id The numeric ID of the CiviCRM Phone Phone Type.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $phones The modified Phone Records.
 	 */
 	$phones = apply_filters( 'cacf_get_phone_records_by_type_ids', $phones, $location_type_id, $phone_type_id, $selector, $post_id );
@@ -365,7 +365,7 @@ function cacf_get_phone_records_by_type_ids( $location_type_id, $phone_type_id, 
  * @since 0.7.3
  *
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return str $phone The formatted Phone Number.
  */
 function cacf_get_primary_phone_number( $selector, $post_id = null ) {
@@ -405,7 +405,7 @@ function cacf_get_primary_phone_number( $selector, $post_id = null ) {
 	 *
 	 * @param str $phone The existing Primary Phone Number.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return str $phone The modified Primary Phone Number.
 	 */
 	$phone = apply_filters( 'cacf_get_primary_phone_number', $phone, $selector, $post_id );
@@ -425,7 +425,7 @@ function cacf_get_primary_phone_number( $selector, $post_id = null ) {
  * @since 0.7.3
  *
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return array $phone The array of Phone Record data.
  */
 function cacf_get_primary_phone_record( $selector, $post_id = null ) {
@@ -451,7 +451,7 @@ function cacf_get_primary_phone_record( $selector, $post_id = null ) {
 	 *
 	 * @param array $phone The existing Primary Phone data.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $phone The modified Primary Phone data.
 	 */
 	$phone = apply_filters( 'cacf_get_primary_phone_record', $phone, $selector, $post_id );
@@ -470,7 +470,7 @@ function cacf_get_primary_phone_record( $selector, $post_id = null ) {
  * @since 0.7.3
  *
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return array $records The array of Phone Record data.
  */
 function cacf_get_phone_records( $selector, $post_id = null ) {
@@ -482,7 +482,7 @@ function cacf_get_phone_records( $selector, $post_id = null ) {
 	if ( empty( $post_id ) ) {
 		global $post;
 		if ( ! ( $post instanceof WP_Post ) ) {
-			return $phone;
+			return $records;
 		}
 		$post_id = $post->ID;
 	}
@@ -510,7 +510,7 @@ function cacf_get_phone_records( $selector, $post_id = null ) {
 	 *
 	 * @param array $records The existing Phone Record data.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $records The modified Phone Record data.
 	 */
 	$records = apply_filters( 'cacf_get_phone_records', $records, $selector, $post_id );
@@ -534,7 +534,7 @@ function cacf_get_phone_records( $selector, $post_id = null ) {
  * @since 0.7.3
  *
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return str $ims The formatted Instant Messenger "Names".
  */
 function cacf_get_ims( $selector, $post_id = null ) {
@@ -602,7 +602,7 @@ function cacf_get_ims( $selector, $post_id = null ) {
 	 *
 	 * @param str $ims The existing Instant Messenger "Names".
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return str $ims The modified Instant Messenger "Names".
 	 */
 	$ims = apply_filters( 'cacf_get_im_names', $ims, $selector, $post_id );
@@ -625,7 +625,7 @@ function cacf_get_ims( $selector, $post_id = null ) {
  * @param int $im_provider_id The numeric ID of the Instant Messenger Provider.
  * @param str $return Return an HTML list or comma-delimited string. Default 'list'.
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return str $im The formatted Instant Messenger.
  */
 function cacf_get_ims_by_type_ids( $location_type_id, $im_provider_id, $return = 'list', $selector, $post_id = null ) {
@@ -691,7 +691,7 @@ function cacf_get_ims_by_type_ids( $location_type_id, $im_provider_id, $return =
 	 *
 	 * @param str $ims The existing Instant Messengers.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return str $ims The modified Instant Messengers.
 	 */
 	$ims = apply_filters( 'cacf_get_ims_by_type_ids', $ims, $selector, $post_id );
@@ -713,7 +713,7 @@ function cacf_get_ims_by_type_ids( $location_type_id, $im_provider_id, $return =
  * @param int $location_type_id The numeric ID of the CiviCRM Instant Messenger Location Type.
  * @param int $im_provider_id The numeric ID of the CiviCRM IM Provider.
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return array $ims The array of Instant Messenger Record data.
  */
 function cacf_get_im_records_by_type_ids( $location_type_id, $im_provider_id, $selector, $post_id = null ) {
@@ -778,7 +778,7 @@ function cacf_get_im_records_by_type_ids( $location_type_id, $im_provider_id, $s
 	 * @param int $location_type_id The numeric ID of the CiviCRM Instant Messenger Location Type.
 	 * @param int $im_provider_id The numeric ID of the CiviCRM Instant Messenger Provider.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $ims The modified Instant Messenger Records.
 	 */
 	$ims = apply_filters( 'cacf_get_im_records_by_type_ids', $ims, $location_type_id, $im_provider_id, $selector, $post_id );
@@ -798,7 +798,7 @@ function cacf_get_im_records_by_type_ids( $location_type_id, $im_provider_id, $s
  * @since 0.7.3
  *
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return str $im The formatted Instant Messenger.
  */
 function cacf_get_primary_im( $selector, $post_id = null ) {
@@ -839,7 +839,7 @@ function cacf_get_primary_im( $selector, $post_id = null ) {
 	 *
 	 * @param str $im The existing Primary Instant Messenger.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return str $im The modified Primary Instant Messenger.
 	 */
 	$im = apply_filters( 'cacf_get_primary_im_name', $im, $selector, $post_id );
@@ -859,7 +859,7 @@ function cacf_get_primary_im( $selector, $post_id = null ) {
  * @since 0.7.3
  *
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return array $im The array of Instant Messenger Record data.
  */
 function cacf_get_primary_im_record( $selector, $post_id = null ) {
@@ -885,7 +885,7 @@ function cacf_get_primary_im_record( $selector, $post_id = null ) {
 	 *
 	 * @param array $im The existing Primary Instant Messenger data.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $im The modified Primary Instant Messenger data.
 	 */
 	$im = apply_filters( 'cacf_get_primary_im_record', $im, $selector, $post_id );
@@ -904,7 +904,7 @@ function cacf_get_primary_im_record( $selector, $post_id = null ) {
  * @since 0.7.3
  *
  * @param str $selector The ACF field selector.
- * @param int $post_id The numeric ID of the WordPress Post.
+ * @param int|str $post_id The ACF "Post ID".
  * @return array $records The array of Instant Messenger Record data.
  */
 function cacf_get_im_records( $selector, $post_id = null ) {
@@ -916,7 +916,7 @@ function cacf_get_im_records( $selector, $post_id = null ) {
 	if ( empty( $post_id ) ) {
 		global $post;
 		if ( ! ( $post instanceof WP_Post ) ) {
-			return $im;
+			return $records;
 		}
 		$post_id = $post->ID;
 	}
@@ -944,7 +944,7 @@ function cacf_get_im_records( $selector, $post_id = null ) {
 	 *
 	 * @param array $records The existing Instant Messenger Record data.
 	 * @param str $selector The ACF field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $records The modified Instant Messenger Record data.
 	 */
 	$records = apply_filters( 'cacf_get_im_records', $records, $selector, $post_id );

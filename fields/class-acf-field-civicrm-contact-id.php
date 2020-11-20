@@ -191,18 +191,23 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 	 * @since 0.6.4
 	 *
 	 * @param mixed $value The value found in the database.
-	 * @param int $post_id The Post ID from which the value was loaded.
+	 * @param int|str $post_id The ACF "Post ID" from which the value was loaded.
 	 * @param array $field The field array holding all the field options.
 	 * @return mixed $value The modified value.
 	 */
 	public function load_value( $value, $post_id, $field ) {
 
-		// Get Contact ID for this Post.
+		// Assign Contact ID for this Field if empty.
 		if ( empty( $value ) ) {
-			$contact_id = $this->plugin->post->is_mapped_to_contact( $post_id );
+
+			// Get Contact ID for this ACF "Post ID".
+			$contact_id = $this->acf->field->query_contact_id( $post_id );
+
+			// Overwrite if we get a value.
 			if ( $contact_id !== false ) {
 				$value = $contact_id;
 			}
+
 		}
 
 		// --<
@@ -224,12 +229,17 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 	 */
 	public function update_value( $value, $post_id, $field ) {
 
-		// Assign Contact ID for this Post if empty.
+		// Assign Contact ID for this Field if empty.
 		if ( empty( $value ) ) {
-			$contact_id = $this->plugin->post->is_mapped_to_contact( $post_id );
+
+			// Get Contact ID for this ACF "Post ID".
+			$contact_id = $this->acf->field->query_contact_id( $post_id );
+
+			// Overwrite if we get a value.
 			if ( $contact_id !== false ) {
 				$value = $contact_id;
 			}
+
 		}
 
 		// --<

@@ -108,11 +108,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 	 */
 	public function register_hooks() {
 
-		// Intercept when a CiviCRM Website is about to be updated.
-		add_action( 'civicrm_acf_integration_mapper_website_pre_edit', [ $this, 'website_pre_edit' ], 10, 1 );
-
-		// Intercept when a CiviCRM Website has been updated.
-		add_action( 'civicrm_acf_integration_mapper_website_edited', [ $this, 'website_edited' ], 10, 1 );
+		// Always register Mapper hooks.
+		$this->register_mapper_hooks();
 
 		// Add any Website Fields attached to a Post.
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
@@ -121,7 +118,41 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		add_filter( 'civicrm_acf_integration_contact_custom_field_id_get', [ $this, 'custom_field_id_get' ], 10, 2 );
 
 		// Intercept Post created from Contact events.
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Register callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function register_mapper_hooks() {
+
+		// Listen for events from our Mapper that require Website updates.
+		add_action( 'civicrm_acf_integration_mapper_website_pre_edit', [ $this, 'website_pre_edit' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_website_created', [ $this, 'website_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_website_edited', [ $this, 'website_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_website_deleted', [ $this, 'website_edited' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Unregister callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function unregister_mapper_hooks() {
+
+		// Remove all Mapper listeners.
+		remove_action( 'civicrm_acf_integration_mapper_website_pre_edit', [ $this, 'website_pre_edit' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_website_created', [ $this, 'website_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_website_edited', [ $this, 'website_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_website_deleted', [ $this, 'website_edited' ], 10 );
 
 	}
 
@@ -153,7 +184,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		foreach( $args['fields'] AS $field => $value ) {
 
 			// Get the field settings.
-			$settings = get_field_object( $field );
+			$settings = get_field_object( $field, $args['post_id'] );
 
 			// Maybe update a Contact Field.
 			$this->field_handled_update( $field, $value, $args['contact']['id'], $settings );
@@ -256,7 +287,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		}
 
  		// The result set should contain only one item.
-		$website = array_pop( $result['values'] );
+		$website = (object) array_pop( $result['values'] );
 
 		// --<
 		return $website;
@@ -519,12 +550,8 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 			unset( $this->website_pre );
 		}
 
-		// Maybe cast as an object.
-		if ( ! is_object( $args['objectRef'] ) ) {
-			$website = (object) $args['objectRef'];
-		} else {
-			$website = $args['objectRef'];
-		}
+		// Grab Website object.
+		$website = $args['objectRef'];
 
 		// We need a Contact ID in the edited Website.
 		if ( empty( $website->contact_id ) ) {
@@ -532,14 +559,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		}
 
 		// Grab the previous Website data from the database.
-		$website_pre = $this->website_get_by_id( $website->id );
-
-		// Maybe cast previous Website data as object and stash in a property.
-		if ( ! is_object( $website_pre ) ) {
-			$this->website_pre = (object) $website_pre;
-		} else {
-			$this->website_pre = $website_pre;
-		}
+		$this->website_pre = $this->website_get_by_id( $website->id );
 
 	}
 
@@ -565,83 +585,61 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 		// Get the Contact data.
 		$contact = $this->plugin->civicrm->contact->get_by_id( $website->contact_id );
 
-		// Bail if none of this Contact's Contact Types is mapped.
+		// Test if any of this Contact's Contact Types is mapped.
 		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
-		if ( $post_types === false ) {
-			return;
-		}
+		if ( $post_types !== false ) {
 
-		// Handle each Post Type in turn.
-		foreach( $post_types AS $post_type ) {
+			// Handle each Post Type in turn.
+			foreach( $post_types AS $post_type ) {
 
-			// Get the Post ID for this Contact.
-			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
+				// Get the Post ID for this Contact.
+				$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
 
-			// Skip if not mapped or Post doesn't yet exist.
-			if ( $post_id === false ) {
-				continue;
-			}
-
-			// Get the ACF Fields for this Post.
-			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
-
-			// Bail if there are no Website Fields.
-			if ( empty( $acf_fields['website'] ) ) {
-				continue;
-			}
-
-			// TODO: Find the ACF Fields to update.
-			//$fields_to_update = $this->fields_to_update_get( $acf_fields, $website, $args['op'] );
-
-			// Let's look at each ACF Field in turn.
-			foreach( $acf_fields['website'] AS $selector => $website_field ) {
-
-				// Skip if it's a Custom Field.
-				if ( false !== strpos( $website_field, $this->civicrm->custom_field_prefix() ) ) {
+				// Skip if not mapped or Post doesn't yet exist.
+				if ( $post_id === false ) {
 					continue;
 				}
 
-				// Skip if it's not the right Website Type.
-				if ( $website_field != $website->website_type_id ) {
-					continue;
-				}
-
-				// Update it.
-				$this->plugin->acf->field->value_update( $selector, $website->url, $post_id );
+				// Update the ACF Fields for this Post.
+				$this->fields_update( $post_id, $website );
 
 			}
 
 		}
+
+		/**
+		 * Broadcast that a Website ACF Field may have been edited.
+		 *
+		 * @since 0.8
+		 *
+		 * @param array $contact The array of CiviCRM Contact data.
+		 * @param object $website The CiviCRM Website object.
+		 */
+		do_action( 'civicrm_acf_integration_website_website_update', $contact, $website );
 
 	}
 
 
 
 	/**
-	 * Get the ACF Fields to update.
+	 * Update Website ACF Fields on an Entity mapped to a Contact ID.
 	 *
-	 * The returned array is of the form:
+	 * @since 0.8
 	 *
-	 * $fields_to_update = [
-	 *   'ACF Selector 1' => [ 'field' => 'CiviCRM Website Field 1', 'action' => 'update' ],
-	 *   'ACF Selector 2' => [ 'field' => 'CiviCRM Website Field 2', 'action' => 'clear' ],
-	 * ]
-	 *
-	 * The "operation" element for each ACF Field is either "clear" or "update"
-	 *
-	 * @since 0.4.4
-	 *
-	 * @param array $acf_fields The array of ACF Fields in the Post.
-	 * @param object $website The CiviCRM Website data.
-	 * @param str $op The database operation.
-	 * @return array $fields_to_update The array of ACF Fields to update.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @param object $website The CiviCRM Website Record object.
 	 */
-	public function fields_to_update_get( $acf_fields, $website, $op ) {
+	public function fields_update( $post_id, $website ) {
 
-		// Init Fields to update.
-		$fields_to_update = [];
+		// Get the ACF Fields for this Post.
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
 
-		// Find the ACF Fields to update.
+		// Bail if there are no Website Fields.
+		if ( empty( $acf_fields['website'] ) ) {
+			return;
+		}
+
+		// Let's look at each ACF Field in turn.
 		foreach( $acf_fields['website'] AS $selector => $website_field ) {
 
 			// Skip if it's a Custom Field.
@@ -649,45 +647,15 @@ class CiviCRM_ACF_Integration_CiviCRM_Website extends CiviCRM_ACF_Integration_Ci
 				continue;
 			}
 
-			// If this Field matches the current Website Type.
-			if ( $website->website_type_id == $website_field ) {
-
-				// Always update.
-				$fields_to_update[$selector] = [
-					'field' => $website_field,
-					'action' => 'update',
-				];
-
-				// Override if we're deleting it.
-				if ( isset( $website->to_delete ) AND $website->to_delete === true ) {
-					$fields_to_update[$selector] = [
-						'field' => $website_field,
-						'action' => 'clear',
-					];
-				}
-
+			// Skip if it's not the right Website Type.
+			if ( $website_field != $website->website_type_id ) {
+				continue;
 			}
 
-			// If this Field has CHANGED its Website Type.
-			if (
-				$website->website_type_id != $website_field AND
-				isset( $this->website_pre->website_type_id ) AND
-				$this->website_pre->website_type_id != $website->website_type_id AND
-				$this->website_pre->website_type_id == $website_field
-			) {
-
-				// Always clear the previous one.
-				$fields_to_update[$selector] = [
-					'field' => $website_field,
-					'action' => 'clear',
-				];
-
-			}
+			// Update it.
+			$this->plugin->acf->field->value_update( $selector, $website->url, $post_id );
 
 		}
-
-		// --<
-		return $fields_to_update;
 
 	}
 

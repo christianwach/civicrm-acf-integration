@@ -99,22 +99,51 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 	 */
 	public function register_hooks() {
 
-		// Intercept when a CiviCRM Phone Record has been updated.
-		add_action( 'civicrm_acf_integration_mapper_phone_created', [ $this, 'phone_edited' ], 10, 1 );
-		add_action( 'civicrm_acf_integration_mapper_phone_edited', [ $this, 'phone_edited' ], 10, 1 );
-
-		// Intercept when a CiviCRM Phone Record is being deleted.
-		add_action( 'civicrm_acf_integration_mapper_phone_pre_delete', [ $this, 'phone_pre_delete' ], 10, 1 );
-		add_action( 'civicrm_acf_integration_mapper_phone_deleted', [ $this, 'phone_deleted' ], 10, 1 );
+		// Always register Mapper hooks.
+		$this->register_mapper_hooks();
 
 		// Add any Phone Fields attached to a Post.
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
 		// Intercept Post created from Contact events.
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
 
 		// Maybe sync the Phone Record "Phone ID" to the ACF Subfields.
 		add_action( 'civicrm_acf_integration_phone_created', [ $this, 'maybe_sync_phone_id' ], 10, 2 );
+
+	}
+
+
+
+	/**
+	 * Register callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function register_mapper_hooks() {
+
+		// Listen for events from our Mapper that require Phone updates.
+		add_action( 'civicrm_acf_integration_mapper_phone_created', [ $this, 'phone_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_phone_edited', [ $this, 'phone_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_phone_pre_delete', [ $this, 'phone_pre_delete' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_phone_deleted', [ $this, 'phone_deleted' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Unregister callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function unregister_mapper_hooks() {
+
+		// Remove all Mapper listeners.
+		remove_action( 'civicrm_acf_integration_mapper_phone_created', [ $this, 'phone_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_phone_edited', [ $this, 'phone_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_phone_pre_delete', [ $this, 'phone_pre_delete' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_phone_deleted', [ $this, 'phone_deleted' ], 10 );
 
 	}
 
@@ -146,7 +175,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 		foreach( $args['fields'] AS $field => $value ) {
 
 			// Get the field settings.
-			$settings = get_field_object( $field );
+			$settings = get_field_object( $field, $args['post_id'] );
 
 			// Maybe update a Phone Record.
 			$success = $this->field_handled_update( $field, $value, $args['contact']['id'], $settings, $args );
@@ -763,8 +792,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 	/**
 	 * A CiviCRM Contact's Phone Record is about to be deleted.
 	 *
-	 * Before a Phone Record is deleted, we need to remove the corresponding
-	 * element in the ACF Field data.
+	 * Before a Phone Record is deleted, we need to retrieve the Phone Record
+	 * because the data passed via "civicrm_post" only contains the ID of the
+	 * Phone Record.
 	 *
 	 * This is not required when creating or editing a Phone Record.
 	 *
@@ -779,7 +809,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 			unset( $this->phone_pre );
 		}
 
-		// We just need the PHone ID.
+		// We just need the Phone ID.
 		$phone_id = intval( $args['objectId'] );
 
 		// Grab the Phone Record data from the database.
@@ -846,211 +876,142 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 		// Get the Contact data.
 		$contact = $this->plugin->civicrm->contact->get_by_id( $phone->contact_id );
 
-		// Bail if none of this Contact's Contact Types is mapped.
+		// Test if any of this Contact's Contact Types is mapped to a Post Type.
 		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
-		if ( $post_types === false ) {
-			return;
-		}
+		if ( $post_types !== false ) {
 
-		// Handle each Post Type in turn.
-		foreach( $post_types AS $post_type ) {
+			// Handle each Post Type in turn.
+			foreach( $post_types AS $post_type ) {
 
-			// Get the Post ID for this Contact.
-			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
+				// Get the Post ID for this Contact.
+				$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
 
-			// Skip if not mapped or Post doesn't yet exist.
-			if ( $post_id === false ) {
-				continue;
-			}
-
-			// Get the ACF Fields for this Post.
-			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
-
-			// Bail if there are no Phone Record Fields.
-			if ( empty( $acf_fields['phone'] ) ) {
-				continue;
-			}
-
-			// TODO: Find the ACF Fields to update.
-			//$fields_to_update = $this->fields_to_update_get( $acf_fields, $phone, $args['op'] );
-
-			// Let's look at each ACF Field in turn.
-			foreach( $acf_fields['phone'] AS $selector => $phone_field ) {
-
-				// Get existing Field value.
-				$existing = get_field( $selector, $post_id );
-
-				// Before applying edits, make some checks.
-				if ( $args['op'] == 'edit' ) {
-
-					// If there is no existing Field value, treat as a 'create' op.
-					if ( empty( $existing ) ) {
-						$args['op'] = 'create';
-					} else {
-
-						// Grab the ACF Phone ID values.
-						$acf_phone_ids = wp_list_pluck( $existing, 'field_phone_id' );
-
-						// Sanitise array contents.
-						array_walk( $acf_phone_ids, function( &$item ) {
-							$item = intval( trim( $item ) );
-						} );
-
-						// If the ID is missing, treat as a 'create' op.
-						if ( ! in_array( $phone->id, $acf_phone_ids ) ) {
-							$args['op'] = 'create';
-						}
-
-					}
-
+				// Skip if not mapped or Post doesn't yet exist.
+				if ( $post_id === false ) {
+					continue;
 				}
 
-				// Process array record.
-				switch( $args['op'] ) {
-
-					case 'create' :
-
-						// Make sure no other Phone is Primary if this one is.
-						if ( $acf_phone['field_phone_primary'] == '1' ) {
-							foreach( $existing AS $key => $record ) {
-								$existing[$key]['field_phone_id'] = '0';
-							}
-						}
-
-						// Add array record.
-						$existing[] = $acf_phone;
-
-						break;
-
-					case 'edit' :
-
-						// Overwrite array record.
-						foreach( $existing AS $key => $record ) {
-							if ( $phone->id == $record['field_phone_id'] ) {
-								$existing[$key] = $acf_phone;
-								break;
-							}
-						}
-
-						break;
-
-					case 'delete' :
-
-						// Remove array record.
-						foreach( $existing AS $key => $record ) {
-							if ( $phone->id == $record['field_phone_id'] ) {
-								unset( $existing[$key] );
-								break;
-							}
-						}
-
-						break;
-
-				}
-
-				// Now update Field.
-				$this->plugin->acf->field->value_update( $selector, $existing, $post_id );
+				// Update the ACF Fields for this Post.
+				$this->fields_update( $post_id, $phone, $acf_phone, $args );
 
 			}
 
 		}
+
+		/**
+		 * Broadcast that a Phone ACF Field may have been edited.
+		 *
+		 * @since 0.8
+		 *
+		 * @param array $contact The array of CiviCRM Contact data.
+		 * @param object $phone The CiviCRM Phone Record object.
+		 * @param array $acf_phone The ACF Phone Record array.
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_phone_phone_update', $contact, $phone, $acf_phone, $args );
 
 	}
 
 
 
-	// -------------------------------------------------------------------------
-
-
-
 	/**
-	 * Get the ACF Fields to update.
+	 * Update Phone ACF Fields on an Entity mapped to a Contact ID.
 	 *
-	 * The returned array is of the form:
+	 * @since 0.8
 	 *
-	 * $fields_to_update = [
-	 *   'ACF Selector 1' => [ 'field' => 'CiviCRM Phone Field 1', 'action' => 'update' ],
-	 *   'ACF Selector 2' => [ 'field' => 'CiviCRM Phone Field 2', 'action' => 'clear' ],
-	 * ]
-	 *
-	 * The "operation" element for each ACF Field is either "clear" or "update"
-	 *
-	 * @since 0.7.3
-	 *
-	 * @param array $acf_fields The array of ACF Fields in the Post.
-	 * @param object $phone The CiviCRM Phone Record data.
-	 * @param str $op The database operation.
-	 * @return array $fields_to_update The array of ACF Fields to update.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @param object $phone The CiviCRM Phone Record object.
+	 * @param array $acf_phone The ACF Phone Record array.
+	 * @param array $args The array of CiviCRM params.
 	 */
-	public function fields_to_update_get( $acf_fields, $phone, $op ) {
+	public function fields_update( $post_id, $phone, $acf_phone, $args ) {
 
-		// Init Fields to update.
-		$fields_to_update = [];
+		// Get the ACF Fields for this Post.
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
 
-		// Find the ACF Fields to update.
+		// Bail if there are no Phone Record Fields.
+		if ( empty( $acf_fields['phone'] ) ) {
+			return;
+		}
+
+		// Let's look at each ACF Field in turn.
 		foreach( $acf_fields['phone'] AS $selector => $phone_field ) {
 
-			// Parse the Phone data.
-			$phone_data = explode( '_', $phone_field );
-			$primary = $phone_data[0];
-			$location = $phone_data[1];
-			$type = $phone_data[2];
+			// Get existing Field value.
+			$existing = get_field( $selector, $post_id );
 
-			// If this Field matches the current Phone Type.
-			if ( $phone->phone_type_id == $type ) {
+			// Before applying edit, make some checks.
+			if ( $args['op'] == 'edit' ) {
 
-				// Always update.
-				$fields_to_update[$selector] = [
-					'field' => $phone_field,
-					'action' => 'update',
-				];
+				// If there is no existing Field value, treat as a 'create' op.
+				if ( empty( $existing ) ) {
+					$args['op'] = 'create';
+				} else {
 
-				// Override if we're deleting it.
-				if ( isset( $phone->to_delete ) AND $phone->to_delete === true ) {
-					$fields_to_update[$selector] = [
-						'field' => $phone_field,
-						'action' => 'clear',
-					];
+					// Grab the ACF Phone ID values.
+					$acf_phone_ids = wp_list_pluck( $existing, 'field_phone_id' );
+
+					// Sanitise array contents.
+					array_walk( $acf_phone_ids, function( &$item ) {
+						$item = intval( trim( $item ) );
+					} );
+
+					// If the ID is missing, treat as a 'create' op.
+					if ( ! in_array( $phone->id, $acf_phone_ids ) ) {
+						$args['op'] = 'create';
+					}
+
 				}
 
 			}
 
-			// If this Field has CHANGED its Phone Location.
-			if (
-				$phone->location_type_id != $location AND
-				isset( $this->phone_pre->location_type_id ) AND
-				$this->phone_pre->location_type_id != $phone->location_type_id AND
-				$this->phone_pre->location_type_id == $location
-			) {
+			// Process array record.
+			switch( $args['op'] ) {
 
-				// Always clear the previous one.
-				$fields_to_update[$selector] = [
-					'field' => $phone_field,
-					'action' => 'clear',
-				];
+				case 'create' :
+
+					// Make sure no other Phone is Primary if this one is.
+					if ( $acf_phone['field_phone_primary'] == '1' AND ! empty( $existing ) ) {
+						foreach( $existing AS $key => $record ) {
+							$existing[$key]['field_phone_id'] = '0';
+						}
+					}
+
+					// Add array record.
+					$existing[] = $acf_phone;
+
+					break;
+
+				case 'edit' :
+
+					// Overwrite array record.
+					foreach( $existing AS $key => $record ) {
+						if ( $phone->id == $record['field_phone_id'] ) {
+							$existing[$key] = $acf_phone;
+							break;
+						}
+					}
+
+					break;
+
+				case 'delete' :
+
+					// Remove array record.
+					foreach( $existing AS $key => $record ) {
+						if ( $phone->id == $record['field_phone_id'] ) {
+							unset( $existing[$key] );
+							break;
+						}
+					}
+
+					break;
 
 			}
 
-			// If this Field has CHANGED its Phone Type.
-			if (
-				$phone->phone_type_id != $type AND
-				isset( $this->phone_pre->phone_type_id ) AND
-				$this->phone_pre->phone_type_id != $phone->phone_type_id AND
-				$this->phone_pre->phone_type_id == $type
-			) {
-
-				// Always clear the previous one.
-				$fields_to_update[$selector] = [
-					'field' => $phone_field,
-					'action' => 'clear',
-				];
-
-			}
+			// Now update Field.
+			$this->plugin->acf->field->value_update( $selector, $existing, $post_id );
 
 		}
-
-		// --<
-		return $fields_to_update;
 
 	}
 
@@ -1246,13 +1207,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 	 *
 	 * @param array $acf_fields The existing ACF Fields array.
 	 * @param array $field The ACF Field.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $acf_fields The modified ACF Fields array.
 	 */
 	public function acf_fields_get_for_post( $acf_fields, $field, $post_id ) {
 
 		// Add if it has a reference to a Phone Field.
-		if ( ! empty( $field['type'] == 'civicrm_phone' ) ) {
+		if ( ! empty( $field['type'] ) AND $field['type'] == 'civicrm_phone' ) {
 			$acf_fields['phone'][$field['name']] = $field['type'];
 		}
 
@@ -1277,9 +1238,21 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 	 */
 	public function maybe_sync_phone_id( $params, $args ) {
 
-		// Check permissions.
-		if ( ! current_user_can( 'edit_post', $args['post']->ID ) ) {
-			return;
+		// Get Entity reference.
+		$entity = $this->plugin->acf->field->entity_type_get( $args['post_id'] );
+
+		// Check permissions if it's a Post.
+		if ( $entity === 'post' ) {
+			if ( ! current_user_can( 'edit_post', $args['post_id'] ) ) {
+				return;
+			}
+		}
+
+		// Check permissions if it's a User.
+		if ( $entity === 'user' ) {
+			if ( ! current_user_can( 'edit_user', $args['user_id'] ) ) {
+				return;
+			}
 		}
 
 		// Maybe cast Phone as an object.
@@ -1288,7 +1261,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 		}
 
 		// Get existing Field value.
-		$existing = get_field( $params['selector'], $args['post']->ID );
+		$existing = get_field( $params['selector'], $args['post_id'] );
 
 		// Add Phone ID and overwrite array element.
 		if ( ! empty( $existing[$params['key']] ) ) {
@@ -1297,7 +1270,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 		}
 
 		// Now update Field.
-		$this->plugin->acf->field->value_update( $params['selector'], $existing, $args['post']->ID );
+		$this->plugin->acf->field->value_update( $params['selector'], $existing, $args['post_id'] );
 
 	}
 

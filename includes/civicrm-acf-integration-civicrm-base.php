@@ -53,11 +53,42 @@ class CiviCRM_ACF_Integration_CiviCRM_Base {
 	 */
 	public function __construct() {
 
+		// Add callbacks.
+		$this->fields_handled_hooks_add();
+
+	}
+
+
+
+	/**
+	 * Register the "Handled Fields" callbacks.
+	 *
+	 * @since 0.8
+	 */
+	public function fields_handled_hooks_add() {
+
 		// Add our handled fields.
 		add_filter( 'civicrm_acf_integration_civicrm_fields_handled', [ $this, 'fields_handled_add' ] );
 
 		// Process our handled fields.
-		add_action( 'civicrm_acf_integration_contact_acf_fields_saved', [ $this, 'fields_handled_update' ], 10, 1 );
+		add_action( 'civicrm_acf_integration_contact_acf_fields_saved', [ $this, 'fields_handled_update' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Unregister the "Handled Fields" callbacks.
+	 *
+	 * @since 0.8
+	 */
+	public function fields_handled_hooks_remove() {
+
+		// Remove our handled fields.
+		remove_filter( 'civicrm_acf_integration_civicrm_fields_handled', [ $this, 'fields_handled_add' ] );
+
+		// Suspend processing our handled fields.
+		remove_action( 'civicrm_acf_integration_contact_acf_fields_saved', [ $this, 'fields_handled_update' ], 10 );
 
 	}
 

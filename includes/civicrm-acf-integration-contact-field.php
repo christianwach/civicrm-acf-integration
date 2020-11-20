@@ -155,7 +155,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		// Intercept Post created, updated (or synced) from Contact events.
 		add_action( 'civicrm_acf_integration_post_created', [ $this, 'post_edited' ], 10 );
 		add_action( 'civicrm_acf_integration_post_edited', [ $this, 'post_edited' ], 10 );
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
+
+		// TODO: Add hooks to Relationships to detect Employer changes via that route.
 
 	}
 
@@ -202,13 +204,16 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 	 */
 	public function post_edited( $args ) {
 
+		// Get originating Entity.
+		$originating_entity = $this->plugin->mapper->entity_get();
+
 		// Get the Contact Type hierarchy.
 		$hierarchy = $this->plugin->civicrm->contact_type->hierarchy_get_for_contact( $args['objectRef'] );
 
 		// Get the public Contact Fields for the top level type.
 		$public_fields = $this->get_public( $hierarchy );
 
-		// Get the ACF Fields for this Post.
+		// Get the ACF Fields for this ACF "Post ID".
 		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $args['post_id'] );
 
 		// Bail if there are no Contact Fields.
@@ -559,28 +564,43 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 			return $contact_fields;
 		}
 
-		// Bail if this is not a Contact Field Group.
+		// Skip if this is not a Contact Field Group.
 		$is_contact_field_group = $this->civicrm->contact->is_contact_field_group( $field_group );
-		if ( $is_contact_field_group === false ) {
-			return $contact_fields;
+		if ( $is_contact_field_group !== false ) {
+
+			// Loop through the Post Types.
+			foreach( $is_contact_field_group AS $post_type_name ) {
+
+				// Get the Contact Type ID.
+				$contact_type_id = $this->civicrm->contact_type->id_get_for_post_type( $post_type_name );
+
+				// Get Contact Type hierarchy.
+				$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
+
+				// Get public fields of this type.
+				$contact_fields_for_type = $this->data_get( $contact_types['type'], $field['type'], 'public' );
+
+				// Merge with return array.
+				$contact_fields = array_merge( $contact_fields, $contact_fields_for_type );
+
+			}
+
 		}
 
-		// Loop through the Post Types.
-		foreach( $is_contact_field_group AS $post_type_name ) {
-
-			// Get the Contact Type ID.
-			$contact_type_id = $this->civicrm->contact_type->id_get_for_post_type( $post_type_name );
-
-			// Get Contact Type hierarchy.
-			$contact_types = $this->civicrm->contact_type->hierarchy_get_by_id( $contact_type_id );
-
-			// Get public fields of this type.
-			$contact_fields_for_type = $this->data_get( $contact_types['type'], $field['type'], 'public' );
-
-			// Merge with return array.
-			$contact_fields = array_merge( $contact_fields, $contact_fields_for_type );
-
-		}
+		/**
+		 * Filter the Contact Fields.
+		 *
+		 * @since 0.8
+		 *
+		 * @param array $contact_fields The existing array of Contact Fields.
+		 * @param array $field_group The ACF Field Group data array.
+		 * @param array $field The ACF Field data array.
+		 * @return array $contact_fields The modified array of Contact Fields.
+		 */
+		$contact_fields = apply_filters(
+			'civicrm_acf_integration_contact_field_get_for_acf_field',
+			$contact_fields, $field_group, $field
+		);
 
 		// --<
 		return $contact_fields;

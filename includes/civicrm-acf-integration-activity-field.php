@@ -114,7 +114,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity_Field {
 		add_action( 'civicrm_acf_integration_post_activity_sync', [ $this, 'activity_sync_to_post' ], 10 );
 
 		// Maybe sync the various Activity "Date" Fields to ACF Fields attached to the WordPress Post.
-		add_action( 'civicrm_acf_integration_activity_acf_fields_saved', [ $this, 'maybe_sync_fields' ], 10, 1 );
+		add_action( 'civicrm_acf_integration_activity_acf_fields_saved', [ $this, 'maybe_sync_fields' ], 10 );
 
 		// Some Activity "Text" Fields need their own validation.
 		add_filter( 'acf/validate_value/type=text', [ $this, 'value_validate' ], 10, 4 );

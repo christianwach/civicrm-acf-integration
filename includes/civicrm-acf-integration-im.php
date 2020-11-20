@@ -99,22 +99,51 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 	 */
 	public function register_hooks() {
 
-		// Intercept when a CiviCRM Instant Messenger Record has been updated.
-		add_action( 'civicrm_acf_integration_mapper_im_created', [ $this, 'im_edited' ], 10, 1 );
-		add_action( 'civicrm_acf_integration_mapper_im_edited', [ $this, 'im_edited' ], 10, 1 );
-
-		// Intercept when a CiviCRM Instant Messenger Record is being deleted.
-		add_action( 'civicrm_acf_integration_mapper_im_pre_delete', [ $this, 'im_pre_delete' ], 10, 1 );
-		add_action( 'civicrm_acf_integration_mapper_im_deleted', [ $this, 'im_deleted' ], 10, 1 );
+		// Always register Mapper hooks.
+		$this->register_mapper_hooks();
 
 		// Add any Instant Messenger Fields attached to a Post.
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
 		// Intercept Post created from Contact events.
-		add_action( 'civicrm_acf_integration_post_contact_sync', [ $this, 'contact_sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
 
 		// Maybe sync the Instant Messenger Record "Instant Messenger ID" to the ACF Subfields.
 		add_action( 'civicrm_acf_integration_im_created', [ $this, 'maybe_sync_im_id' ], 10, 2 );
+
+	}
+
+
+
+	/**
+	 * Register callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function register_mapper_hooks() {
+
+		// Listen for events from our Mapper that require Instant Messenger updates.
+		add_action( 'civicrm_acf_integration_mapper_im_created', [ $this, 'im_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_im_edited', [ $this, 'im_edited' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_im_pre_delete', [ $this, 'im_pre_delete' ], 10 );
+		add_action( 'civicrm_acf_integration_mapper_im_deleted', [ $this, 'im_deleted' ], 10 );
+
+	}
+
+
+
+	/**
+	 * Unregister callbacks for Mapper events.
+	 *
+	 * @since 0.8
+	 */
+	public function unregister_mapper_hooks() {
+
+		// Remove all Mapper listeners.
+		remove_action( 'civicrm_acf_integration_mapper_im_created', [ $this, 'im_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_im_edited', [ $this, 'im_edited' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_im_pre_delete', [ $this, 'im_pre_delete' ], 10 );
+		remove_action( 'civicrm_acf_integration_mapper_im_deleted', [ $this, 'im_deleted' ], 10 );
 
 	}
 
@@ -146,7 +175,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 		foreach( $args['fields'] AS $field => $value ) {
 
 			// Get the field settings.
-			$settings = get_field_object( $field );
+			$settings = get_field_object( $field, $args['post_id'] );
 
 			// Maybe update an Instant Messenger Record.
 			$success = $this->field_handled_update( $field, $value, $args['contact']['id'], $settings, $args );
@@ -759,8 +788,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 	/**
 	 * A CiviCRM Contact's Instant Messenger Record is about to be deleted.
 	 *
-	 * Before an Instant Messenger Record is deleted, we need to remove the
-	 * corresponding element in the ACF Field data.
+	 * Before an Instant Messenger Record is deleted, we need to retrieve the
+	 * Instant Messenger Record because the data passed via "civicrm_post" only
+	 *  contains the ID of the Instant Messenger Record.
 	 *
 	 * This is not required when creating or editing an Instant Messenger Record.
 	 *
@@ -775,7 +805,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 			unset( $this->im_pre );
 		}
 
-		// We just need the PHone ID.
+		// We just need the Instant Messenger ID.
 		$im_id = intval( $args['objectId'] );
 
 		// Grab the Instant Messenger Record data from the database.
@@ -842,211 +872,142 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 		// Get the Contact data.
 		$contact = $this->plugin->civicrm->contact->get_by_id( $im->contact_id );
 
-		// Bail if none of this Contact's Contact Types is mapped.
+		// Test if any of this Contact's Contact Types is mapped to a Post Type.
 		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
-		if ( $post_types === false ) {
-			return;
-		}
+		if ( $post_types !== false ) {
 
-		// Handle each Post Type in turn.
-		foreach( $post_types AS $post_type ) {
+			// Handle each Post Type in turn.
+			foreach( $post_types AS $post_type ) {
 
-			// Get the Post ID for this Contact.
-			$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
+				// Get the Post ID for this Contact.
+				$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $contact, $post_type );
 
-			// Skip if not mapped or Post doesn't yet exist.
-			if ( $post_id === false ) {
-				continue;
-			}
-
-			// Get the ACF Fields for this Post.
-			$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
-
-			// Bail if there are no Instant Messenger Record Fields.
-			if ( empty( $acf_fields['im'] ) ) {
-				continue;
-			}
-
-			// TODO: Find the ACF Fields to update.
-			//$fields_to_update = $this->fields_to_update_get( $acf_fields, $im, $args['op'] );
-
-			// Let's look at each ACF Field in turn.
-			foreach( $acf_fields['im'] AS $selector => $im_field ) {
-
-				// Get existing Field value.
-				$existing = get_field( $selector, $post_id );
-
-				// Before applying edit, make some checks.
-				if ( $args['op'] == 'edit' ) {
-
-					// If there is no existing Field value, treat as a 'create' op.
-					if ( empty( $existing ) ) {
-						$args['op'] = 'create';
-					} else {
-
-						// Grab the ACF Instant Messenger ID values.
-						$acf_im_ids = wp_list_pluck( $existing, 'field_im_id' );
-
-						// Sanitise array contents.
-						array_walk( $acf_im_ids, function( &$item ) {
-							$item = intval( trim( $item ) );
-						} );
-
-						// If the ID is missing, treat as a 'create' op.
-						if ( ! in_array( $im->id, $acf_im_ids ) ) {
-							$args['op'] = 'create';
-						}
-
-					}
-
+				// Skip if not mapped or Post doesn't yet exist.
+				if ( $post_id === false ) {
+					continue;
 				}
 
-				// Process array record.
-				switch( $args['op'] ) {
-
-					case 'create' :
-
-						// Make sure no other Instant Messenger is Primary if this one is.
-						if ( $acf_im['field_im_primary'] == '1' AND ! empty( $existing ) ) {
-							foreach( $existing AS $key => $record ) {
-								$existing[$key]['field_im_id'] = '0';
-							}
-						}
-
-						// Add array record.
-						$existing[] = $acf_im;
-
-						break;
-
-					case 'edit' :
-
-						// Overwrite array record.
-						foreach( $existing AS $key => $record ) {
-							if ( $im->id == $record['field_im_id'] ) {
-								$existing[$key] = $acf_im;
-								break;
-							}
-						}
-
-						break;
-
-					case 'delete' :
-
-						// Remove array record.
-						foreach( $existing AS $key => $record ) {
-							if ( $im->id == $record['field_im_id'] ) {
-								unset( $existing[$key] );
-								break;
-							}
-						}
-
-						break;
-
-				}
-
-				// Now update Field.
-				$this->plugin->acf->field->value_update( $selector, $existing, $post_id );
+				// Update the ACF Fields for this Post.
+				$this->fields_update( $post_id, $im, $acf_im, $args );
 
 			}
 
 		}
+
+		/**
+		 * Broadcast that an Instant Messenger ACF Field may have been edited.
+		 *
+		 * @since 0.8
+		 *
+		 * @param array $contact The array of CiviCRM Contact data.
+		 * @param object $im The CiviCRM Instant Messenger Record object.
+		 * @param array $acf_im The ACF Instant Messenger Record array.
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_im_im_update', $contact, $im, $acf_im, $args );
 
 	}
 
 
 
-	// -------------------------------------------------------------------------
-
-
-
 	/**
-	 * Get the ACF Fields to update.
+	 * Update Instant Messenger ACF Fields on an Entity mapped to a Contact ID.
 	 *
-	 * The returned array is of the form:
+	 * @since 0.8
 	 *
-	 * $fields_to_update = [
-	 *   'ACF Selector 1' => [ 'field' => 'CiviCRM Instant Messenger Field 1', 'action' => 'update' ],
-	 *   'ACF Selector 2' => [ 'field' => 'CiviCRM Instant Messenger Field 2', 'action' => 'clear' ],
-	 * ]
-	 *
-	 * The "operation" element for each ACF Field is either "clear" or "update"
-	 *
-	 * @since 0.7.3
-	 *
-	 * @param array $acf_fields The array of ACF Fields in the Post.
-	 * @param object $im The CiviCRM Instant Messenger Record data.
-	 * @param str $op The database operation.
-	 * @return array $fields_to_update The array of ACF Fields to update.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @param object $im The CiviCRM Instant Messenger Record object.
+	 * @param array $acf_im The ACF Instant Messenger Record array.
+	 * @param array $args The array of CiviCRM params.
 	 */
-	public function fields_to_update_get( $acf_fields, $im, $op ) {
+	public function fields_update( $post_id, $im, $acf_im, $args ) {
 
-		// Init Fields to update.
-		$fields_to_update = [];
+		// Get the ACF Fields for this Post.
+		$acf_fields = $this->plugin->acf->field->fields_get_for_post( $post_id );
 
-		// Find the ACF Fields to update.
+		// Bail if there are no Instant Messenger Record Fields.
+		if ( empty( $acf_fields['im'] ) ) {
+			return;
+		}
+
+		// Let's look at each ACF Field in turn.
 		foreach( $acf_fields['im'] AS $selector => $im_field ) {
 
-			// Parse the Instant Messenger data.
-			$im_data = explode( '_', $im_field );
-			$primary = $im_data[0];
-			$location = $im_data[1];
-			$provider = $im_data[2];
+			// Get existing Field value.
+			$existing = get_field( $selector, $post_id );
 
-			// If this Field matches the current Instant Messenger Type.
-			if ( $im->provider_id == $provider ) {
+			// Before applying edit, make some checks.
+			if ( $args['op'] == 'edit' ) {
 
-				// Always update.
-				$fields_to_update[$selector] = [
-					'field' => $im_field,
-					'action' => 'update',
-				];
+				// If there is no existing Field value, treat as a 'create' op.
+				if ( empty( $existing ) ) {
+					$args['op'] = 'create';
+				} else {
 
-				// Override if we're deleting it.
-				if ( isset( $im->to_delete ) AND $im->to_delete === true ) {
-					$fields_to_update[$selector] = [
-						'field' => $im_field,
-						'action' => 'clear',
-					];
+					// Grab the ACF Instant Messenger ID values.
+					$acf_im_ids = wp_list_pluck( $existing, 'field_im_id' );
+
+					// Sanitise array contents.
+					array_walk( $acf_im_ids, function( &$item ) {
+						$item = intval( trim( $item ) );
+					} );
+
+					// If the ID is missing, treat as a 'create' op.
+					if ( ! in_array( $im->id, $acf_im_ids ) ) {
+						$args['op'] = 'create';
+					}
+
 				}
 
 			}
 
-			// If this Field has CHANGED its Instant Messenger Location.
-			if (
-				$im->location_type_id != $location AND
-				isset( $this->im_pre->location_type_id ) AND
-				$this->im_pre->location_type_id != $im->location_type_id AND
-				$this->im_pre->location_type_id == $location
-			) {
+			// Process array record.
+			switch( $args['op'] ) {
 
-				// Always clear the previous one.
-				$fields_to_update[$selector] = [
-					'field' => $im_field,
-					'action' => 'clear',
-				];
+				case 'create' :
+
+					// Make sure no other Instant Messenger is Primary if this one is.
+					if ( $acf_im['field_im_primary'] == '1' AND ! empty( $existing ) ) {
+						foreach( $existing AS $key => $record ) {
+							$existing[$key]['field_im_id'] = '0';
+						}
+					}
+
+					// Add array record.
+					$existing[] = $acf_im;
+
+					break;
+
+				case 'edit' :
+
+					// Overwrite array record.
+					foreach( $existing AS $key => $record ) {
+						if ( $im->id == $record['field_im_id'] ) {
+							$existing[$key] = $acf_im;
+							break;
+						}
+					}
+
+					break;
+
+				case 'delete' :
+
+					// Remove array record.
+					foreach( $existing AS $key => $record ) {
+						if ( $im->id == $record['field_im_id'] ) {
+							unset( $existing[$key] );
+							break;
+						}
+					}
+
+					break;
 
 			}
 
-			// If this Field has CHANGED its Instant Messenger Type.
-			if (
-				$im->provider_id != $provider AND
-				isset( $this->im_pre->provider_id ) AND
-				$this->im_pre->provider_id != $im->provider_id AND
-				$this->im_pre->provider_id == $provider
-			) {
-
-				// Always clear the previous one.
-				$fields_to_update[$selector] = [
-					'field' => $im_field,
-					'action' => 'clear',
-				];
-
-			}
+			// Now update Field.
+			$this->plugin->acf->field->value_update( $selector, $existing, $post_id );
 
 		}
-
-		// --<
-		return $fields_to_update;
 
 	}
 
@@ -1242,13 +1203,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 	 *
 	 * @param array $acf_fields The existing ACF Fields array.
 	 * @param array $field The ACF Field.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param int|str $post_id The ACF "Post ID".
 	 * @return array $acf_fields The modified ACF Fields array.
 	 */
 	public function acf_fields_get_for_post( $acf_fields, $field, $post_id ) {
 
 		// Add if it has a reference to an Instant Messenger Field.
-		if ( ! empty( $field['type'] == 'civicrm_im' ) ) {
+		if ( ! empty( $field['type'] ) AND $field['type'] == 'civicrm_im' ) {
 			$acf_fields['im'][$field['name']] = $field['type'];
 		}
 
@@ -1273,9 +1234,21 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 	 */
 	public function maybe_sync_im_id( $params, $args ) {
 
-		// Check permissions.
-		if ( ! current_user_can( 'edit_post', $args['post']->ID ) ) {
-			return;
+		// Get Entity reference.
+		$entity = $this->plugin->acf->field->entity_type_get( $args['post_id'] );
+
+		// Check permissions if it's a Post.
+		if ( $entity === 'post' ) {
+			if ( ! current_user_can( 'edit_post', $args['post_id'] ) ) {
+				return;
+			}
+		}
+
+		// Check permissions if it's a User.
+		if ( $entity === 'user' ) {
+			if ( ! current_user_can( 'edit_user', $args['user_id'] ) ) {
+				return;
+			}
 		}
 
 		// Maybe cast Instant Messenger data as an object.
@@ -1284,7 +1257,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 		}
 
 		// Get existing Field value.
-		$existing = get_field( $params['selector'], $args['post']->ID );
+		$existing = get_field( $params['selector'], $args['post_id'] );
 
 		// Add Instant Messenger ID and overwrite array element.
 		if ( ! empty( $existing[$params['key']] ) ) {
@@ -1293,7 +1266,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 		}
 
 		// Now update Field.
-		$this->plugin->acf->field->value_update( $params['selector'], $existing, $args['post']->ID );
+		$this->plugin->acf->field->value_update( $params['selector'], $existing, $args['post_id'] );
 
 	}
 
