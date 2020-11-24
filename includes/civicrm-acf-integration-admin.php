@@ -152,7 +152,7 @@ class CiviCRM_ACF_Integration_Admin {
 		add_action( 'wp_ajax_sync_acf_and_civicrm', [ $this, 'sync_acf_and_civicrm' ] );
 
 		// Add menu item(s) to WordPress admin menu.
-		add_action( 'admin_menu', [ $this, 'admin_menu' ], 1 );
+		add_action( 'admin_menu', [ $this, 'admin_menu' ], 30 );
 
 		// Add AJAX handlers.
 		add_action( 'wp_ajax_sync_posts_to_contacts', array( $this, 'stepped_sync_posts_to_contacts' ) );
@@ -186,10 +186,11 @@ class CiviCRM_ACF_Integration_Admin {
 			return;
 		}
 
-		// Add our "Manual Sync" page to the Settings menu.
-		$this->sync_page = add_options_page(
+		// Add our "Manual Sync" page to the CiviCRM menu.
+		$this->sync_page = add_submenu_page(
+			'CiviCRM', // Parent slug.
 			__( 'CiviCRM ACF Integration', 'civicrm-acf-integration' ),
-			__( 'CiviCRM ACF Integration', 'civicrm-acf-integration' ),
+			__( 'ACF Integration', 'civicrm-acf-integration' ),
 			'manage_options',
 			'civicrm_acf_integration_sync',
 			[ $this, 'page_manual_sync' ]
