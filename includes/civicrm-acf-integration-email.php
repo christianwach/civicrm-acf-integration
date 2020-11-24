@@ -249,6 +249,60 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 
 
 	/**
+	 * Get the Primary Email for a given Contact ID.
+	 *
+	 * @since 0.8
+	 *
+	 * @param int $contact_id The numeric ID of the CiviCRM Contact.
+	 * @return object|bool $email The Primary Email data object, or false on failure.
+	 */
+	public function primary_email_get( $contact_id ) {
+
+		// Init return.
+		$email = false;
+
+		// Bail if we have no Contact ID.
+		if ( empty( $contact_id ) ) {
+			return $email;
+		}
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $email;
+		}
+
+		// Define params to get queried Email.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+			'is_primary' => 1,
+			'contact_id' => $contact_id,
+		];
+
+		// Call the API.
+		$result = civicrm_api( 'Email', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $email;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $email;
+		}
+
+		// The result set should contain only one item.
+		$email = (object) array_pop( $result['values'] );
+
+		// --<
+		return $email;
+
+	}
+
+
+
+	/**
 	 * Update a CiviCRM Contact's Primary Email.
 	 *
 	 * @since 0.4.1
@@ -595,18 +649,21 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 	public function email_edited( $args ) {
 
 		// Grab the Email data.
-		$email = $args['objectRef'];
+		$email_data = $args['objectRef'];
 
 		// Bail if this is not a Contact's Email.
-		if ( empty( $email->contact_id ) ) {
+		if ( empty( $email_data->contact_id ) ) {
 			return;
 		}
 
 		// Get the Contact data.
-		$contact = $this->plugin->civicrm->contact->get_by_id( $email->contact_id );
+		$contact = $this->plugin->civicrm->contact->get_by_id( $email_data->contact_id );
 		if ( $contact === false ) {
 			return;
 		}
+
+		// Data may be missing for some operations, so get the full Email record.
+		$email = $this->primary_email_get( $email_data->contact_id );
 
 		// Test if any of this Contact's Contact Types is mapped to a Post Type.
 		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
