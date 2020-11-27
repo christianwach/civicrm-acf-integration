@@ -5,7 +5,7 @@ CiviCRM ACF Integration
 **Donate link:** https://www.paypal.me/interactivist<br/>
 **Tags:** civicrm, acf, sync<br/>
 **Requires at least:** 4.9<br/>
-**Tested up to:** 5.5<br/>
+**Tested up to:** 5.6<br/>
 **Stable tag:** 0.8<br/>
 **License:** GPLv2 or later<br/>
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html
