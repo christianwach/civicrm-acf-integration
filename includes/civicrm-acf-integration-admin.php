@@ -503,19 +503,6 @@ class CiviCRM_ACF_Integration_Admin {
 			return;
 		}
 
-		// Create CiviCRM Contacts to WordPress Posts metabox.
-		add_meta_box(
-			'cai_contact_post',
-			__( 'CiviCRM Contacts &rarr; WordPress Posts', 'civicrm-acf-integration' ),
-			[ $this, 'meta_box_contact_post_render' ], // Callback.
-			$screen_id, // Screen ID.
-			'normal', // Column: options are 'normal' and 'side'.
-			'core' // Vertical placement: options are 'core', 'high', 'low'.
-		);
-
-		// Closed by default.
-		add_filter( "postbox_classes_{$screen_id}_cai_contact_post", [ $this, 'meta_box_closed' ] );
-
 		// Create WordPress Posts to CiviCRM Contacts metabox.
 		add_meta_box(
 			'cai_post_contact',
@@ -529,18 +516,18 @@ class CiviCRM_ACF_Integration_Admin {
 		// Closed by default.
 		add_filter( "postbox_classes_{$screen_id}_cai_post_contact", [ $this, 'meta_box_closed' ] );
 
-		// Create CiviCRM Activities to WordPress Posts metabox.
+		// Create CiviCRM Contacts to WordPress Posts metabox.
 		add_meta_box(
-			'cai_activity_post',
-			__( 'CiviCRM Activities &rarr; WordPress Posts', 'civicrm-acf-integration' ),
-			[ $this, 'meta_box_activity_post_render' ], // Callback.
+			'cai_contact_post',
+			__( 'CiviCRM Contacts &rarr; WordPress Posts', 'civicrm-acf-integration' ),
+			[ $this, 'meta_box_contact_post_render' ], // Callback.
 			$screen_id, // Screen ID.
 			'normal', // Column: options are 'normal' and 'side'.
 			'core' // Vertical placement: options are 'core', 'high', 'low'.
 		);
 
 		// Closed by default.
-		add_filter( "postbox_classes_{$screen_id}_cai_activity_post", [ $this, 'meta_box_closed' ] );
+		add_filter( "postbox_classes_{$screen_id}_cai_contact_post", [ $this, 'meta_box_closed' ] );
 
 		// Create WordPress Posts to CiviCRM Activities metabox.
 		add_meta_box(
@@ -554,6 +541,19 @@ class CiviCRM_ACF_Integration_Admin {
 
 		// Closed by default.
 		add_filter( "postbox_classes_{$screen_id}_cai_post_activity", [ $this, 'meta_box_closed' ] );
+
+		// Create CiviCRM Activities to WordPress Posts metabox.
+		add_meta_box(
+			'cai_activity_post',
+			__( 'CiviCRM Activities &rarr; WordPress Posts', 'civicrm-acf-integration' ),
+			[ $this, 'meta_box_activity_post_render' ], // Callback.
+			$screen_id, // Screen ID.
+			'normal', // Column: options are 'normal' and 'side'.
+			'core' // Vertical placement: options are 'core', 'high', 'low'.
+		);
+
+		// Closed by default.
+		add_filter( "postbox_classes_{$screen_id}_cai_activity_post", [ $this, 'meta_box_closed' ] );
 
 		// Create CiviCRM Groups to WordPress Terms metabox.
 		add_meta_box(
@@ -596,30 +596,7 @@ class CiviCRM_ACF_Integration_Admin {
 
 
 	/**
-	 * Render CiviCRM Activities to WordPress Posts meta box.
-	 *
-	 * @since 0.8
-	 */
-	public function meta_box_contact_post_render() {
-
-		// Get all mapped Contact Types.
-		$mapped_contact_types = $this->plugin->civicrm->contact_type->get_mapped();
-
-		// Loop through them and get the data we want.
-		$contact_types = [];
-		foreach( $mapped_contact_types AS $contact_type ) {
-			$contact_types[$contact_type['id']] = $contact_type['label'];
-		}
-
-		// Include template file.
-		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/metabox-contacts-posts.php';
-
-	}
-
-
-
-	/**
-	 * Render CiviCRM Contacts to WordPress Posts meta box.
+	 * Render WordPress Posts to CiviCRM Contacts meta box.
 	 *
 	 * @since 0.8
 	 */
@@ -642,7 +619,30 @@ class CiviCRM_ACF_Integration_Admin {
 
 
 	/**
-	 * Render CiviCRM Activities to WordPress Posts meta box.
+	 * Render CiviCRM Contacts to WordPress Posts meta box.
+	 *
+	 * @since 0.8
+	 */
+	public function meta_box_contact_post_render() {
+
+		// Get all mapped Contact Types.
+		$mapped_contact_types = $this->plugin->civicrm->contact_type->get_mapped();
+
+		// Loop through them and get the data we want.
+		$contact_types = [];
+		foreach( $mapped_contact_types AS $contact_type ) {
+			$contact_types[$contact_type['id']] = $contact_type['label'];
+		}
+
+		// Include template file.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/metabox-contacts-posts.php';
+
+	}
+
+
+
+	/**
+	 * Render WordPress Posts to CiviCRM Activities meta box.
 	 *
 	 * @since 0.8
 	 */
@@ -1266,139 +1266,6 @@ class CiviCRM_ACF_Integration_Admin {
 
 
 	/**
-	 * Stepped synchronisation of CiviCRM Groups to WordPress Terms.
-	 *
-	 * @since 0.6.4
-	 *
-	 * @param str $entity The identifier for the entity - here it's Group ID.
-	 */
-	public function stepped_sync_groups_to_terms( $entity = null ) {
-
-		// Init AJAX return.
-		$data = array();
-
-		// Sanitise input.
-		if ( ! wp_doing_ajax() ) {
-			$group_id = is_numeric( $entity ) ? (int) $entity : 0;
-		} else {
-			$group_id = isset( $_POST['entity_id'] ) ? (int) $_POST['entity_id'] : 0;
-		}
-
-		// Build key.
-		$key = 'group_to_term_' . $group_id;
-
-		// If this is an AJAX request, check security.
-		$result = true;
-		if ( wp_doing_ajax() ) {
-			$result = check_ajax_referer( 'cai_' . $key, false, false );
-		}
-
-		// If we get an error.
-		if ( $group_id === 0 OR $result === false ) {
-
-			// Set finished flag.
-			$data['finished'] = 'true';
-
-			// Send data to browser.
-			$this->send_data( $data );
-			return;
-
-		}
-
-		// Get the current offset.
-		$offset = $this->stepped_offset_init( $key );
-
-		// Init query result.
-		$result = [];
-
-		// Init CiviCRM.
-		if ( $this->plugin->civicrm->is_initialised() ) {
-
-			// Get the Group Contact data.
-			$result = $this->plugin->civicrm->group->group_contacts_chunked_data_get(
-				$group_id,
-				$offset,
-				$this->step_counts['groups']
-			);
-
-		} else {
-
-			// Do not allow progress.
-			$result['is_error'] = 1;
-
-		}
-
-		// Did we get an error?
-		$error = false;
-		if ( isset( $result['is_error'] ) AND $result['is_error'] == '1' ) {
-			$error = true;
-		}
-
-		// Finish sync on failure or empty result.
-		if ( $error OR empty( $result['values'] ) ) {
-
-			// Set finished flag.
-			$data['finished'] = 'true';
-
-			// Delete the option to start from the beginning.
-			$this->stepped_offset_delete( $key );
-
-		} else {
-
-			// Set finished flag.
-			$data['finished'] = 'false';
-
-			// Are there fewer items than the step count?
-			if ( count( $result['values'] ) < $this->step_counts['groups'] ) {
-				$diff = count( $result['values'] );
-			} else {
-				$diff = $this->step_counts['groups'];
-			}
-
-			// Set "from" and "to" flags.
-			$data['from'] = (int) $offset;
-			$data['to'] = $data['from'] + $diff;
-
-			// Remove WordPress callbacks to prevent recursion.
-			$this->plugin->mapper->hooks_wordpress_remove();
-
-			// Let's make an array of params.
-			$args = [
-				'op' => 'sync',
-				'objectName' => 'GroupContact',
-				'objectId' => $group_id,
-				'objectRef' => $result['values'],
-			];
-
-			/**
-			 * Broadcast that the Contacts in this Group must be synced.
-			 *
-			 * Used internally to:
-			 *
-			 * - Update the WordPress Terms
-			 *
-			 * @since 0.6.4
-			 *
-			 * @param array $args The array of CiviCRM params.
-			 */
-			do_action( 'civicrm_acf_integration_admin_group_sync', $args );
-
-			// Reinstate WordPress callbacks.
-			$this->plugin->mapper->hooks_wordpress_add();
-
-			// Increment offset option.
-			$this->stepped_offset_update( $key, $data['to'] );
-
-		}
-
-		// Send data to browser.
-		$this->send_data( $data );
-
-	}
-
-
-
-	/**
 	 * Stepped synchronisation of WordPress Posts to CiviCRM Activities.
 	 *
 	 * @since 0.7.3
@@ -1679,6 +1546,139 @@ class CiviCRM_ACF_Integration_Admin {
 				do_action( 'civicrm_acf_integration_admin_activity_sync', $args );
 
 			}
+
+			// Reinstate WordPress callbacks.
+			$this->plugin->mapper->hooks_wordpress_add();
+
+			// Increment offset option.
+			$this->stepped_offset_update( $key, $data['to'] );
+
+		}
+
+		// Send data to browser.
+		$this->send_data( $data );
+
+	}
+
+
+
+	/**
+	 * Stepped synchronisation of CiviCRM Groups to WordPress Terms.
+	 *
+	 * @since 0.6.4
+	 *
+	 * @param str $entity The identifier for the entity - here it's Group ID.
+	 */
+	public function stepped_sync_groups_to_terms( $entity = null ) {
+
+		// Init AJAX return.
+		$data = array();
+
+		// Sanitise input.
+		if ( ! wp_doing_ajax() ) {
+			$group_id = is_numeric( $entity ) ? (int) $entity : 0;
+		} else {
+			$group_id = isset( $_POST['entity_id'] ) ? (int) $_POST['entity_id'] : 0;
+		}
+
+		// Build key.
+		$key = 'group_to_term_' . $group_id;
+
+		// If this is an AJAX request, check security.
+		$result = true;
+		if ( wp_doing_ajax() ) {
+			$result = check_ajax_referer( 'cai_' . $key, false, false );
+		}
+
+		// If we get an error.
+		if ( $group_id === 0 OR $result === false ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Send data to browser.
+			$this->send_data( $data );
+			return;
+
+		}
+
+		// Get the current offset.
+		$offset = $this->stepped_offset_init( $key );
+
+		// Init query result.
+		$result = [];
+
+		// Init CiviCRM.
+		if ( $this->plugin->civicrm->is_initialised() ) {
+
+			// Get the Group Contact data.
+			$result = $this->plugin->civicrm->group->group_contacts_chunked_data_get(
+				$group_id,
+				$offset,
+				$this->step_counts['groups']
+			);
+
+		} else {
+
+			// Do not allow progress.
+			$result['is_error'] = 1;
+
+		}
+
+		// Did we get an error?
+		$error = false;
+		if ( isset( $result['is_error'] ) AND $result['is_error'] == '1' ) {
+			$error = true;
+		}
+
+		// Finish sync on failure or empty result.
+		if ( $error OR empty( $result['values'] ) ) {
+
+			// Set finished flag.
+			$data['finished'] = 'true';
+
+			// Delete the option to start from the beginning.
+			$this->stepped_offset_delete( $key );
+
+		} else {
+
+			// Set finished flag.
+			$data['finished'] = 'false';
+
+			// Are there fewer items than the step count?
+			if ( count( $result['values'] ) < $this->step_counts['groups'] ) {
+				$diff = count( $result['values'] );
+			} else {
+				$diff = $this->step_counts['groups'];
+			}
+
+			// Set "from" and "to" flags.
+			$data['from'] = (int) $offset;
+			$data['to'] = $data['from'] + $diff;
+
+			// Remove WordPress callbacks to prevent recursion.
+			$this->plugin->mapper->hooks_wordpress_remove();
+
+			// Let's make an array of params.
+			$args = [
+				'op' => 'sync',
+				'objectName' => 'GroupContact',
+				'objectId' => $group_id,
+				'objectRef' => $result['values'],
+			];
+
+			/**
+			 * Broadcast that the Contacts in this Group must be synced.
+			 *
+			 * Used internally to:
+			 *
+			 * - Update the WordPress Terms
+			 *
+			 * @since 0.6.4
+			 *
+			 * @param array $args The array of CiviCRM params.
+			 */
+			do_action( 'civicrm_acf_integration_admin_group_sync', $args );
 
 			// Reinstate WordPress callbacks.
 			$this->plugin->mapper->hooks_wordpress_add();

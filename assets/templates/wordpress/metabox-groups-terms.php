@@ -1,8 +1,8 @@
 <?php
 /**
- * WordPress Posts to CiviCRM Contacts sync template.
+ * CiviCRM Groups to WordPress Terms sync template.
  *
- * Handles markup for the WordPress Posts to CiviCRM Contacts meta box.
+ * Handles markup for the CiviCRM Groups to WordPress Terms meta box.
  *
  * @package CiviCRM_ACF_Integration
  * @since 0.8
