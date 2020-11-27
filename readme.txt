@@ -54,7 +54,7 @@ From now on, each time you create a Contact of the Contact Type that you have li
 
 If you want to make the same kind of links between Events in WordPress and CiviCRM, this plugin is compatible with [CiviCRM Event Organiser](https://github.com/christianwach/civicrm-event-organiser) and enables integration of Custom Fields on CiviCRM Events with ACF Fields attached to the Event Organiser "Event" Post Type.
 
-*Important note:* Please make sure you have *CiviCRM Event Organiser* version 0.5.3 or greater.
+*Important note:* Please make sure you have *CiviCRM Event Organiser* version 0.6 or greater.
 
 #### CiviCRM Activities and WordPress Custom Post Types
 
