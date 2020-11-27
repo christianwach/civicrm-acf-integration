@@ -3,7 +3,7 @@
 Plugin Name: CiviCRM ACF Integration
 Plugin URI: https://github.com/christianwach/civicrm-acf-integration
 Description: Enables integration between CiviCRM Entities and WordPress Entities using Advanced Custom Fields.
-Version: 0.8
+Version: 0.8.1
 Author: Christian Wach
 Author URI: https://haystack.co.uk
 License: GPL-2.0+
@@ -17,7 +17,7 @@ Depends: CiviCRM
 
 
 // Set our version here.
-define( 'CIVICRM_ACF_INTEGRATION_VERSION', '0.8' );
+define( 'CIVICRM_ACF_INTEGRATION_VERSION', '0.8.1' );
 
 // Store reference to this file.
 if ( ! defined( 'CIVICRM_ACF_INTEGRATION_FILE' ) ) {
