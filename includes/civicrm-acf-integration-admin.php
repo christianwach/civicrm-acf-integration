@@ -154,6 +154,9 @@ class CiviCRM_ACF_Integration_Admin {
 		// Add menu item(s) to WordPress admin menu.
 		add_action( 'admin_menu', [ $this, 'admin_menu' ], 30 );
 
+		// Add our meta boxes.
+		add_action( 'add_meta_boxes', [ $this, 'meta_boxes_add' ], 11, 1 );
+
 		// Add AJAX handlers.
 		add_action( 'wp_ajax_sync_posts_to_contacts', array( $this, 'stepped_sync_posts_to_contacts' ) );
 		add_action( 'wp_ajax_sync_contacts_to_posts', array( $this, 'stepped_sync_contacts_to_posts' ) );
@@ -198,12 +201,28 @@ class CiviCRM_ACF_Integration_Admin {
 
 		// Add styles and scripts only on our "Manual Sync" page.
 		// @see wp-admin/admin-header.php
+		add_action( 'admin_head-' . $this->sync_page, [ $this, 'admin_head' ] );
 		add_action( 'admin_print_styles-' . $this->sync_page, [ $this, 'admin_styles' ] );
 		add_action( 'admin_print_scripts-' . $this->sync_page, [ $this, 'admin_scripts' ] );
-		//add_action( 'admin_head-' . $this->sync_page, [ $this, 'admin_head' ], 50 );
 
 		// Try and update options.
 		$this->settings_update_router();
+
+	}
+
+
+
+	/**
+	 * Initialise plugin help.
+	 *
+	 * @since 0.8
+	 */
+	public function admin_head() {
+
+		// Enqueue WordPress scripts.
+		wp_enqueue_script( 'common' );
+		wp_enqueue_script( 'jquery-ui-sortable' );
+		wp_enqueue_script( 'dashboard' );
 
 	}
 
@@ -428,14 +447,160 @@ class CiviCRM_ACF_Integration_Admin {
 			wp_die( __( 'You do not have permission to access this page.', 'civicrm-acf-integration' ) );
 		}
 
-		// Get all Post Types mapped to Contacts.
-		$mapped_contact_post_types = $this->plugin->post_type->get_mapped( 'contact' );
+		// Get current screen.
+		$screen = get_current_screen();
 
-		// Loop through them and get the data we want.
-		$contact_post_types = [];
-		foreach( $mapped_contact_post_types AS $contact_post_type ) {
-			$contact_post_types[$contact_post_type->name] = $contact_post_type->label;
+		/**
+		 * Allow meta boxes to be added to this screen.
+		 *
+		 * The Screen ID to use is: "civicrm_page_civicrm_acf_integration_sync".
+		 *
+		 * @since 0.8
+		 *
+		 * @param str $screen_id The ID of the current screen.
+		 */
+		do_action( 'add_meta_boxes', $screen->id, null );
+
+		// Get the column CSS class.
+		$columns = absint($screen->get_columns());
+		$columns_css = '';
+		if ($columns) {
+			$columns_css = " columns-$columns";
 		}
+
+		// Include template file.
+		include( CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/manual-sync.php' );
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Register meta boxes.
+	 *
+	 * @since 0.8
+	 *
+	 * @param str $screen_id The Admin Page Screen ID.
+	 */
+	public function meta_boxes_add( $screen_id ) {
+
+		// Define valid Screen IDs.
+		$screen_ids = [
+			'civicrm_page_civicrm_acf_integration_sync',
+		];
+
+		// Bail if not the Screen ID we want.
+		if ( ! in_array( $screen_id, $screen_ids ) ) {
+			return;
+		}
+
+		// Bail if user cannot access CiviCRM.
+		if ( ! current_user_can( 'access_civicrm' ) ) {
+			return;
+		}
+
+		// Create CiviCRM Contacts to WordPress Posts metabox.
+		add_meta_box(
+			'cai_contact_post',
+			__( 'CiviCRM Contacts &rarr; WordPress Posts', 'civicrm-acf-integration' ),
+			[ $this, 'meta_box_contact_post_render' ], // Callback.
+			$screen_id, // Screen ID.
+			'normal', // Column: options are 'normal' and 'side'.
+			'core' // Vertical placement: options are 'core', 'high', 'low'.
+		);
+
+		// Closed by default.
+		add_filter( "postbox_classes_{$screen_id}_cai_contact_post", [ $this, 'meta_box_closed' ] );
+
+		// Create WordPress Posts to CiviCRM Contacts metabox.
+		add_meta_box(
+			'cai_post_contact',
+			__( 'WordPress Posts &rarr; CiviCRM Contacts', 'civicrm-acf-integration' ),
+			[ $this, 'meta_box_post_contact_render' ], // Callback.
+			$screen_id, // Screen ID.
+			'side', // Column: options are 'normal' and 'side'.
+			'core' // Vertical placement: options are 'core', 'high', 'low'.
+		);
+
+		// Closed by default.
+		add_filter( "postbox_classes_{$screen_id}_cai_post_contact", [ $this, 'meta_box_closed' ] );
+
+		// Create CiviCRM Activities to WordPress Posts metabox.
+		add_meta_box(
+			'cai_activity_post',
+			__( 'CiviCRM Activities &rarr; WordPress Posts', 'civicrm-acf-integration' ),
+			[ $this, 'meta_box_activity_post_render' ], // Callback.
+			$screen_id, // Screen ID.
+			'normal', // Column: options are 'normal' and 'side'.
+			'core' // Vertical placement: options are 'core', 'high', 'low'.
+		);
+
+		// Closed by default.
+		add_filter( "postbox_classes_{$screen_id}_cai_activity_post", [ $this, 'meta_box_closed' ] );
+
+		// Create WordPress Posts to CiviCRM Activities metabox.
+		add_meta_box(
+			'cai_post_activity',
+			__( 'WordPress Posts &rarr; CiviCRM Activities', 'civicrm-acf-integration' ),
+			[ $this, 'meta_box_post_activity_render' ], // Callback.
+			$screen_id, // Screen ID.
+			'side', // Column: options are 'normal' and 'side'.
+			'core' // Vertical placement: options are 'core', 'high', 'low'.
+		);
+
+		// Closed by default.
+		add_filter( "postbox_classes_{$screen_id}_cai_post_activity", [ $this, 'meta_box_closed' ] );
+
+		// Create CiviCRM Groups to WordPress Terms metabox.
+		add_meta_box(
+			'cai_group_term',
+			__( 'CiviCRM Groups &rarr; WordPress Terms', 'civicrm-acf-integration' ),
+			[ $this, 'meta_box_group_term_render' ], // Callback.
+			$screen_id, // Screen ID.
+			'normal', // Column: options are 'normal' and 'side'.
+			'core' // Vertical placement: options are 'core', 'high', 'low'.
+		);
+
+		// Closed by default.
+		add_filter( "postbox_classes_{$screen_id}_cai_group_term", [ $this, 'meta_box_closed' ] );
+
+	}
+
+
+
+	/**
+	 * Load our meta boxes as closed by default.
+	 *
+	 * @since 0.8
+	 *
+	 * @param string[] $classes An array of postbox classes.
+	 */
+	public function meta_box_closed( $classes ) {
+
+		// Add closed class.
+		if ( is_array( $classes ) ) {
+			if ( ! in_array( 'closed', $classes ) ) {
+				$classes[] = 'closed';
+			}
+		}
+
+		// --<
+		return $classes;
+
+	}
+
+
+
+	/**
+	 * Render CiviCRM Activities to WordPress Posts meta box.
+	 *
+	 * @since 0.8
+	 */
+	public function meta_box_contact_post_render() {
 
 		// Get all mapped Contact Types.
 		$mapped_contact_types = $this->plugin->civicrm->contact_type->get_mapped();
@@ -446,14 +611,42 @@ class CiviCRM_ACF_Integration_Admin {
 			$contact_types[$contact_type['id']] = $contact_type['label'];
 		}
 
-		// Get all mapped Groups.
-		$mapped_groups = $this->plugin->civicrm->group->groups_get_mapped();
+		// Include template file.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/metabox-contacts-posts.php';
+
+	}
+
+
+
+	/**
+	 * Render CiviCRM Contacts to WordPress Posts meta box.
+	 *
+	 * @since 0.8
+	 */
+	public function meta_box_post_contact_render() {
+
+		// Get all Post Types mapped to Contacts.
+		$mapped_contact_post_types = $this->plugin->post_type->get_mapped( 'contact' );
 
 		// Loop through them and get the data we want.
-		$groups = [];
-		foreach( $mapped_groups AS $group ) {
-			$groups[$group['id']] = $group['title'];
+		$contact_post_types = [];
+		foreach( $mapped_contact_post_types AS $contact_post_type ) {
+			$contact_post_types[$contact_post_type->name] = $contact_post_type->label;
 		}
+
+		// Include template file.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/metabox-posts-contacts.php';
+
+	}
+
+
+
+	/**
+	 * Render CiviCRM Activities to WordPress Posts meta box.
+	 *
+	 * @since 0.8
+	 */
+	public function meta_box_post_activity_render() {
 
 		// Get all Post Types mapped to Activities.
 		$mapped_activity_post_types = $this->plugin->post_type->get_mapped( 'activity' );
@@ -463,6 +656,20 @@ class CiviCRM_ACF_Integration_Admin {
 		foreach( $mapped_activity_post_types AS $activity_post_type ) {
 			$activity_post_types[$activity_post_type->name] = $activity_post_type->label;
 		}
+
+		// Include template file.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/metabox-posts-activities.php';
+
+	}
+
+
+
+	/**
+	 * Render CiviCRM Activities to WordPress Posts meta box.
+	 *
+	 * @since 0.8
+	 */
+	public function meta_box_activity_post_render() {
 
 		// Get all mapped Activity Types.
 		$mapped_activity_types = $this->plugin->civicrm->activity_type->get_mapped();
@@ -474,7 +681,30 @@ class CiviCRM_ACF_Integration_Admin {
 		}
 
 		// Include template file.
-		include( CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/manual-sync.php' );
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/metabox-activities-posts.php';
+
+	}
+
+
+
+	/**
+	 * Render CiviCRM Groups to WordPress Terms meta box.
+	 *
+	 * @since 0.8
+	 */
+	public function meta_box_group_term_render() {
+
+		// Get all mapped Groups.
+		$mapped_groups = $this->plugin->civicrm->group->groups_get_mapped();
+
+		// Loop through them and get the data we want.
+		$groups = [];
+		foreach( $mapped_groups AS $group ) {
+			$groups[$group['id']] = $group['title'];
+		}
+
+		// Include template file.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/metabox-groups-terms.php';
 
 	}
 

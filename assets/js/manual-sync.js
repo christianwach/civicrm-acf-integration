@@ -66,9 +66,6 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 		 */
 		this.dom_ready = function() {
 
-			// Init listeners.
-			me.listeners();
-
 		};
 
 		// Init localisation array.
@@ -122,30 +119,6 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 		 */
 		this.get_setting = function( identifier ) {
 			return me.settings[identifier];
-		};
-
-		/**
-		 * Add listeners.
-		 *
-		 * @since 0.7.3
-		 */
-		this.listeners = function() {
-
-			// Unbind first to allow repeated calls to this function.
-			$('#civicrm_acf_integration_sync_form').off( 'click', '.cai_trigger' );
-
-			/**
-			 * Listen for clicks on "accordion" triggers.
-			 *
-			 * @since 0.7.3
-			 */
-			$('#civicrm_acf_integration_sync_form').on( 'click', '.cai_trigger', function( event ) {
-
-				// Toggle next cai_wrapper.
-				$(this).next( 'div.cai_wrapper' ).slideToggle( 'slow' );
-
-			});
-
 		};
 
 	};

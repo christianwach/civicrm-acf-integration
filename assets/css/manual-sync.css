@@ -16,7 +16,6 @@ body.js .cai_trigger {
 
 body.js .cai_wrapper {
 	padding-top: 0;
-    display: none;
 }
 
 body.js .cai_wrapper p {
@@ -146,7 +145,6 @@ body.js .cai_wrapper p {
 /* Component containers
 ----------------------------------*/
 .ui-widget {
-	font-family: Verdana,Arial,sans-serif;
 	font-size: 1.1em;
 }
 .ui-widget .ui-widget {
@@ -156,7 +154,6 @@ body.js .cai_wrapper p {
 .ui-widget select,
 .ui-widget textarea,
 .ui-widget button {
-	font-family: Verdana,Arial,sans-serif;
 	font-size: 1em;
 }
 .ui-widget-content {
@@ -675,7 +672,6 @@ body.js .cai_wrapper p {
 /* Component containers
 ----------------------------------*/
 .ui-widget {
-	font-family: Verdana,Arial,sans-serif;
 	font-size: 1.1em;
 }
 .ui-widget .ui-widget {
@@ -685,7 +681,6 @@ body.js .cai_wrapper p {
 .ui-widget select,
 .ui-widget textarea,
 .ui-widget button {
-	font-family: Verdana,Arial,sans-serif;
 	font-size: 1em;
 }
 .ui-widget-content {
@@ -1084,7 +1079,9 @@ body.js .cai_wrapper p {
 .progress-label {
 	position: absolute;
 	left: 1%;
-	top: 4px;
+	top: 8px;
 	font-weight: bold;
-	text-shadow: 1px 1px 0 #fff;
+	text-shadow: 1px 1px 0 #ddd;
+	/* text-transform: uppercase; */
+	font-size: 14px;
 }
