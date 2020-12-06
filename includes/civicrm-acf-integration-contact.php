@@ -1204,10 +1204,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 		$fields_handled = $this->fields_handled_get();
 
 		// Loop through the field data.
-		foreach( $fields AS $field => $value ) {
+		foreach( $fields AS $selector => $value ) {
 
 			// Get the field settings.
-			$settings = get_field_object( $field, $post_id );
+			$settings = get_field_object( $selector, $post_id );
 
 			// Get the CiviCRM Custom Field and Contact Field.
 			$custom_field_id = $this->civicrm->custom_field->custom_field_id_get( $settings );
