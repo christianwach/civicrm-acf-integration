@@ -153,8 +153,9 @@ class CiviCRM_ACF_Integration_Mapper {
 	 *
 	 * @param str $entity The name of the Entity.
 	 * @param int $id The numeric ID of the Entity.
+	 * @param str $type For WordPress Entities, this is the Post Type.
 	 */
-	public function entity_set( $entity, $id ) {
+	public function entity_set( $entity, $id, $type = '' ) {
 
 		// Bail if it has already been set.
 		if ( $this->entity['entity'] !== false ) {
@@ -164,6 +165,7 @@ class CiviCRM_ACF_Integration_Mapper {
 		// Set it.
 		$this->entity['entity'] = $entity;
 		$this->entity['id'] = $id;
+		$this->entity['type'] = $type;
 
 	}
 
@@ -2616,7 +2618,7 @@ class CiviCRM_ACF_Integration_Mapper {
 
 		// Maybe set this as the originating Entity.
 		if ( $this->plugin->post->should_be_synced( $post ) ) {
-			$this->entity_set( 'post', $post_id );
+			$this->entity_set( 'post', $post_id, $post->post_type );
 		}
 
 		/**

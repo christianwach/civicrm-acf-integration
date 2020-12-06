@@ -746,13 +746,31 @@ class CiviCRM_ACF_Integration_Post {
 		$post_types = $this->plugin->civicrm->contact->is_mapped( $args['objectRef'] );
 		if ( $post_types !== false ) {
 
+			// Get originating Entity.
+			$entity = $this->plugin->mapper->entity_get();
+
 			// Handle each Post Type in turn.
 			foreach( $post_types AS $post_type ) {
 
 				// Check if the Post ID for this Contact already exists.
 				$post_id = $this->plugin->civicrm->contact->is_mapped_to_post( $args['objectRef'], $post_type );
 
-				// TODO: If it's a Post that originated this, allow other Posts to update?
+				/*
+				 * Exclude "reverse" create procedure when a WordPress Post is the
+				 * originating Entity and the Post Type matches.
+				 *
+				 * This is because - although there isn't a Post ID yet - there
+				 * cannot be more than one Post of a particular Post Type per Contact.
+				 *
+				 * Instead, the Contact ID needs to be reverse synced to the Post.
+				 */
+				if ( $entity['entity'] === 'post' AND $post_type == $entity['type'] ) {
+
+					// Save correspondence and skip to next.
+					$this->contact_id_set( $entity['id'], $args['objectId'] );
+					continue;
+
+				}
 
 				// Remove WordPress Post callbacks to prevent recursion.
 				$this->plugin->mapper->hooks_wordpress_post_remove();
