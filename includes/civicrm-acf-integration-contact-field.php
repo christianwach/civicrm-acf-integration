@@ -268,7 +268,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 	 * @param mixed $value The Contact Field value.
 	 * @param array $name The Contact Field name.
 	 * @param str $selector The ACF Field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param mixed $post_id The ACF "Post ID".
 	 * @return mixed $value The formatted field value.
 	 */
 	public function value_get_for_acf( $value, $name, $selector, $post_id ) {
@@ -1009,7 +1009,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 	 * @param mixed $value The Contact Field value (the Image URL).
 	 * @param array $name The Contact Field name.
 	 * @param str $selector The ACF Field selector.
-	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @param mixed $post_id The ACF "Post ID".
 	 * @return mixed $value The formatted field value.
 	 */
 	public function image_value_get_for_acf( $value, $name, $selector, $post_id ) {
@@ -1049,62 +1049,94 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		// Maybe transfer the CiviCRM Contact Image to WordPress.
 		if ( $sync === true ) {
 
-			// Grab mapped Contact.
-			$contact_id = $this->plugin->post->contact_id_get( $post_id );
-			$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
+			// Get Contact ID for this ACF "Post ID".
+			$contact_id = $this->plugin->acf->field->query_contact_id( $post_id );
 
-			// Overwrite value with current Image URL.
-			$url = $contact['image_URL'];
+			// Proceed if we get a value.
+			if ( $contact_id !== false ) {
 
-			// Maybe fix the following function.
-			add_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10, 2 );
+				// Get full Contact data.
+				$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
 
-			// First check for an existing Attachment ID.
-			$possible_id = attachment_url_to_postid( $url );
+				// Overwrite value with current Image URL.
+				$url = $contact['image_URL'];
 
-			// Remove the fix.
-			remove_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10 );
+				// Maybe fix the following function.
+				add_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10, 2 );
 
-			// If no Attachment ID is found.
-			if ( $possible_id === 0 ) {
+				// First check for an existing Attachment ID.
+				$possible_id = attachment_url_to_postid( $url );
 
-				// Grab the filename as the "title" if we can.
-				if ( false === strpos( $url, 'photo=' ) ) {
-					$title = __( 'CiviCRM Contact Image', 'civicrm-acf-integration' );
+				// Remove the fix.
+				remove_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10 );
+
+				// If no Attachment ID is found.
+				if ( $possible_id === 0 ) {
+
+					// Grab the filename as the "title" if we can.
+					if ( false === strpos( $url, 'photo=' ) ) {
+						$title = __( 'CiviCRM Contact Image', 'civicrm-acf-integration' );
+					} else {
+						$title = explode( 'photo=', $url )[1];
+					}
+
+					// Possibly include the required files.
+					require_once ABSPATH . 'wp-admin/includes/media.php';
+					require_once ABSPATH . 'wp-admin/includes/file.php';
+					require_once ABSPATH . 'wp-admin/includes/image.php';
+
+					// Only assign to a Post if the ACF "Post ID" is numeric.
+					if ( ! is_numeric( $post_id ) ) {
+						$target_post_id = null;
+					} else {
+						$target_post_id = $post_id;
+					}
+
+					// Transfer the CiviCRM Contact Image to WordPress and grab ID.
+					$id = media_sideload_image( $url, $post_id, $title, 'id' );
+
+					// Grab the the full size Image data.
+					$url = wp_get_attachment_image_url( (int) $id, 'full' );
+
+					// Remove all internal CiviCRM hooks.
+					$this->plugin->mapper->hooks_civicrm_remove();
+
+					/**
+					 * Broadcast that we're about to reverse-sync to a Contact.
+					 *
+					 * @since 0.8.1
+					 *
+					 * @param $contact_data The array of Contact data.
+					 */
+					do_action( 'cai/contact_field/reverse_sync/pre' );
+
+					// Bare-bones data.
+					$contact_data = [
+						'id' => $contact_id,
+						'image_URL' => $url,
+					];
+
+					// Save the Attachment URL back to the Contact.
+					$result = $this->civicrm->contact->update( $contact_data );
+
+					// Restore all internal CiviCRM hooks.
+					$this->plugin->mapper->hooks_civicrm_add();
+
+					/**
+					 * Broadcast that we have reverse-synced to a Contact.
+					 *
+					 * @since 0.8.1
+					 *
+					 * @param $contact_data The array of Contact data.
+					 */
+					do_action( 'cai/contact_field/reverse_sync/post', $contact_data );
+
 				} else {
-					$title = explode( 'photo=', $url )[1];
+
+					// Let's use this Attachment ID.
+					$id = $possible_id;
+
 				}
-
-				// Transfer the CiviCRM Contact Image to WordPress and grab ID.
-				$id = media_sideload_image( $url, $post_id, $title, 'id' );
-
-				// Grab the the full size Image data.
-				$url = wp_get_attachment_image_url( (int) $id, 'full' );
-
-				// Remove all CiviCRM hooks.
-				$this->plugin->mapper->hooks_civicrm_remove();
-
-				// Bare-bones data.
-				$contact_data = [
-					'id' => $contact_id,
-					'image_URL' => $url,
-				];
-
-				// Save the Attachment URL back to the Contact.
-				$result = $this->civicrm->contact->update( $contact_data );
-
-				// Restore all CiviCRM hooks.
-				$this->plugin->mapper->hooks_civicrm_add();
-
-			} else {
-
-				/*
-				// Get the Attachment for the ID we've determined.
-				$possible_attachment = acf_get_attachment( $possible_id );
-				*/
-
-				// Let's use this Attachment ID.
-				$id = $possible_id;
 
 			}
 
