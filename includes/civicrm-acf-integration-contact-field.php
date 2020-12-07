@@ -1095,6 +1095,24 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 					// Transfer the CiviCRM Contact Image to WordPress and grab ID.
 					$id = media_sideload_image( $url, $post_id, $title, 'id' );
 
+					// Log as much as we can if there's an error.
+					if ( is_wp_error( $id ) ) {
+						$e = new \Exception;
+						$trace = $e->getTraceAsString();
+						error_log( print_r( array(
+							'method' => __METHOD__,
+							'error' => $id,
+							'value' => $value,
+							'name' => $name,
+							'selector' => $selector,
+							'post_id' => $post_id,
+							'existing' => $existing,
+							'contact' => $contact,
+							//'backtrace' => $trace,
+						), true ) );
+						return '';
+					}
+
 					// Grab the the full size Image data.
 					$url = wp_get_attachment_image_url( (int) $id, 'full' );
 
