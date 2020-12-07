@@ -107,6 +107,9 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		add_action( 'acf/render_field_settings/type=text', [ $this, 'text_setting_add' ] );
 		add_filter( 'acf/validate_value/type=text', [ $this, 'value_validate' ], 10, 4 );
 
+		// Customise "Image" Fields.
+		add_action( 'acf/render_field_settings/type=image', [ $this, 'image_setting_add' ] );
+
 	}
 
 
@@ -467,6 +470,11 @@ class CiviCRM_ACF_Integration_ACF_Field {
 				$value = $this->true_false_value_get( $value );
 				break;
 
+	 		// Parse the value of an "Image" Field.
+			case 'image' :
+				$value = $this->image_value_get( $value );
+				break;
+
 			// Other Field Types may require parsing - add them here.
 
 		}
@@ -475,6 +483,10 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		return $value;
 
 	}
+
+
+
+	// -------------------------------------------------------------------------
 
 
 
@@ -502,10 +514,6 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		return $value;
 
 	}
-
-
-
-	// -------------------------------------------------------------------------
 
 
 
@@ -1441,6 +1449,123 @@ class CiviCRM_ACF_Integration_ACF_Field {
 			$field = $this->plugin->civicrm->custom_field->text_settings_get( $field, $custom_field_id );
 
 		}
+
+		// --<
+		return $field;
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get the value of an "Image" Field formatted for CiviCRM.
+	 *
+	 * The only kind of sync that an ACF Image Field can do at the moment is to
+	 * sync with the CiviCRM Contact Image. This is a built-in field for Contacts
+	 * and consists simply of the URL of the image.
+	 *
+	 * The ACF Image Field return format can be either 'array', 'url' or 'id' so
+	 * we need to extract the original image URL to send to CiviCRM.
+	 *
+	 * @since 0.8.1
+	 *
+	 * @param int|null $value The field value (the Attachment data).
+	 * @return str $value The URL of the full size image.
+	 */
+	public function image_value_get( $value ) {
+
+		// Return empty string when value is empty.
+		if ( empty( $value ) ) {
+			return '';
+		}
+
+		// If it's an array, extract full image URL.
+		if ( is_array( $value ) ) {
+
+			// Discard all but the URL.
+			if ( ! empty( $value['url'] ) ) {
+				$value = $value['url'];
+			}
+
+		// When it's numeric, get full image URL from attachment.
+		} elseif ( is_numeric( $value ) ) {
+
+			// Grab the the full size Image URL.
+			$url = wp_get_attachment_image_url( (int) $value, 'full' );
+
+			// Overwrite with the URL.
+			if ( ! empty( $url ) ) {
+				$value = $url;
+			}
+
+		}
+
+		// When it's a string, it must be the URL.
+
+		// --<
+		return $value;
+
+	}
+
+
+
+	/**
+	 * Add Setting to "Image" Field Settings.
+	 *
+	 * @since 0.8.1
+	 *
+	 * @param array $field The field data array.
+	 */
+	public function image_setting_add( $field ) {
+
+		// Get the Contact Fields for this CiviCRM Contact Type.
+		$contact_fields = $this->plugin->civicrm->contact_field->get_for_acf_field( $field );
+
+		// Bail if there are no fields.
+		if ( empty( $contact_fields ) ) {
+			return;
+		}
+
+		// Get Setting field.
+		$setting = $this->plugin->civicrm->contact->acf_field_get( [], $contact_fields );
+
+		// Now add it.
+		acf_render_field_setting( $field, $setting );
+
+	}
+
+
+
+	/**
+	 * Maybe modify the Setting of an "Image" Field.
+	 *
+	 * @since 0.8.1
+	 *
+	 * @param array $field The existing field data array.
+	 * @return array $field The modified field data array.
+	 */
+	public function image_setting_modify( $field ) {
+
+		// Skip if the CiviCRM Field key isn't there or isn't populated.
+		$key = $this->plugin->civicrm->acf_field_key_get();
+		if ( ! array_key_exists( $key, $field ) OR empty( $field[$key] ) ) {
+			return;
+		}
+
+		// Get the mapped Contact Field name if present.
+		$contact_field_name = $this->plugin->civicrm->contact->contact_field_name_get( $field );
+
+		// Bail if we don't have one.
+		if ( $contact_field_name === false ) {
+			return $field;
+		}
+
+		// Apply settings.
+		$field = $this->plugin->civicrm->contact_field->image_settings_get( $field, $contact_field_name );
 
 		// --<
 		return $field;

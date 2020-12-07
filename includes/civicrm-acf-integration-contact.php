@@ -550,6 +550,66 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact {
 
 
 
+	/**
+	 * Get the CiviCRM Contacts with a given Image URL.
+	 *
+	 * In practice there is only likely to be one Contact returned, but since it
+	 * is possible for more than one to share the same Image URL, an array of
+	 * data is always returned (or boolean if there's a failure of some sort).
+	 *
+	 * @since 0.8.1
+	 *
+	 * @param str $image_url The Image URL of the CiviCRM Contact.
+	 * @return array|bool $contacts An array of Contacts, or false on failure.
+	 */
+	public function get_by_image( $image_url ) {
+
+		// Init return.
+		$contacts = false;
+
+		// Bail if we have no Image URL.
+		if ( empty( $image_url ) ) {
+			return $contacts;
+		}
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $contacts;
+		}
+
+		// Define params to get queried Contact.
+		$params = [
+			'version' => 3,
+			'sequential' => 1,
+			'image_URL' => $image_url,
+			'options' => [
+				'limit' => 0, // No limit.
+			],
+		];
+
+		// Call the API.
+		$result = civicrm_api( 'Contact', 'get', $params );
+
+		// Bail if there's an error.
+		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			return $contacts;
+		}
+
+		// Bail if there are no results.
+		if ( empty( $result['values'] ) ) {
+			return $contacts;
+		}
+
+		// The result set is what we're after.
+		$contacts = $result['values'];
+
+		// --<
+		return $contacts;
+
+	}
+
+
+
 	// -------------------------------------------------------------------------
 
 

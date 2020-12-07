@@ -77,6 +77,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		'is_deceased' => 'true_false',
 		'deceased_date' => 'date_picker',
 		'employer_id' => 'civicrm_contact',
+		'image_URL' => 'image',
 	];
 
 	/**
@@ -156,6 +157,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		add_action( 'civicrm_acf_integration_post_created', [ $this, 'post_edited' ], 10 );
 		add_action( 'civicrm_acf_integration_post_edited', [ $this, 'post_edited' ], 10 );
 		add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
+
+		// Intercept Contact Image delete.
+		add_action( 'civicrm_postSave_civicrm_contact', [ $this, 'image_deleted' ], 10 );
+		add_action( 'delete_attachment', [ $this, 'image_attachment_deleted' ], 10 );
 
 		// TODO: Add hooks to Relationships to detect Employer changes via that route.
 
@@ -321,6 +326,14 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 					$datetime = DateTime::createFromFormat( 'YmdHis', $value );
 					$value = $datetime->format( 'Y-m-d H:i:s' );
 				}
+
+				break;
+
+			// Used by "Contact Image".
+			case 'image' :
+
+				// Delegate to method, expect an Attachment ID.
+				$value = $this->image_value_get_for_acf( $value, $name, $selector, $post_id );
 
 				break;
 
@@ -957,6 +970,394 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 
 		// --<
 		return $field;
+
+	}
+
+
+
+	/**
+	 * Modify the Settings of an "Image" Field as required by a Contact Field.
+	 *
+	 * The only modification at the moment is to "derestrict" the library that
+	 * the Field can access. This is done so that multiple Posts can share the
+	 * same Attachment - useful for situations where a Contact has multiple
+	 * Contact Types that are mapped to Custom Post Types.
+	 *
+	 * @since 0.8.1
+	 *
+	 * @param array $field The field data array.
+	 * @param str $contact_field_name The CiviCRM Contact Field name.
+	 * @return array $choices The choices for the field.
+	 */
+	public function image_settings_get( $field, $contact_field_name ) {
+
+		// Set Field source library.
+		$field['library'] = 'all';
+
+		// --<
+		return $field;
+
+	}
+
+
+
+	/**
+	 * Get the value of an "Image" Field as required by an ACF Field.
+	 *
+	 * @since 0.8.1
+	 *
+	 * @param mixed $value The Contact Field value (the Image URL).
+	 * @param array $name The Contact Field name.
+	 * @param str $selector The ACF Field selector.
+	 * @param int $post_id The numeric ID of the WordPress Post.
+	 * @return mixed $value The formatted field value.
+	 */
+	public function image_value_get_for_acf( $value, $name, $selector, $post_id ) {
+
+		// Grab the raw data (Attachment ID) from the ACF Field.
+		$existing = get_field( $selector, $post_id, false );
+
+		// Assume no sync necessary.
+		$sync = false;
+
+		// If there's no ACF data.
+		if ( empty( $existing ) ) {
+
+			// We're good to sync.
+			$sync = true;
+
+		} else {
+
+			// Grab the the full size Image data.
+			$url = wp_get_attachment_image_url( (int) $existing, 'full' );
+
+			// If the URL has changed.
+			if ( ! empty( $url ) AND $url != $value ) {
+
+				// Sync the new image.
+				$sync = true;
+
+			} else {
+
+				// The ID is the existing value.
+				$id = $existing;
+
+			}
+
+		}
+
+		// Maybe transfer the CiviCRM Contact Image to WordPress.
+		if ( $sync === true ) {
+
+			// Grab mapped Contact.
+			$contact_id = $this->plugin->post->contact_id_get( $post_id );
+			$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
+
+			// Overwrite value with current Image URL.
+			$url = $contact['image_URL'];
+
+			// Maybe fix the following function.
+			add_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10, 2 );
+
+			// First check for an existing Attachment ID.
+			$possible_id = attachment_url_to_postid( $url );
+
+			// Remove the fix.
+			remove_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10 );
+
+			// If no Attachment ID is found.
+			if ( $possible_id === 0 ) {
+
+				// Grab the filename as the "title" if we can.
+				if ( false === strpos( $url, 'photo=' ) ) {
+					$title = __( 'CiviCRM Contact Image', 'civicrm-acf-integration' );
+				} else {
+					$title = explode( 'photo=', $url )[1];
+				}
+
+				// Transfer the CiviCRM Contact Image to WordPress and grab ID.
+				$id = media_sideload_image( $url, $post_id, $title, 'id' );
+
+				// Grab the the full size Image data.
+				$url = wp_get_attachment_image_url( (int) $id, 'full' );
+
+				// Remove all CiviCRM hooks.
+				$this->plugin->mapper->hooks_civicrm_remove();
+
+				// Bare-bones data.
+				$contact_data = [
+					'id' => $contact_id,
+					'image_URL' => $url,
+				];
+
+				// Save the Attachment URL back to the Contact.
+				$result = $this->civicrm->contact->update( $contact_data );
+
+				// Restore all CiviCRM hooks.
+				$this->plugin->mapper->hooks_civicrm_add();
+
+			} else {
+
+				/*
+				// Get the Attachment for the ID we've determined.
+				$possible_attachment = acf_get_attachment( $possible_id );
+				*/
+
+				// Let's use this Attachment ID.
+				$id = $possible_id;
+
+			}
+
+		}
+
+		// Get the Attachment for the ID we've determined.
+		$attachment = acf_get_attachment( $id );
+
+		// The value in ACF is the Attachment ID.
+		$value = $attachment['ID'];
+
+		// --<
+		return $value;
+
+	}
+
+
+
+	/**
+	 * Tries to convert an Attachment URL (for intermediate/edited sized image) into a Post ID.
+	 *
+	 * Formatted version of the following Gist:
+	 *
+	 * @see https://gist.github.com/pbiron/d72a5d3b63e7077df767735464b2769c
+	 *
+	 * Produces incorrect results with the following sequence prior to WordPress 5.3.1:
+	 *
+	 * 1) Set thumbnail site to 150x150;
+	 * 2) Upload foo-150x150.jpg;
+	 * 3) Upload foo.jpg;
+	 * 4) Call attachment_url_to_post_id( 'https://host/wp-content/uploads/foo-150x150.jpg' )
+	 *
+	 * @see https://core.trac.wordpress.org/ticket/44095
+	 *
+	 * Produces incorrect results after the following sequence:
+	 *
+	 * 1) Set thumbnail site to 150x150;
+	 * 2) Upload a 300x300 image foo.jpg;
+	 * 3) Edit foo.jpg and scale to 200x200;
+	 * 4) Regenerate intermediate sized images
+	 *    (e.g. with https://wordpress.org/plugins/regenerate-thumbnails/)
+	 * 5) Call attachment_url_to_post_id( 'https://host/wp-content/uploads/foo-150x150.jpg' )
+	 *
+	 * @see https://core.trac.wordpress.org/ticket/44127
+	 *
+	 * @since 0.8.1
+	 *
+	 * @param str $url The URL to resolve.
+	 * @return int The found Post ID, or 0 on failure.
+	 */
+	public function image_url_to_post_id_helper( $post_id, $url ) {
+
+		global $wpdb;
+
+ 		// Bail if a Post ID was found.
+ 		if ( $post_id ) {
+ 			return $post_id;
+ 		}
+
+ 		// Start by setting up a few vars the same way attachment_url_to_postid() does.
+		$dir = wp_get_upload_dir();
+		$path = $url;
+
+		$site_url = parse_url( $dir['url'] );
+		$image_path = parse_url( $path );
+
+		// Force the protocols to match if needed.
+		if ( isset( $image_path['scheme'] ) AND ( $image_path['scheme'] !== $site_url['scheme'] ) ) {
+			$path = str_replace( $image_path['scheme'], $site_url['scheme'], $path );
+		}
+
+		if ( 0 === strpos( $path, $dir['baseurl'] . '/' ) ) {
+			$path = substr( $path, strlen( $dir['baseurl'] . '/' ) );
+		}
+
+		$basename = wp_basename( $path );
+		$dirname = dirname( $path );
+
+		/*
+		 * The "LIKE" we search for is the serialized form of $basename to reduce
+		 * the number of false positives we have to deal with.
+		 */
+		$sql = $wpdb->prepare(
+			"SELECT post_id, meta_key, meta_value FROM $wpdb->postmeta
+			 WHERE meta_key IN ( '_wp_attachment_metadata', '_wp_attachment_backup_sizes' ) AND meta_value LIKE %s",
+			'%' . serialize( $basename ) . '%'
+		);
+
+		$results = $wpdb->get_results( $sql );
+		foreach( $results AS $row ) {
+
+			if ( '_wp_attachment_metadata' === $row->meta_key ) {
+
+				$meta = maybe_unserialize( $row->meta_value );
+				if ( dirname( $meta['file'] ) === $dirname AND in_array( $basename, wp_list_pluck( $meta['sizes'], 'file' ) ) ) {
+					// URL is for a registered intermediate size.
+					$post_id = $row->post_id;
+					break;
+				}
+
+			} else {
+
+				// See if URL is for a "backup" of an edited image.
+				$backup_sizes = maybe_unserialize( $row->meta_value );
+
+				if ( in_array( $basename, wp_list_pluck( $backup_sizes, 'file' ) ) ) {
+
+					/*
+					 * URL is possibly for a "backup" of an edited image.
+					 * get the meta for the "original" attachment and perform the equivalent
+					 * test we did above for '_wp_attachment_metadata' === $row->meta_key
+					 */
+					$sql = $wpdb->prepare(
+						"SELECT meta_value FROM $wpdb->postmeta
+						 WHERE post_id = %d AND meta_key = '_wp_attachment_metadata'",
+						$row->post_id
+					);
+
+					$meta = maybe_unserialize( $wpdb->get_var( $sql ) );
+					if ( isset( $meta['file'] ) AND dirname( $meta['file'] ) === $dirname ) {
+						// URL is for a "backup" of an edited image.
+						$post_id = $row->post_id;
+						break;
+					}
+
+				}
+
+			}
+
+		}
+
+		// --<
+		return $post_id;
+
+	}
+
+
+
+	/**
+	 * Callback for the Contact postSave hook.
+	 *
+	 * Since neither "civicrm_pre" nor "civicrm_post" fire when a Contact Image
+	 * is deleted via the "Edit Contact" screen, this callback attempts to
+	 * identify when this happens and then acts accordingly.
+	 *
+	 * @since 0.8.1
+	 *
+	 * @param object $objectRef The DAO object.
+	 */
+	public function image_deleted( $objectRef ) {
+
+		// Bail if not Contact save operation.
+		if ( ! ( $objectRef instanceof CRM_Contact_BAO_Contact ) ) {
+			return;
+		}
+
+		// Bail if no Contact ID.
+		if ( empty( $objectRef->id ) ) {
+			return;
+		}
+
+		// Bail if image_URL isn't the string 'null'.
+		if ( $objectRef->image_URL !== 'null' ) {
+			return;
+		}
+
+		// Bail if GET doesn't contain the path we want.
+		if ( empty( $_GET['q'] ) OR $_GET['q'] != 'civicrm/contact/image' ) {
+			return;
+		}
+
+		// Bail if GET doesn't contain the matching Contact ID.
+		if ( empty( $_GET['cid'] ) OR $_GET['cid'] != $objectRef->id ) {
+			return;
+		}
+
+		// Bail if GET doesn't contain the delete action.
+		if ( empty( $_GET['action'] ) OR $_GET['action'] != 'delete' ) {
+			return;
+		}
+
+		// Bail if GET doesn't contain the confirmed flag.
+		if ( empty( $_GET['confirmed'] ) OR $_GET['confirmed'] != 1 ) {
+			return;
+		}
+
+		// Get the full Contact data.
+		$contact = $this->plugin->civicrm->contact->get_by_id( $objectRef->id );
+
+		// Bail if something went wrong.
+		if ( $contact === false ) {
+			return;
+		}
+
+		// We need to pass an instance of CRM_Contact_DAO_Contact.
+		$object = new CRM_Contact_DAO_Contact();
+		$object->id = $objectRef->id;
+
+		// Trigger the sync process via the Mapper.
+		$this->plugin->mapper->contact_edited( 'edit', $contact['contact_type'], $objectRef->id, $object );
+
+	}
+
+
+
+
+	/**
+	 * Fires just before an Attachment is deleted.
+	 *
+	 * ACF Image Fields store the Attachment ID, so when an Attachment is deleted
+	 * (and depending on the return format) nothing bad happens. CiviCRM Contact
+	 * Images are stored as URLs - so when the actual file is missing, we get a
+	 * 404 and a broken image icon.
+	 *
+	 * This callback tries to mitigate this by searching for Contacts that have
+	 * the Contact Image that's being deleted and triggers the sync process for
+	 * those that are found by deleting their Image URL.
+	 *
+	 * @since 0.8.1
+	 *
+	 * @param int $post_id The numeric ID of the Attachment.
+	 */
+	public function image_attachment_deleted( $post_id ) {
+
+		// Grab the the full size Image URL.
+		$image_url = wp_get_attachment_image_url( $post_id, 'full' );
+
+		// Bail if the Image URL is empty.
+		if ( empty( $image_url ) ) {
+			return;
+		}
+
+		// Search for Contacts.
+		$contacts = $this->civicrm->contact->get_by_image( $image_url );
+
+		// Bail if there aren't any.
+		if ( empty( $contacts ) ) {
+			return;
+		}
+
+		// Process all of them.
+		foreach( $contacts AS $contact ) {
+
+			// Bare-bones data.
+			$contact_data = [
+				'id' => $contact['contact_id'],
+				'image_URL' => '',
+			];
+
+			// Clear the Image URL for the Contact.
+			$result = $this->civicrm->contact->update( $contact_data );
+
+		}
 
 	}
 
