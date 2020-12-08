@@ -2,9 +2,9 @@
 # This file is distributed under the same license as the CiviCRM ACF Integration package.
 msgid ""
 msgstr ""
-"Project-Id-Version: CiviCRM ACF Integration 0.8\n"
+"Project-Id-Version: CiviCRM ACF Integration 0.8.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/civicrm-acf-integration\n"
-"POT-Creation-Date: 2020-11-27 10:06:04+00:00\n"
+"POT-Creation-Date: 2020-12-08 12:06:01+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -133,7 +133,7 @@ msgid "CiviCRM Contact ID"
 msgstr ""
 
 #: fields/class-acf-field-civicrm-contact.php:153
-msgid "CiviCRM Contact"
+msgid "CiviCRM Contact Reference"
 msgstr ""
 
 #: fields/class-acf-field-civicrm-im.php:152
@@ -252,20 +252,20 @@ msgstr ""
 msgid "A custom phone block."
 msgstr ""
 
-#: includes/civicrm-acf-integration-acf-field.php:410
+#: includes/civicrm-acf-integration-acf-field.php:413
 #: includes/civicrm-acf-integration-activity-field.php:164
 msgid "Must be an integer."
 msgstr ""
 
-#: includes/civicrm-acf-integration-acf-field.php:417
+#: includes/civicrm-acf-integration-acf-field.php:420
 msgid "Must be a number."
 msgstr ""
 
-#: includes/civicrm-acf-integration-acf-field.php:425
+#: includes/civicrm-acf-integration-acf-field.php:428
 msgid "Must be a valid money format."
 msgstr ""
 
-#: includes/civicrm-acf-integration-acf-field.php:433
+#: includes/civicrm-acf-integration-acf-field.php:436
 msgid "Only two decimal places please."
 msgstr ""
 
@@ -274,7 +274,7 @@ msgid "A numerical ID must be present to update an Activity."
 msgstr ""
 
 #: includes/civicrm-acf-integration-activity.php:942
-#: includes/civicrm-acf-integration-contact.php:985
+#: includes/civicrm-acf-integration-contact.php:1045
 msgid "Name not set"
 msgstr ""
 
@@ -283,14 +283,14 @@ msgid "Activity Fields"
 msgstr ""
 
 #: includes/civicrm-acf-integration-activity.php:1205
-#: includes/civicrm-acf-integration-contact.php:1328
+#: includes/civicrm-acf-integration-contact.php:1388
 #: includes/civicrm-acf-integration-custom-field.php:1398
 #: includes/civicrm-acf-integration-multiset.php:1050
 msgid "CiviCRM Field"
 msgstr ""
 
 #: includes/civicrm-acf-integration-activity.php:1208
-#: includes/civicrm-acf-integration-contact.php:1331
+#: includes/civicrm-acf-integration-contact.php:1391
 #: includes/civicrm-acf-integration-custom-field.php:1401
 #: includes/civicrm-acf-integration-multiset.php:1053
 msgid "Choose the CiviCRM Field that this ACF Field should sync with. (Optional)"
@@ -434,31 +434,35 @@ msgstr ""
 msgid "You must supply an option to site_option_delete()"
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact-field.php:416
+#: includes/civicrm-acf-integration-contact-field.php:429
 msgid "%d year"
 msgid_plural "%d years"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/civicrm-acf-integration-contact-field.php:424
+#: includes/civicrm-acf-integration-contact-field.php:437
 msgid "%d month"
 msgid_plural "%d months"
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/civicrm-acf-integration-contact-field.php:431
+#: includes/civicrm-acf-integration-contact-field.php:444
 msgid "Under a month"
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact.php:887
+#: includes/civicrm-acf-integration-contact-field.php:1080
+msgid "CiviCRM Contact Image"
+msgstr ""
+
+#: includes/civicrm-acf-integration-contact.php:947
 msgid "A numerical ID must be present to update a Contact."
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact.php:925
+#: includes/civicrm-acf-integration-contact.php:985
 msgid "A numerical ID must be present to delete a Contact."
 msgstr ""
 
-#: includes/civicrm-acf-integration-contact.php:1301
+#: includes/civicrm-acf-integration-contact.php:1361
 msgid "Contact Fields"
 msgstr ""
 
