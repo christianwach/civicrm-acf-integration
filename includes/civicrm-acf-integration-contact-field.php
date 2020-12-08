@@ -1099,7 +1099,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 
 				// Log as much as we can if there's an error.
 				if ( is_wp_error( $id ) ) {
-					$e = new \Exception;
+					$e = new \Exception();
 					$trace = $e->getTraceAsString();
 					error_log( print_r( [
 						'method' => __METHOD__,

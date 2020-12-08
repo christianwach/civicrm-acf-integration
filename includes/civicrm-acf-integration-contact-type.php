@@ -517,7 +517,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Type {
 
 		// Add log entry on failure.
 		if ( isset( $result['is_error'] ) AND $result['is_error'] == '1' ) {
-			$e = new Exception;
+			$e = new \Exception();
 			$trace = $e->getTraceAsString();
 			error_log( print_r( [
 				'method' => __METHOD__,

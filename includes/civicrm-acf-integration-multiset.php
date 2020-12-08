@@ -941,7 +941,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Multiple_Record_Set extends CiviCRM_ACF_In
 	 */
 	public function get_for_acf_field( $field ) {
 
-		$e = new \Exception;
+		$e = new \Exception();
 		$trace = $e->getTraceAsString();
 		error_log( print_r( [
 			'method' => __METHOD__,

@@ -380,7 +380,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity {
 
 		// Add log entry on failure.
 		if ( isset( $result['is_error'] ) AND $result['is_error'] == '1' ) {
-			$e = new Exception;
+			$e = new \Exception();
 			$trace = $e->getTraceAsString();
 			error_log( print_r( [
 				'method' => __METHOD__,
@@ -842,7 +842,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Activity {
 
 		// Log and bail if there's no Activity ID.
 		if ( empty( $activity['id'] ) ) {
-			$e = new Exception;
+			$e = new \Exception();
 			$trace = $e->getTraceAsString();
 			error_log( print_r( [
 				'method' => __METHOD__,

@@ -499,7 +499,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	 */
 	public function trace_pre( $op, $objectName, $objectId, $objectRef ) {
 
-		$e = new Exception;
+		$e = new \Exception();
 		$trace = $e->getTraceAsString();
 		error_log( print_r( [
 			'method' => __METHOD__,
@@ -526,7 +526,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	 */
 	public function trace_post( $op, $objectName, $objectId, $objectRef ) {
 
-		$e = new Exception;
+		$e = new \Exception();
 		$trace = $e->getTraceAsString();
 		error_log( print_r( [
 			'method' => __METHOD__,

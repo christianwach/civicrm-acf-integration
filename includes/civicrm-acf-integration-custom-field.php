@@ -762,7 +762,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Custom_Field {
 					 */
 
 					/*
-					$e = new Exception;
+					$e = new \Exception();
 					$trace = $e->getTraceAsString();
 					error_log( print_r( [
 						'method' => __METHOD__,

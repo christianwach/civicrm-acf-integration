@@ -108,7 +108,7 @@ class CiviCRM_ACF_Integration_ACF_Blocks {
 		];
 
 		/*
-		$e = new \Exception;
+		$e = new \Exception();
 		$trace = $e->getTraceAsString();
 		error_log( print_r( [
 			'method' => __METHOD__,
@@ -122,7 +122,7 @@ class CiviCRM_ACF_Integration_ACF_Blocks {
 		$result = acf_register_block_type( $block );
 
 		/*
-		$e = new \Exception;
+		$e = new \Exception();
 		$trace = $e->getTraceAsString();
 		error_log( print_r( [
 			'method' => __METHOD__,

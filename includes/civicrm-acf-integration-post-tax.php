@@ -403,7 +403,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 	public function term_deleted( $args ) {
 
 		/*
-		$e = new Exception;
+		$e = new \Exception();
 		$trace = $e->getTraceAsString();
 		error_log( print_r( [
 			'method' => __METHOD__,
@@ -468,7 +468,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 			 */
 
 			/*
-			$e = new Exception;
+			$e = new \Exception();
 			$trace = $e->getTraceAsString();
 			error_log( print_r( [
 				'method' => __METHOD__,
@@ -485,7 +485,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		if ( is_wp_error( $meta_id ) ) {
 
 			// Log error message.
-			$e = new Exception;
+			$e = new \Exception();
 			$trace = $e->getTraceAsString();
 			error_log( print_r( [
 				'method' => __METHOD__,
@@ -528,7 +528,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 
 		// Log something if there's an error.
 		if ( $meta_id === false ) {
-			$e = new Exception;
+			$e = new \Exception();
 			$trace = $e->getTraceAsString();
 			error_log( print_r( [
 				'method' => __METHOD__,
@@ -543,7 +543,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		if ( is_wp_error( $meta_id ) ) {
 
 			// Log error message.
-			$e = new Exception;
+			$e = new \Exception();
 			$trace = $e->getTraceAsString();
 			error_log( print_r( [
 				'method' => __METHOD__,
@@ -624,7 +624,7 @@ class CiviCRM_ACF_Integration_Post_Tax {
 		if ( is_wp_error( $terms ) ) {
 
 			// Write error message.
-			$e = new Exception;
+			$e = new \Exception();
 			$trace = $e->getTraceAsString();
 			error_log( print_r( [
 				'method' => __METHOD__,
