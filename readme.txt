@@ -16,7 +16,7 @@ Enables integration between CiviCRM Entities and WordPress Entities with data sy
 
 *CiviCRM ACF Integration* enables integration between CiviCRM Entities and WordPress Entities with data synced via Advanced Custom Fields.
 
-Please be aware that this plugin is at an early stage of development and — although it is limited in its coverage of the entities that can be linked — it is fairly comprehensive in its mapping of the built-in CiviCRM *Custom Field Types* with their corresponding ACF *Field Types*.
+Please be aware that this plugin is at an early stage of development and - although it is limited in its coverage of the entities that can be linked - it is fairly comprehensive in its mapping of the built-in CiviCRM *Custom Field Types* with their corresponding ACF *Field Types*.
 
 So if, for now, you want to display (or create) a Contact Type on your WordPress site with ACF Fields that contain synced CiviCRM data, this plugin could work for you.
 
@@ -47,7 +47,7 @@ At present the *CiviCRM ACF Integration* plugin allows you to specify links betw
 
 #### CiviCRM Contact Types and WordPress Custom Post Types
 
-To link these together, in CiviCRM go to *Administer* —> *Customize Data and Screens* —> *Contact Types* and edit a Contact Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Contact Type you are editing. Choose one and save the Contact Type.
+To link these together, in CiviCRM go to *Administer* -> *Customize Data and Screens* -> *Contact Types* and edit a Contact Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Contact Type you are editing. Choose one and save the Contact Type.
 
 From now on, each time you create a Contact of the Contact Type that you have linked, a new WordPress Post will be created. The "Display Name" of the Contact will become the WordPress Post Title. And - in the reverse direction - each time you create a WordPress Post which is of the Post Type you have linked to a Contact Type, a new Contact will be created with their "Display Name" set to the Title of the new Post.
 
@@ -59,7 +59,7 @@ If you want to make the same kind of links between Events in WordPress and CiviC
 
 #### CiviCRM Activity Types and WordPress Custom Post Types
 
-To link these together, in CiviCRM go to *Administer* —> *Customize Data and Screens* —> *Activity Types* and edit an Activity Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Activity Type you are editing. Choose one and save the Activity Type.
+To link these together, in CiviCRM go to *Administer* -> *Customize Data and Screens* -> *Activity Types* and edit an Activity Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Activity Type you are editing. Choose one and save the Activity Type.
 
 From now on, each time you create an Activity of the Activity Type that you have linked, a new WordPress Post will be created. The "Subject" of the Activity will become the WordPress Post Title. And - in the reverse direction - each time you create a WordPress Post which is of the Post Type you have linked to an Activity Type, a new Activity will be created with their "Subject" set to the Title of the new Post.
 
@@ -87,19 +87,19 @@ In each of these cases, choose the ACF Field Type, modify the Field Settings as 
 
 The following are the Contact Fields and the kind of ACF Field needed to map them to CiviCRM:
 
-* Prefix & Suffix — ACF Select
-* First Name, Middle Name, Last Name — ACF Text
-* Email — ACF Email
-* Website — ACF Link
+* Prefix & Suffix - ACF Select
+* First Name, Middle Name, Last Name - ACF Text
+* Email - ACF Email
+* Website - ACF Link
 * Address - ACF Google Map (only available in ACF Pro)
-* Gender — ACF Radio Button
+* Gender - ACF Radio Button
 * Date of Birth & Date of Death - ACF Date Picker
 * Deceased - ACF True/False
 * Job Title, Source & Nickname - ACF Text
-* Employer - ACF CiviCRM Contact (see "Custom ACF Fields" below)
+* Employer - ACF CiviCRM Contact Reference (see "Custom ACF Fields" below)
 * Phone - ACF CiviCRM Phone (see "Custom ACF Fields" below)
 * Instant Messenger - ACF CiviCRM Instant Messenger (see "Custom ACF Fields" below)
-* Contact Image — ACF Image
+* Contact Image - ACF Image
 
 When you select a Field Type for an ACF Field, the "CiviCRM Field" dropdown in the ACF Field's Settings will only show you those CiviCRM Contact Fields which can be mapped to this type of ACF Field.
 
@@ -109,7 +109,7 @@ When you select a Field Type for an ACF Field, the "CiviCRM Field" dropdown in t
 When creating a Custom Field in CiviCRM, you need to specify the kind of Data Type that it is - e.g. "Alphanumeric", "Integer", "Number", etc - followed by the Field Type - e.g. "Text", "Select", "Radio", etc. The Field Type pretty much corresponds to the kind of ACF Field that will map to the Custom Field. When you select a Field Type for an ACF Field, the "CiviCRM Field" dropdown in the ACF Field's Settings will only show you those CiviCRM Custom Fields which can be mapped to this type of ACF Field.
 
 
-#### ACF Custom Fields
+#### Custom ACF Fields
 
 The *CiviCRM ACF Integration* plugin also provides a number of custom ACF Fields which you will see as choices in the "Field Type" dropdown when you add a new ACF Field to a Field Group. These are:
 
