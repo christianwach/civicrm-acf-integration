@@ -54,6 +54,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 	 */
 	public $contact_fields_common = [
 		'nick_name' => 'text',
+		'image_URL' => 'image',
 	];
 
 	/**
@@ -77,7 +78,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		'is_deceased' => 'true_false',
 		'deceased_date' => 'date_picker',
 		'employer_id' => 'civicrm_contact',
-		'image_URL' => 'image',
 	];
 
 	/**
