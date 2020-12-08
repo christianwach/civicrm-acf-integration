@@ -1052,109 +1052,109 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 			// Get Contact ID for this ACF "Post ID".
 			$contact_id = $this->plugin->acf->field->query_contact_id( $post_id );
 
-			// Proceed if we get a value.
-			if ( $contact_id !== false ) {
+			// Can't proceed if there's no Contact ID.
+			if ( $contact_id === false ) {
+				return '';
+			}
 
-				// Get full Contact data.
-				$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
+			// Get full Contact data.
+			$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
 
-				// Overwrite value with current Image URL.
-				$url = $contact['image_URL'];
+			// Overwrite value with current Image URL.
+			$url = $contact['image_URL'];
 
-				// Maybe fix the following function.
-				add_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10, 2 );
+			// Maybe fix the following function.
+			add_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10, 2 );
 
-				// First check for an existing Attachment ID.
-				$possible_id = attachment_url_to_postid( $url );
+			// First check for an existing Attachment ID.
+			$possible_id = attachment_url_to_postid( $url );
 
-				// Remove the fix.
-				remove_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10 );
+			// Remove the fix.
+			remove_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10 );
 
-				// If no Attachment ID is found.
-				if ( $possible_id === 0 ) {
+			// If no Attachment ID is found.
+			if ( $possible_id === 0 ) {
 
-					// Grab the filename as the "title" if we can.
-					if ( false === strpos( $url, 'photo=' ) ) {
-						$title = __( 'CiviCRM Contact Image', 'civicrm-acf-integration' );
-					} else {
-						$title = explode( 'photo=', $url )[1];
-					}
-
-					// Possibly include the required files.
-					require_once ABSPATH . 'wp-admin/includes/media.php';
-					require_once ABSPATH . 'wp-admin/includes/file.php';
-					require_once ABSPATH . 'wp-admin/includes/image.php';
-
-					// Only assign to a Post if the ACF "Post ID" is numeric.
-					if ( ! is_numeric( $post_id ) ) {
-						$target_post_id = null;
-					} else {
-						$target_post_id = $post_id;
-					}
-
-					// Transfer the CiviCRM Contact Image to WordPress and grab ID.
-					$id = media_sideload_image( $url, $post_id, $title, 'id' );
-
-					// Log as much as we can if there's an error.
-					if ( is_wp_error( $id ) ) {
-						$e = new \Exception;
-						$trace = $e->getTraceAsString();
-						error_log( print_r( array(
-							'method' => __METHOD__,
-							'error' => $id,
-							'value' => $value,
-							'name' => $name,
-							'selector' => $selector,
-							'post_id' => $post_id,
-							'existing' => $existing,
-							'contact' => $contact,
-							//'backtrace' => $trace,
-						), true ) );
-						return '';
-					}
-
-					// Grab the the full size Image data.
-					$url = wp_get_attachment_image_url( (int) $id, 'full' );
-
-					// Remove all internal CiviCRM hooks.
-					$this->plugin->mapper->hooks_civicrm_remove();
-
-					/**
-					 * Broadcast that we're about to reverse-sync to a Contact.
-					 *
-					 * @since 0.8.1
-					 *
-					 * @param $contact_data The array of Contact data.
-					 */
-					do_action( 'cai/contact_field/reverse_sync/pre' );
-
-					// Bare-bones data.
-					$contact_data = [
-						'id' => $contact_id,
-						'image_URL' => $url,
-					];
-
-					// Save the Attachment URL back to the Contact.
-					$result = $this->civicrm->contact->update( $contact_data );
-
-					// Restore all internal CiviCRM hooks.
-					$this->plugin->mapper->hooks_civicrm_add();
-
-					/**
-					 * Broadcast that we have reverse-synced to a Contact.
-					 *
-					 * @since 0.8.1
-					 *
-					 * @param $contact_data The array of Contact data.
-					 */
-					do_action( 'cai/contact_field/reverse_sync/post', $contact_data );
-
+				// Grab the filename as the "title" if we can.
+				if ( false === strpos( $url, 'photo=' ) ) {
+					$title = __( 'CiviCRM Contact Image', 'civicrm-acf-integration' );
 				} else {
-
-					// Let's use this Attachment ID.
-					$id = $possible_id;
-
+					$title = explode( 'photo=', $url )[1];
 				}
+
+				// Only assign to a Post if the ACF "Post ID" is numeric.
+				if ( ! is_numeric( $post_id ) ) {
+					$target_post_id = null;
+				} else {
+					$target_post_id = $post_id;
+				}
+
+				// Possibly include the required files.
+				require_once ABSPATH . 'wp-admin/includes/media.php';
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+				require_once ABSPATH . 'wp-admin/includes/image.php';
+
+				// Transfer the CiviCRM Contact Image to WordPress and grab ID.
+				$id = media_sideload_image( $url, $target_post_id, $title, 'id' );
+
+				// Log as much as we can if there's an error.
+				if ( is_wp_error( $id ) ) {
+					$e = new \Exception;
+					$trace = $e->getTraceAsString();
+					error_log( print_r( array(
+						'method' => __METHOD__,
+						'error' => $id,
+						'value' => $value,
+						'name' => $name,
+						'selector' => $selector,
+						'post_id' => $post_id,
+						'existing' => $existing,
+						'contact' => $contact,
+						//'backtrace' => $trace,
+					), true ) );
+					return '';
+				}
+
+				// Grab the the full size Image data.
+				$url = wp_get_attachment_image_url( (int) $id, 'full' );
+
+				// Remove all internal CiviCRM hooks.
+				$this->plugin->mapper->hooks_civicrm_remove();
+
+				/**
+				 * Broadcast that we're about to reverse-sync to a Contact.
+				 *
+				 * @since 0.8.1
+				 *
+				 * @param $contact_data The array of Contact data.
+				 */
+				do_action( 'cai/contact_field/reverse_sync/pre' );
+
+				// Bare-bones data.
+				$contact_data = [
+					'id' => $contact_id,
+					'image_URL' => $url,
+				];
+
+				// Save the Attachment URL back to the Contact.
+				$result = $this->civicrm->contact->update( $contact_data );
+
+				/**
+				 * Broadcast that we have reverse-synced to a Contact.
+				 *
+				 * @since 0.8.1
+				 *
+				 * @param $contact_data The array of Contact data.
+				 */
+				do_action( 'cai/contact_field/reverse_sync/post', $contact_data );
+
+				// Restore all internal CiviCRM hooks.
+				$this->plugin->mapper->hooks_civicrm_add();
+
+			} else {
+
+				// Let's use this Attachment ID.
+				$id = $possible_id;
 
 			}
 

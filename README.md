@@ -87,6 +87,7 @@ The following are the Contact Fields and the kind of ACF Field needed to map the
 * Employer — ACF CiviCRM Contact (see "Custom ACF Fields" below)
 * Phone — ACF CiviCRM Phone (see "Custom ACF Fields" below)
 * Instant Messenger — ACF CiviCRM Instant Messenger (see "Custom ACF Fields" below)
+* Contact Image — ACF Image
 
 When you select a Field Type for an ACF Field, the "CiviCRM Field" dropdown in the ACF Field's Settings will only show you those CiviCRM Contact Fields which can be mapped to this type of ACF Field.
 
