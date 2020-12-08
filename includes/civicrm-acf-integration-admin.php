@@ -57,8 +57,8 @@ class CiviCRM_ACF_Integration_Admin {
 	 * @var object $step_counts The array of item counts to process per AJAX request.
 	 */
 	public $step_counts = array(
-		'contact_post_types' => 10, // Number of Contact Posts per WordPress Post Type.
-		'contact_types' => 10, // Number of Contacts per CiviCRM Contact Type.
+		'contact_post_types' => 5, // Number of Contact Posts per WordPress Post Type.
+		'contact_types' => 5, // Number of Contacts per CiviCRM Contact Type.
 		'groups' => 10, // Number of Group Members per CiviCRM Group.
 		'activity_post_types' => 10, // Number of Activity Posts per WordPress Post Type.
 		'activity_types' => 10, // Number of Activities per CiviCRM Activity Type.
@@ -331,11 +331,11 @@ class CiviCRM_ACF_Integration_Admin {
 			'groups' => $groups,
 			'activity_post_types' => $activity_post_types,
 			'activity_types' => $activity_types,
-			'step_contact_post_types' => $this->step_counts['contact_post_types'],
-			'step_contact_types' => $this->step_counts['contact_types'],
-			'step_groups' => $this->step_counts['groups'],
-			'step_activity_post_types' => $this->step_counts['activity_post_types'],
-			'step_activity_types' => $this->step_counts['activity_types'],
+			'step_contact_post_types' => $this->step_count_get( 'contact_post_types' ),
+			'step_contact_types' => $this->step_count_get( 'contact_types' ),
+			'step_groups' => $this->step_count_get( 'groups' ),
+			'step_activity_post_types' => $this->step_count_get( 'activity_post_types' ),
+			'step_activity_types' => $this->step_count_get( 'activity_types' ),
 		];
 
 		// Init localisation.
@@ -1031,7 +1031,7 @@ class CiviCRM_ACF_Integration_Admin {
 		$args = [
 			'post_type' => $contact_post_type,
 			'no_found_rows' => true,
-			'numberposts' => $this->step_counts['contact_post_types'],
+			'numberposts' => $this->step_count_get( 'contact_post_types' ),
 			'offset' => $offset,
 		];
 
@@ -1045,10 +1045,10 @@ class CiviCRM_ACF_Integration_Admin {
 			$data['finished'] = 'false';
 
 			// Are there less items than the step count?
-			if ( count( $posts ) < $this->step_counts['contact_post_types'] ) {
+			if ( count( $posts ) < $this->step_count_get( 'contact_post_types' ) ) {
 				$diff = count( $posts );
 			} else {
-				$diff = $this->step_counts['contact_post_types'];
+				$diff = $this->step_count_get( 'contact_post_types' );
 			}
 
 			// Set from and to flags.
@@ -1179,7 +1179,7 @@ class CiviCRM_ACF_Integration_Admin {
 			$result = $this->plugin->civicrm->contact->contacts_chunked_data_get(
 				$contact_type_id,
 				$offset,
-				$this->step_counts['contact_types']
+				$this->step_count_get( 'contact_types' )
 			);
 
 		} else {
@@ -1210,10 +1210,10 @@ class CiviCRM_ACF_Integration_Admin {
 			$data['finished'] = 'false';
 
 			// Are there fewer items than the step count?
-			if ( count( $result['values'] ) < $this->step_counts['contact_types'] ) {
+			if ( count( $result['values'] ) < $this->step_count_get( 'contact_types' ) ) {
 				$diff = count( $result['values'] );
 			} else {
-				$diff = $this->step_counts['contact_types'];
+				$diff = $this->step_count_get( 'contact_types' );
 			}
 
 			// Set "from" and "to" flags.
@@ -1330,7 +1330,7 @@ class CiviCRM_ACF_Integration_Admin {
 		$args = [
 			'post_type' => $activity_post_type,
 			'no_found_rows' => true,
-			'numberposts' => $this->step_counts['activity_post_types'],
+			'numberposts' => $this->step_count_get( 'activity_post_types' ),
 			'offset' => $offset,
 		];
 
@@ -1344,10 +1344,10 @@ class CiviCRM_ACF_Integration_Admin {
 			$data['finished'] = 'false';
 
 			// Are there less items than the step count?
-			if ( count( $posts ) < $this->step_counts['activity_post_types'] ) {
+			if ( count( $posts ) < $this->step_count_get( 'activity_post_types' ) ) {
 				$diff = count( $posts );
 			} else {
-				$diff = $this->step_counts['activity_post_types'];
+				$diff = $this->step_count_get( 'activity_post_types' );
 			}
 
 			// Set from and to flags.
@@ -1477,7 +1477,7 @@ class CiviCRM_ACF_Integration_Admin {
 			$result = $this->plugin->civicrm->activity->activities_chunked_data_get(
 				$activity_type_id,
 				$offset,
-				$this->step_counts['activity_types']
+				$this->step_count_get( 'activity_types' )
 			);
 
 		} else {
@@ -1508,10 +1508,10 @@ class CiviCRM_ACF_Integration_Admin {
 			$data['finished'] = 'false';
 
 			// Are there fewer items than the step count?
-			if ( count( $result['values'] ) < $this->step_counts['activity_types'] ) {
+			if ( count( $result['values'] ) < $this->step_count_get( 'activity_types' ) ) {
 				$diff = count( $result['values'] );
 			} else {
-				$diff = $this->step_counts['activity_types'];
+				$diff = $this->step_count_get( 'activity_types' );
 			}
 
 			// Set "from" and "to" flags.
@@ -1615,7 +1615,7 @@ class CiviCRM_ACF_Integration_Admin {
 			$result = $this->plugin->civicrm->group->group_contacts_chunked_data_get(
 				$group_id,
 				$offset,
-				$this->step_counts['groups']
+				$this->step_count_get( 'groups' )
 			);
 
 		} else {
@@ -1646,10 +1646,10 @@ class CiviCRM_ACF_Integration_Admin {
 			$data['finished'] = 'false';
 
 			// Are there fewer items than the step count?
-			if ( count( $result['values'] ) < $this->step_counts['groups'] ) {
+			if ( count( $result['values'] ) < $this->step_count_get( 'groups' ) ) {
 				$diff = count( $result['values'] );
 			} else {
-				$diff = $this->step_counts['groups'];
+				$diff = $this->step_count_get( 'groups' );
 			}
 
 			// Set "from" and "to" flags.
@@ -1764,6 +1764,64 @@ class CiviCRM_ACF_Integration_Admin {
 		delete_option( $option );
 
 	}
+
+
+
+	// -------------------------------------------------------------------------
+
+
+
+	/**
+	 * Get all step counts.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param array $step_counts The array of step counts.
+	 */
+	public function step_counts_get() {
+
+		/**
+		 * Filter the step counts.
+		 *
+		 * @since 0.8.2
+		 *
+		 * @param array $step_counts The default step counts.
+		 * @return array $step_counts The filtered step counts.
+		 */
+		return apply_filters( 'cai/step_counts/get', $this->step_counts );
+
+	}
+
+
+
+	/**
+	 * Get the step count for a given mapping.
+	 *
+	 * There's no error-checking here. Make sure the $mapping param is correct.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param str $mapping The type of mapping.
+	 * @param int $step_count The number of items to sync for this mapping.
+	 */
+	public function step_count_get( $type ) {
+
+		// Only call getter once.
+		static $step_counts = [];
+
+		// Get all step counts.
+		if ( empty( $step_counts ) ) {
+			$step_counts = $this->step_counts_get();
+		}
+
+		// Return the value for the given key.
+		return $step_counts[$type];
+
+	}
+
+
+
+	// -------------------------------------------------------------------------
 
 
 
