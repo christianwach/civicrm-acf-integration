@@ -541,7 +541,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	public function hooks_civicrm_group_add() {
 
 		// Intercept Group updates in CiviCRM.
-		add_action( 'civicrm_pre', array( $this, 'group_deleted_pre' ), 10, 4 );
+		add_action( 'civicrm_pre', [ $this, 'group_deleted_pre' ], 10, 4 );
 
 	}
 
@@ -769,7 +769,7 @@ class CiviCRM_ACF_Integration_Mapper {
 	public function hooks_civicrm_group_remove() {
 
 		// Remove Group update hooks.
-		remove_action( 'civicrm_pre', array( $this, 'group_deleted_pre' ), 10 );
+		remove_action( 'civicrm_pre', [ $this, 'group_deleted_pre' ], 10 );
 
 	}
 

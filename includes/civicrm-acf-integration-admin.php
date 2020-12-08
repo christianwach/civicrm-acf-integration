@@ -56,13 +56,13 @@ class CiviCRM_ACF_Integration_Admin {
 	 * @access public
 	 * @var object $step_counts The array of item counts to process per AJAX request.
 	 */
-	public $step_counts = array(
+	public $step_counts = [
 		'contact_post_types' => 5, // Number of Contact Posts per WordPress Post Type.
 		'contact_types' => 5, // Number of Contacts per CiviCRM Contact Type.
 		'groups' => 10, // Number of Group Members per CiviCRM Group.
 		'activity_post_types' => 10, // Number of Activity Posts per WordPress Post Type.
 		'activity_types' => 10, // Number of Activities per CiviCRM Activity Type.
-	);
+	];
 
 
 
@@ -158,11 +158,11 @@ class CiviCRM_ACF_Integration_Admin {
 		add_action( 'add_meta_boxes', [ $this, 'meta_boxes_add' ], 11, 1 );
 
 		// Add AJAX handlers.
-		add_action( 'wp_ajax_sync_posts_to_contacts', array( $this, 'stepped_sync_posts_to_contacts' ) );
-		add_action( 'wp_ajax_sync_contacts_to_posts', array( $this, 'stepped_sync_contacts_to_posts' ) );
-		add_action( 'wp_ajax_sync_groups_to_terms', array( $this, 'stepped_sync_groups_to_terms' ) );
-		add_action( 'wp_ajax_sync_posts_to_activities', array( $this, 'stepped_sync_posts_to_activities' ) );
-		add_action( 'wp_ajax_sync_activities_to_posts', array( $this, 'stepped_sync_activities_to_posts' ) );
+		add_action( 'wp_ajax_sync_posts_to_contacts', [ $this, 'stepped_sync_posts_to_contacts' ] );
+		add_action( 'wp_ajax_sync_contacts_to_posts', [ $this, 'stepped_sync_contacts_to_posts' ] );
+		add_action( 'wp_ajax_sync_groups_to_terms', [ $this, 'stepped_sync_groups_to_terms' ] );
+		add_action( 'wp_ajax_sync_posts_to_activities', [ $this, 'stepped_sync_posts_to_activities' ] );
+		add_action( 'wp_ajax_sync_activities_to_posts', [ $this, 'stepped_sync_activities_to_posts' ] );
 
 	}
 
@@ -1136,7 +1136,7 @@ class CiviCRM_ACF_Integration_Admin {
 	public function stepped_sync_contacts_to_posts( $entity = null ) {
 
 		// Init AJAX return.
-		$data = array();
+		$data = [];
 
 		// Sanitise input.
 		if ( ! wp_doing_ajax() ) {
@@ -1434,7 +1434,7 @@ class CiviCRM_ACF_Integration_Admin {
 	public function stepped_sync_activities_to_posts( $entity = null ) {
 
 		// Init AJAX return.
-		$data = array();
+		$data = [];
 
 		// Sanitise input.
 		if ( ! wp_doing_ajax() ) {
@@ -1572,7 +1572,7 @@ class CiviCRM_ACF_Integration_Admin {
 	public function stepped_sync_groups_to_terms( $entity = null ) {
 
 		// Init AJAX return.
-		$data = array();
+		$data = [];
 
 		// Sanitise input.
 		if ( ! wp_doing_ajax() ) {

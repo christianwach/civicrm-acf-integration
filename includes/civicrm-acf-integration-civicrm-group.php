@@ -80,7 +80,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Group {
 	public function register_hooks() {
 
 		// Intercept prior to a CiviCRM Group being deleted.
-		add_action( 'civicrm_acf_integration_mapper_group_deleted_pre', array( $this, 'group_deleted_pre' ), 10 );
+		add_action( 'civicrm_acf_integration_mapper_group_deleted_pre', [ $this, 'group_deleted_pre' ], 10 );
 
 		// Intercept CiviCRM's add Contacts to Group.
 		add_action( 'civicrm_acf_integration_mapper_group_contacts_created', [ $this, 'group_contacts_created' ], 10 );
@@ -128,7 +128,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Group {
 
 				// Get params.
 				$group_id = $group_membership['group_id'];
-				$contact_ids = array( $args['objectId'] );
+				$contact_ids = [ $args['objectId'] ];
 
 				// Sync this Group Contact to WordPress Terms.
 				$this->plugin->post->tax->terms_update_for_group_contacts( $group_id, $contact_ids, 'add' );
@@ -142,7 +142,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Group {
 
 				// Get params.
 				$group_id = $group_membership['group_id'];
-				$contact_ids = array( $args['objectId'] );
+				$contact_ids = [ $args['objectId'] ];
 
 				// Sync this Group Contact to WordPress Terms.
 				$this->plugin->post->tax->terms_update_for_group_contacts( $group_id, $contact_ids, 'remove' );

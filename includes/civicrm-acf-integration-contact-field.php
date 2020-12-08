@@ -1101,7 +1101,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 				if ( is_wp_error( $id ) ) {
 					$e = new \Exception;
 					$trace = $e->getTraceAsString();
-					error_log( print_r( array(
+					error_log( print_r( [
 						'method' => __METHOD__,
 						'error' => $id,
 						'value' => $value,
@@ -1111,7 +1111,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 						'existing' => $existing,
 						'contact' => $contact,
 						//'backtrace' => $trace,
-					), true ) );
+					], true ) );
 					return '';
 				}
 

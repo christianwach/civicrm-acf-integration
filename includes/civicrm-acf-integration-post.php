@@ -432,13 +432,13 @@ class CiviCRM_ACF_Integration_Post {
 		$url = $this->plugin->civicrm->get_link( 'civicrm/contact/view', 'reset=1&cid=' . $contact_id );
 
 		// Add item to menu.
-		$wp_admin_bar->add_node( array(
+		$wp_admin_bar->add_node( [
 			'id' => 'cau-0',
 			'parent' => $id,
 			//'parent' => 'edit',
 			'title' => __( 'View in CiviCRM', 'civicrm-acf-integration' ),
 			'href' => $url,
-		) );
+		] );
 
 	}
 
