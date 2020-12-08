@@ -169,7 +169,7 @@ Syncs between the ACF Field and a CiviCRM Yes/No Custom Field. This Field Type i
 
 #### Bulk changes via the CiviCRM Contact Edit screen
 
-Wholesale changes via the CiviCRM Contact Edit screen may not yet be fully supported. Please open [an issue on GitHub](https://github.com/christianwach/civicrm-acf-integration/issues) if you find anything that needs fixing.
+Wholesale changes via the CiviCRM Contact Edit screen should be fully supported. However, there's a lot going on when Contacts are saved that way, so please [an issue on GitHub](https://github.com/christianwach/civicrm-acf-integration/issues) if you find anything that needs fixing.
 
 
 ##### Changes to Custom Field settings
