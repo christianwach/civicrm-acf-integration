@@ -34,6 +34,7 @@ At present the *CiviCRM ACF Integration* plugin allows you to specify links betw
 
 * CiviCRM Contact Types and WordPress Custom Post Types
 * CiviCRM Events and Event Organiser Events
+* CiviCRM Activity Types and WordPress Custom Post Types
 * More entity links to follow...
 
 ### CiviCRM Contact Types and WordPress Custom Post Types
@@ -48,7 +49,7 @@ If you want to make the same kind of links between Events in WordPress and CiviC
 
 *Important note:* Please make sure you have *CiviCRM Event Organiser* version 0.6 or greater.
 
-### CiviCRM Activities and WordPress Custom Post Types
+### CiviCRM Activity Types and WordPress Custom Post Types
 
 To link these together, in CiviCRM go to *Administer* —> *Customize Data and Screens* —> *Activity Types* and edit an Activity Type. You will see a dropdown that allows you to choose a WordPress Post Type to link to the Activity Type you are editing. Choose one and save the Activity Type.
 
@@ -97,19 +98,23 @@ When creating a Custom Field in CiviCRM, you need to specify the kind of Data Ty
 
 ### ACF Custom Fields
 
-The *CiviCRM ACF Integration* plugin also provides three custom ACF Fields which you will see as choices in the "Field Type" dropdown when you add a new ACF Field to a Field Group. These are:
+The *CiviCRM ACF Integration* plugin also provides a number of custom ACF Fields which you will see as choices in the "Field Type" dropdown when you add a new ACF Field to a Field Group. These are:
 
-#### CiviCRM Contact
+#### CiviCRM Contact ID
+
+Populates with the numeric ID of the synced CiviCRM Contact.
+
+#### CiviCRM Contact Reference
 
 Syncs with either a CiviCRM "Contact Reference" Custom Field or the "Current Employer" Contact Field.
-
-#### CiviCRM Relationship
-
-Syncs between the ACF Field and a CiviCRM Relationship.
 
 #### CiviCRM Yes/No
 
 Syncs between the ACF Field and a CiviCRM Yes/No Custom Field. This Field Type is necessary because a CiviCRM Yes/No Custom Field is actually a Yes/No/Unknown field and the ACF True-False Field does not allow Unknown.
+
+#### CiviCRM Relationship
+
+Syncs between the ACF Field and a CiviCRM Relationship.
 
 #### CiviCRM Phone
 
@@ -152,6 +157,18 @@ Syncs between the ACF Field and a CiviCRM Yes/No Custom Field. This Field Type i
 <p><strong><?php _e( 'All IMs as list: ', 'your-slug' ). ' '; ?></strong></p>
 <?php echo cacf_get_ims( 'im_field' ); ?>
 ```
+
+#### CiviCRM Activity Creator
+
+Syncs between the ACF Field and the Creator of a CiviCRM Activity.
+
+#### CiviCRM Activity Target
+
+Syncs between the ACF Field and the Targets of a CiviCRM Activity.
+
+#### CiviCRM Activity Assignee
+
+Syncs between the ACF Field and the Assignee of a CiviCRM Activity.
 
 ## Outstanding Issues
 
