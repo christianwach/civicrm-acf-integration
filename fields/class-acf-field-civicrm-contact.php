@@ -84,7 +84,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 	 * @access public
 	 * @var str $label The Field Type category.
 	 */
-	public $category = 'relational';
+	public $category = 'CiviCRM';
 
 	/**
 	 * Field Type defaults.
@@ -150,7 +150,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field extends acf_field {
 		$this->civicrm = $this->plugin->civicrm;
 
 		// Define label.
-		$this->label = __( 'CiviCRM Contact', 'civicrm-acf-integration' );
+		$this->label = __( 'CiviCRM Contact Reference', 'civicrm-acf-integration' );
 
 		// Define translations.
 		$this->l10n = [

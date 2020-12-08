@@ -84,7 +84,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Multiple_Record_Set extends acf_fie
 	 * @access public
 	 * @var str $label The Field Type category.
 	 */
-	public $category = 'layout';
+	public $category = 'CiviCRM';
 
 	/**
 	 * Field Type defaults.

@@ -75,7 +75,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field extends acf_field 
 	 * @access public
 	 * @var str $label The Field Type category.
 	 */
-	public $category = 'basic';
+	public $category = 'CiviCRM';
 
 	/**
 	 * Field Type defaults.

@@ -84,7 +84,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Instant_Messenger extends acf_field
 	 * @access public
 	 * @var str $label The Field Type category.
 	 */
-	public $category = 'basic';
+	public $category = 'CiviCRM';
 
 	/**
 	 * Field Type defaults.

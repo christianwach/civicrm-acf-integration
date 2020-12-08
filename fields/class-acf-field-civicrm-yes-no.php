@@ -84,7 +84,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No extends acf_field {
 	 * @access public
 	 * @var str $label The Field Type category.
 	 */
-	public $category = 'choice';
+	public $category = 'CiviCRM';
 
 	/**
 	 * Field Type defaults.
