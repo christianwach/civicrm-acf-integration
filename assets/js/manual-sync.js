@@ -253,7 +253,7 @@ var CiviCRM_ACF_Integration_Sync = CiviCRM_ACF_Integration_Sync || {};
 				action: me.action,
 				entity_id: me.entity_id,
 				_ajax_nonce: me.ajax_nonce
-			},
+			};
 
 			// Use jQuery post method.
 			$.post( url, data,
