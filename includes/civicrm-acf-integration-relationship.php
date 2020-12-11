@@ -611,6 +611,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 				// Okay, let's do it.
 				$relationship = $this->relationship_create( $contact_id_a, $contact_id_b, $relationship_type_id );
 
+				// Continue on failure.
+				if ( $relationship === false ) {
+					continue;
+				}
+
 				// Add to return array.
 				$relationships[] = $relationship;
 
@@ -735,8 +740,16 @@ class CiviCRM_ACF_Integration_CiviCRM_Relationship extends CiviCRM_ACF_Integrati
 		// Call the CiviCRM API.
 		$result = civicrm_api( 'Relationship', 'create', $params );
 
-		// Bail if there's an error.
+		// Log and bail if there's an error.
 		if ( ! empty( $result['is_error'] ) AND $result['is_error'] == 1 ) {
+			$e = new \Exception();
+			$trace = $e->getTraceAsString();
+			error_log( print_r( [
+				'method' => __METHOD__,
+				'params' => $params,
+				'result' => $result,
+				'backtrace' => $trace,
+			], true ) );
 			return $relationship;
 		}
 
