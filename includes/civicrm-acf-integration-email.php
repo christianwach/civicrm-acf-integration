@@ -664,6 +664,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Email extends CiviCRM_ACF_Integration_Civi
 
 		// Data may be missing for some operations, so get the full Email record.
 		$email = $this->primary_email_get( $email_data->contact_id );
+		if ( empty( $email->contact_id ) ) {
+			return;
+		}
 
 		// Test if any of this Contact's Contact Types is mapped to a Post Type.
 		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
