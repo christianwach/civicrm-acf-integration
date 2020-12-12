@@ -38,18 +38,18 @@ jQuery(document).ready(function($) {
 	function cai_primary_phone_selector() {
 
 		// Declare vars.
-		var radios = $('.acf-field.civicrm_phone'),
-			target = '.acf-input ul.acf-radio-list li label input';
+		var scope = $('.acf-field.civicrm_phone'),
+			radios = '.acf-input ul.acf-radio-list li label input';
 
 		// Unbind first to allow repeated calls to this function.
-		radios.off( 'click', target );
+		scope.off( 'click', radios );
 
 		/**
 		 * Callback for clicks on the "Primary Phone Record" radio buttons.
 		 *
 		 * @since 0.7.3
 		 */
-		radios.on( 'click', target, function( event ) {
+		scope.on( 'click', radios, function( event ) {
 
 			// Prevent bubbling.
 			event.stopPropagation();
@@ -58,7 +58,7 @@ jQuery(document).ready(function($) {
 			var container, buttons;
 
 			// Get container element.
-			container = $(this).parents( 'tbody.ui-sortable' );
+			container = $(this).parents( 'table.acf-table tbody' );
 
 			// Get radio button elements.
 			buttons = $( 'ul.acf-radio-list li label input', container );
