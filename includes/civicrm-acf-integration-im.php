@@ -872,6 +872,9 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 		// Get the Contact data.
 		$contact = $this->plugin->civicrm->contact->get_by_id( $im->contact_id );
 
+		// Get originating Entity.
+		$entity = $this->plugin->mapper->entity_get();
+
 		// Test if any of this Contact's Contact Types is mapped to a Post Type.
 		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
 		if ( $post_types !== false ) {
@@ -884,6 +887,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 
 				// Skip if not mapped or Post doesn't yet exist.
 				if ( $post_id === false ) {
+					continue;
+				}
+
+				// Exclude "reverse" edits when a Post is the originator.
+				if ( $entity['entity'] === 'post' AND $post_id == $entity['id'] ) {
 					continue;
 				}
 
