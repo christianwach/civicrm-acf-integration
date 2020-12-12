@@ -140,6 +140,24 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	public $address;
 
 	/**
+	 * CiviCRM Addresses object.
+	 *
+	 * @since 0.8.2
+	 * @access public
+	 * @var object $addresses The CiviCRM Addresses object.
+	 */
+	public $addresses;
+
+	/**
+	 * CiviCRM Google Map object.
+	 *
+	 * @since 0.8.2
+	 * @access public
+	 * @var object $google_map The CiviCRM Google Map object.
+	 */
+	public $google_map;
+
+	/**
 	 * CiviCRM Activity Type object.
 	 *
 	 * @since 0.7.3
@@ -242,23 +260,29 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	 */
 	public function include_files() {
 
-		// Include class files.
-		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-civicrm-base.php';
+		// Include top-level Entity class files.
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-contact-type.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-contact.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-contact-field.php';
-		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-civicrm-group.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity-type.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity-field.php';
+
+		// Include Standalone class files.
 		//include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-custom-group.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-custom-field.php';
-		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-relationship.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-civicrm-group.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-address.php';
+
+		// Include Additional Entity class files.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-civicrm-base.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-addresses.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-google-map.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-relationship.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-email.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-website.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-phone.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-im.php';
-		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity-type.php';
-		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity.php';
-		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-activity-field.php';
 
 	}
 
@@ -271,32 +295,30 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	 */
 	public function setup_objects() {
 
-		// Init Contact Type.
+		// Init Contact Type, Contact and Contact Field objects.
 		$this->contact_type = new CiviCRM_ACF_Integration_CiviCRM_Contact_Type( $this );
-
-		// Init Contact and Contact Fields.
 		$this->contact = new CiviCRM_ACF_Integration_CiviCRM_Contact( $this );
 		$this->contact_field = new CiviCRM_ACF_Integration_CiviCRM_Contact_Field( $this );
 
-		// Init Group.
-		$this->group = new CiviCRM_ACF_Integration_CiviCRM_Group( $this );
+		// Init Activity Type, Activity and Activity Field objects.
+		$this->activity_type = new CiviCRM_ACF_Integration_CiviCRM_Activity_Type( $this );
+		$this->activity = new CiviCRM_ACF_Integration_CiviCRM_Activity( $this );
+		$this->activity_field = new CiviCRM_ACF_Integration_CiviCRM_Activity_Field( $this );
 
-		// Init Other Entities.
+		// Init Standalone objects.
 		//$this->custom_group = new CiviCRM_ACF_Integration_CiviCRM_Custom_Group( $this );
 		$this->custom_field = new CiviCRM_ACF_Integration_CiviCRM_Custom_Field( $this );
-		$this->relationship = new CiviCRM_ACF_Integration_CiviCRM_Relationship( $this );
+		$this->group = new CiviCRM_ACF_Integration_CiviCRM_Group( $this );
 		$this->address = new CiviCRM_ACF_Integration_CiviCRM_Address( $this );
+
+		// Init Additional Entity objects.
+		$this->addresses = new CiviCRM_ACF_Integration_CiviCRM_Addresses( $this );
+		$this->google_map = new CiviCRM_ACF_Integration_CiviCRM_Google_Map( $this );
+		$this->relationship = new CiviCRM_ACF_Integration_CiviCRM_Relationship( $this );
 		$this->email = new CiviCRM_ACF_Integration_CiviCRM_Email( $this );
 		$this->website = new CiviCRM_ACF_Integration_CiviCRM_Website( $this );
 		$this->phone = new CiviCRM_ACF_Integration_CiviCRM_Phone( $this );
 		$this->im = new CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger( $this );
-
-		// Init Activity Type.
-		$this->activity_type = new CiviCRM_ACF_Integration_CiviCRM_Activity_Type( $this );
-
-		// Init Activity and Activity Fields.
-		$this->activity = new CiviCRM_ACF_Integration_CiviCRM_Activity( $this );
-		$this->activity_field = new CiviCRM_ACF_Integration_CiviCRM_Activity_Field( $this );
 
 	}
 
@@ -327,11 +349,17 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	public function is_initialised() {
 
 		// Init only when CiviCRM is fully installed.
-		if ( ! defined( 'CIVICRM_INSTALLED' ) ) return false;
-		if ( ! CIVICRM_INSTALLED ) return false;
+		if ( ! defined( 'CIVICRM_INSTALLED' ) ) {
+			return false;
+		}
+		if ( ! CIVICRM_INSTALLED ) {
+			return false;
+		}
 
 		// Bail if no CiviCRM init function.
-		if ( ! function_exists( 'civi_wp' ) ) return false;
+		if ( ! function_exists( 'civi_wp' ) ) {
+			return false;
+		}
 
 		// Try and initialise CiviCRM.
 		return civi_wp()->initialize();

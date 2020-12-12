@@ -173,26 +173,28 @@ class CiviCRM_ACF_Integration_ACF {
 		// Include class files.
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-contact-id.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-contact.php';
-		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-yes-no.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-relationship.php';
-		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-creator.php';
-		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-target.php';
-		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-assignee.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-address.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-phone.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-im.php';
 		//include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-multiset.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-yes-no.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-creator.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-target.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-activity-assignee.php';
 
 		// Create fields.
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_ID_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Contact_Field( $this );
-		new CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship( $this );
-		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Creator( $this );
-		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Target( $this );
-		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Assignee( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Address_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Instant_Messenger( $this );
 		//new CiviCRM_ACF_Integration_Custom_CiviCRM_Multiple_Record_Set( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Yes_No( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Creator( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Target( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Activity_Assignee( $this );
 
 	}
 

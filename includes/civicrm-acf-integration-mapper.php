@@ -513,6 +513,7 @@ class CiviCRM_ACF_Integration_Mapper {
 		add_action( 'civicrm_pre', [ $this, 'address_pre_edit' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'address_created' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'address_edited' ], 10, 4 );
+		add_action( 'civicrm_pre', [ $this, 'address_pre_delete' ], 10, 4 );
 		add_action( 'civicrm_post', [ $this, 'address_deleted' ], 10, 4 );
 
 	}
@@ -741,6 +742,7 @@ class CiviCRM_ACF_Integration_Mapper {
 		remove_action( 'civicrm_pre', [ $this, 'address_pre_edit' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'address_created' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'address_edited' ], 10 );
+		remove_action( 'civicrm_pre', [ $this, 'address_pre_delete' ], 10 );
 		remove_action( 'civicrm_post', [ $this, 'address_deleted' ], 10 );
 
 	}
@@ -2039,6 +2041,51 @@ class CiviCRM_ACF_Integration_Mapper {
 		 * @param array $args The array of CiviCRM params.
 		 */
 		do_action( 'civicrm_acf_integration_mapper_address_edited', $args );
+
+	}
+
+
+
+	/**
+	 * Intercept when a CiviCRM Address is about to be deleted.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param string $op The type of database operation.
+	 * @param string $objectName The type of object.
+	 * @param integer $objectId The ID of the object.
+	 * @param object $objectRef The object.
+	 */
+	public function address_pre_delete( $op, $objectName, $objectId, $objectRef ) {
+
+		// Bail if not the context we want.
+		if ( $op != 'delete' ) {
+			return;
+		}
+
+		// Bail if this is not an Address.
+		if ( $objectName != 'Address' ) {
+			return;
+		}
+
+		// Let's make an array of the params.
+		$args = [
+			'op' => $op,
+			'objectName' => $objectName,
+			'objectId' => $objectId,
+		];
+
+		// Maybe cast objectRef as object.
+		$args['objectRef'] = is_object( $objectRef ) ? $objectRef : (object) $objectRef;
+
+		/**
+		 * Broadcast that a CiviCRM Address is about to be deleted.
+		 *
+		 * @since 0.8.2
+		 *
+		 * @param array $args The array of CiviCRM params.
+		 */
+		do_action( 'civicrm_acf_integration_mapper_address_pre_delete', $args );
 
 	}
 

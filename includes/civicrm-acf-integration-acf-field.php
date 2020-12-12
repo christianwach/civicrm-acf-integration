@@ -311,6 +311,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 				 *
 				 * - Relationship
 				 * - Address
+				 * - Google Map
 				 * - Email
 				 * - Website
 				 * - Phone
@@ -1232,7 +1233,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	public function google_map_setting_add( $field ) {
 
 		// Get the Address Fields for this CiviCRM Contact Type.
-		$address_fields = $this->plugin->civicrm->address->get_for_acf_field( $field );
+		$address_fields = $this->plugin->civicrm->google_map->get_for_acf_field( $field );
 
 		// Bail if there are no fields.
 		if ( empty( $address_fields ) ) {
@@ -1240,14 +1241,14 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		}
 
 		// Get Setting field.
-		$setting = $this->plugin->civicrm->address->acf_field_get( $address_fields );
+		$setting = $this->plugin->civicrm->google_map->acf_field_get( $address_fields );
 
 		// Now add it.
 		acf_render_field_setting( $field, $setting );
 
 		/*
 		// Get "Disable Edit" Setting field.
-		$edit_setting = $this->plugin->civicrm->address->acf_field_edit_get( $address_fields );
+		$edit_setting = $this->plugin->civicrm->google_map->acf_field_edit_get( $address_fields );
 
 		// Now add it.
 		acf_render_field_setting( $field, $edit_setting );
@@ -1273,13 +1274,13 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	public function google_map_setting_modify( $field ) {
 
 		// Bail if it's not a linked field.
-		$key = $this->plugin->civicrm->address->acf_field_key_get();
+		$key = $this->plugin->civicrm->google_map->acf_field_key_get();
 		if ( empty( $field[$key] ) ) {
 			return;
 		}
 
 		// Get the "Make Read Only" key.
-		$edit_key = $this->plugin->civicrm->address->acf_field_key_edit_get();
+		$edit_key = $this->plugin->civicrm->google_map->acf_field_key_edit_get();
 
 		// Always set to default if not set.
 		if ( ! isset( $field[$edit_key] ) ) {
@@ -1307,8 +1308,8 @@ class CiviCRM_ACF_Integration_ACF_Field {
 	 */
 	public function google_map_styles_add( $field ) {
 
-		// Get address key.
-		$key = $this->plugin->civicrm->address->acf_field_key_get();
+		// Get Google Map key.
+		$key = $this->plugin->civicrm->google_map->acf_field_key_get();
 
 		// Bail if it's not a linked field.
 		if ( empty( $field[$key] ) ) {
@@ -1316,7 +1317,7 @@ class CiviCRM_ACF_Integration_ACF_Field {
 		}
 
 		// Get the "Make Read Only" key.
-		$edit_key = $this->plugin->civicrm->address->acf_field_key_edit_get();
+		$edit_key = $this->plugin->civicrm->google_map->acf_field_key_edit_get();
 
 		// Only skip if it's explicitly *not* set to "Read Only".
 		if ( isset( $field[$edit_key] ) AND $field[$edit_key] !== 1 ) {
