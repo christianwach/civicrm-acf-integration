@@ -405,6 +405,14 @@ class CiviCRM_ACF_Integration_Post {
 		// Access WordPress admin bar.
 		global $wp_admin_bar, $post;
 
+		// Bail if the current screen is not an Edit screen.
+		if ( is_admin() ) {
+			$screen = get_current_screen();
+			if ( $screen instanceof WP_Screen AND $screen->base != 'post' ) {
+				return;
+			}
+		}
+
 		// Bail if there's no Post.
 		if ( empty( $post ) ) {
 			return;
