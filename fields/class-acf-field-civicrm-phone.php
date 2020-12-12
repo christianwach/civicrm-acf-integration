@@ -169,10 +169,25 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 	 * @since 0.7.3
 	 *
 	 * @param array $field The Field being edited.
+	 */
 	public function render_field_settings( $field ) {
 
+		// Define setting field.
+		$setting = [
+			'label' => __( 'CiviCRM Phone ID', 'civicrm-acf-integration' ),
+			'name' => 'show_phone_id',
+			'type' => 'true_false',
+			'ui' => 1,
+			'ui_on_text' => __( 'Show', 'civicrm-acf-integration' ),
+			'ui_off_text' => __( 'Hide', 'civicrm-acf-integration' ),
+			'default_value' => 0,
+			'required' => 0,
+		];
+
+		// Now add it.
+		acf_render_field_setting( $field, $setting );
+
 	}
-	 */
 
 
 
@@ -190,6 +205,30 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 
 		// Render.
 		acf_render_field( $field );
+
+	}
+
+
+
+	/**
+	 * Prepare this Field Type for display.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $field The Field being rendered.
+	 */
+	public function prepare_field( $field ) {
+
+		// Bail when Phone ID should be shown.
+		if( ! empty( $field['show_phone_id'] ) ) {
+			return $field;
+		}
+
+		// Add hidden class to element.
+		$field['wrapper']['class'] .= ' phone_id_hidden';
+
+		// --<
+		return $field;
 
 	}
 
@@ -262,8 +301,8 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 		echo '
 		<style type="text/css">
 			/* Hide Repeater column */
-			th[data-key="field_phone_id"],
-			td.civicrm_phone_id
+			.phone_id_hidden th[data-key="field_phone_id"],
+			.phone_id_hidden td.civicrm_phone_id
 			{
 				display: none;
 			}
@@ -567,7 +606,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 			'required' => 0,
 			'conditional_logic' => 0,
 			'wrapper' => [
-				'width' => '20',
+				'width' => '15',
 				'class' => 'civicrm_phone_ext',
 				'id' => '',
 			],
@@ -679,7 +718,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 			'required' => 0,
 			'conditional_logic' => 0,
 			'wrapper' => [
-				'width' => '',
+				'width' => '10',
 				'class' => 'civicrm_phone_id',
 				'id' => '',
 			],

@@ -169,10 +169,25 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Address_Field extends acf_field {
 	 * @since 0.8.2
 	 *
 	 * @param array $field The Field being edited.
+	 */
 	public function render_field_settings( $field ) {
 
+		// Define setting field.
+		$setting = [
+			'label' => __( 'CiviCRM Address ID', 'civicrm-acf-integration' ),
+			'name' => 'show_address_id',
+			'type' => 'true_false',
+			'ui' => 1,
+			'ui_on_text' => __( 'Show', 'civicrm-acf-integration' ),
+			'ui_off_text' => __( 'Hide', 'civicrm-acf-integration' ),
+			'default_value' => 0,
+			'required' => 0,
+		];
+
+		// Now add it.
+		acf_render_field_setting( $field, $setting );
+
 	}
-	 */
 
 
 
@@ -190,6 +205,30 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Address_Field extends acf_field {
 
 		// Render.
 		acf_render_field( $field );
+
+	}
+
+
+
+	/**
+	 * Prepare this Field Type for display.
+	 *
+	 * @since 0.7.3
+	 *
+	 * @param array $field The Field being rendered.
+	 */
+	public function prepare_field( $field ) {
+
+		// Bail when Address ID should be shown.
+		if( ! empty( $field['show_address_id'] ) ) {
+			return $field;
+		}
+
+		// Add hidden class to element.
+		$field['wrapper']['class'] .= ' address_id_hidden';
+
+		// --<
+		return $field;
 
 	}
 
@@ -259,12 +298,10 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Address_Field extends acf_field {
 	 */
 	public function input_admin_head() {
 
-		return;
-
 		echo '
 		<style type="text/css">
 			/* Hide Address ID block */
-			div[data-key="field_address_id"] {
+			.address_id_hidden div[data-key="field_address_id"] {
 				display: none;
 			}
 		</style>
