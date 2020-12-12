@@ -808,7 +808,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 					// Make sure no other Address is Primary if this one is.
 					if ( $acf_address['field_address_primary'] == '1' AND ! empty( $existing ) ) {
 						foreach( $existing AS $key => $record ) {
-							$existing[$key]['field_address_id'] = '0';
+							$existing[$key]['field_address_primary'] = '0';
 						}
 					}
 
@@ -818,6 +818,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 					break;
 
 				case 'edit' :
+
+					// Make sure no other Address is Primary if this one is.
+					if ( $acf_address['field_address_primary'] == '1' ) {
+						foreach( $existing AS $key => $record ) {
+							$existing[$key]['field_address_primary'] = '0';
+						}
+					}
 
 					// Overwrite array record.
 					foreach( $existing AS $key => $record ) {

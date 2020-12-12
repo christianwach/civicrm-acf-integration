@@ -981,7 +981,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 					// Make sure no other Phone is Primary if this one is.
 					if ( $acf_phone['field_phone_primary'] == '1' AND ! empty( $existing ) ) {
 						foreach( $existing AS $key => $record ) {
-							$existing[$key]['field_phone_id'] = '0';
+							$existing[$key]['field_phone_primary'] = '0';
 						}
 					}
 
@@ -991,6 +991,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 					break;
 
 				case 'edit' :
+
+					// Make sure no other Phone is Primary if this one is.
+					if ( $acf_phone['field_phone_primary'] == '1' ) {
+						foreach( $existing AS $key => $record ) {
+							$existing[$key]['field_phone_primary'] = '0';
+						}
+					}
 
 					// Overwrite array record.
 					foreach( $existing AS $key => $record ) {

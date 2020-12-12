@@ -977,7 +977,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 					// Make sure no other Instant Messenger is Primary if this one is.
 					if ( $acf_im['field_im_primary'] == '1' AND ! empty( $existing ) ) {
 						foreach( $existing AS $key => $record ) {
-							$existing[$key]['field_im_id'] = '0';
+							$existing[$key]['field_im_primary'] = '0';
 						}
 					}
 
@@ -987,6 +987,13 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 					break;
 
 				case 'edit' :
+
+					// Make sure no other Instant Messenger is Primary if this one is.
+					if ( $acf_im['field_im_primary'] == '1' ) {
+						foreach( $existing AS $key => $record ) {
+							$existing[$key]['field_im_primary'] = '0';
+						}
+					}
 
 					// Overwrite array record.
 					foreach( $existing AS $key => $record ) {
