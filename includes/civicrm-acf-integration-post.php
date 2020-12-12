@@ -431,11 +431,26 @@ class CiviCRM_ACF_Integration_Post {
 		// Get the URL for this Contact.
 		$url = $this->plugin->civicrm->get_link( 'civicrm/contact/view', 'reset=1&cid=' . $contact_id );
 
-		// Add item to menu.
+		// Add item to Edit menu.
+		$wp_admin_bar->add_node( [
+			'id' => 'cau-edit',
+			'parent' => 'edit',
+			'title' => __( 'Edit in CiviCRM', 'civicrm-acf-integration' ),
+			'href' => $url,
+		] );
+
+		// Add item to View menu.
+		$wp_admin_bar->add_node( [
+			'id' => 'cau-view',
+			'parent' => 'view',
+			'title' => __( 'View in CiviCRM', 'civicrm-acf-integration' ),
+			'href' => $url,
+		] );
+
+		// Add item to CAU menu.
 		$wp_admin_bar->add_node( [
 			'id' => 'cau-0',
 			'parent' => $id,
-			//'parent' => 'edit',
 			'title' => __( 'View in CiviCRM', 'civicrm-acf-integration' ),
 			'href' => $url,
 		] );
