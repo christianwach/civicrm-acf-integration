@@ -199,6 +199,11 @@ function cacf_get_phone_numbers_by_type_ids( $location_type_id, $phone_type_id, 
 		return $phones;
 	}
 
+	// If we are looking for all records.
+	if ( empty( $location_type_id ) AND empty( $phone_type_id ) ) {
+		return cacf_get_phone_numbers( $selector, $post_id );
+	}
+
 	// Init filtered array.
 	$filtered = [];
 
@@ -320,7 +325,7 @@ function cacf_get_phone_records_by_type_ids( $location_type_id, $phone_type_id, 
 
 	}
 
-	// If we are looking for just the Phone Type ID.
+	// If we are looking for a combination of Location Type ID and Phone Type ID.
 	if ( ! empty( $location_type_id ) AND ! empty( $phone_type_id ) ) {
 
 		// Try and find the Phone Records that match both the Location and Phone Type IDs.
@@ -334,6 +339,11 @@ function cacf_get_phone_records_by_type_ids( $location_type_id, $phone_type_id, 
 			}
 		}
 
+	}
+
+	// If we are looking for a neither Location Type ID nor Phone Type ID.
+	if ( empty( $location_type_id ) AND empty( $phone_type_id ) ) {
+		$phones = $records;
 	}
 
 	/**
@@ -641,6 +651,11 @@ function cacf_get_ims_by_type_ids( $location_type_id, $im_provider_id, $return =
 		return $ims;
 	}
 
+	// If we are looking for all records.
+	if ( empty( $location_type_id ) AND empty( $im_provider_id ) ) {
+		return cacf_get_ims( $selector, $post_id );
+	}
+
 	// Init filtered array.
 	$filtered = [];
 
@@ -753,7 +768,7 @@ function cacf_get_im_records_by_type_ids( $location_type_id, $im_provider_id, $s
 
 	}
 
-	// If we are looking for just the Provider ID.
+	// If we are looking for a combination of Location Type ID and Provider ID.
 	if ( ! empty( $location_type_id ) AND ! empty( $im_provider_id ) ) {
 
 		// Try and find the Instant Messenger Records that match both the Location and Provider IDs.
@@ -767,6 +782,11 @@ function cacf_get_im_records_by_type_ids( $location_type_id, $im_provider_id, $s
 			}
 		}
 
+	}
+
+	// If we are looking for a neither Location Type ID nor Provider ID.
+	if ( empty( $location_type_id ) AND empty( $im_provider_id ) ) {
+		$ims = $records;
 	}
 
 	/**
