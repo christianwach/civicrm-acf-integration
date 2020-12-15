@@ -127,10 +127,10 @@ class CiviCRM_ACF_Integration_CiviCRM_Google_Map extends CiviCRM_ACF_Integration
 		add_filter( 'civicrm_acf_integration_fields_get_for_post', [ $this, 'acf_fields_get_for_post' ], 10, 3 );
 
 		// Check Contact prior to Post-Contact sync event.
-		//add_action( 'civicrm_acf_integration_post_contact_sync_to_post_pre', [ $this, 'contact_sync_to_post_pre' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync_to_post_pre', [ $this, 'contact_sync_to_post_pre' ], 10 );
 
 		// Intercept Post-Contact sync event.
-		//add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
+		add_action( 'civicrm_acf_integration_post_contact_sync_to_post', [ $this, 'contact_sync_to_post' ], 10 );
 
 	}
 
