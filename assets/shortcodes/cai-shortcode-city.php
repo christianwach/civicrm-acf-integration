@@ -169,7 +169,7 @@ class CiviCRM_ACF_Integration_Shortcode_City {
 
 		// Get content from theme function.
 		$content = cacf_get_city_by_type_id(
-			$atts['location_type'], $atts['style'], $atts['field'], $atts['post_id']
+			$atts['field'], $atts['location_type'], $atts['style'], $atts['post_id']
 		);
 
 		// --<
