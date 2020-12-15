@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Custom Shortcodes Class.
  *
- * A class that encapsulates a Shortcode  rendering CiviCRM Phone records.
+ * A class that encapsulates a Shortcode for rendering CiviCRM Phone records.
  *
  * @since 0.8.2
  */
