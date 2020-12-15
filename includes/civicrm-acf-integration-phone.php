@@ -51,6 +51,15 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 		'civicrm_phone',
 	];
 
+	/**
+	 * Shortcode object.
+	 *
+	 * @since 0.8.2
+	 * @access public
+	 * @var object $shortcode The Shortcode object.
+	 */
+	public $shortcode;
+
 
 
 	/**
@@ -85,8 +94,49 @@ class CiviCRM_ACF_Integration_CiviCRM_Phone extends CiviCRM_ACF_Integration_Civi
 	 */
 	public function initialise() {
 
+		// Include files.
+		$this->include_files();
+
+		// Set up objects and references.
+		$this->setup_objects();
+
 		// Register hooks.
 		$this->register_hooks();
+
+		/**
+		 * Broadcast that this class is now loaded.
+		 *
+		 * @since 0.8.2
+		 */
+		do_action( 'civicrm_acf_integration_civicrm_phone_loaded' );
+
+	}
+
+
+
+	/**
+	 * Include files.
+	 *
+	 * @since 0.8.2
+	 */
+	public function include_files() {
+
+		// Include Shortcode class file.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/shortcodes/cai-shortcode-phone.php';
+
+	}
+
+
+
+	/**
+	 * Set up the child objects.
+	 *
+	 * @since 0.8.2
+	 */
+	public function setup_objects() {
+
+		// Init Phone Shortcode object.
+		$this->shortcode = new CiviCRM_ACF_Integration_Shortcode_Phone( $this );
 
 	}
 

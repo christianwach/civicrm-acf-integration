@@ -51,6 +51,15 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 		'civicrm_im',
 	];
 
+	/**
+	 * Shortcode object.
+	 *
+	 * @since 0.8.2
+	 * @access public
+	 * @var object $shortcode The Shortcode object.
+	 */
+	public $shortcode;
+
 
 
 	/**
@@ -85,8 +94,49 @@ class CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger extends CiviCRM_ACF_Inte
 	 */
 	public function initialise() {
 
+		// Include files.
+		$this->include_files();
+
+		// Set up objects and references.
+		$this->setup_objects();
+
 		// Register hooks.
 		$this->register_hooks();
+
+		/**
+		 * Broadcast that this class is now loaded.
+		 *
+		 * @since 0.8.2
+		 */
+		do_action( 'civicrm_acf_integration_civicrm_im_loaded' );
+
+	}
+
+
+
+	/**
+	 * Include files.
+	 *
+	 * @since 0.8.2
+	 */
+	public function include_files() {
+
+		// Include Shortcode class file.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/shortcodes/cai-shortcode-im.php';
+
+	}
+
+
+
+	/**
+	 * Set up the child objects.
+	 *
+	 * @since 0.8.2
+	 */
+	public function setup_objects() {
+
+		// Init Instant Messenger Shortcode object.
+		$this->shortcode = new CiviCRM_ACF_Integration_Shortcode_Instant_Messenger( $this );
 
 	}
 
