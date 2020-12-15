@@ -155,7 +155,6 @@ class CiviCRM_ACF_Integration_Shortcode_Address {
 		$defaults = [
 			'field' => '',
 			'location_type' => null,
-			'style' => 'list',
 			'post_id' => null,
 		];
 
@@ -169,7 +168,7 @@ class CiviCRM_ACF_Integration_Shortcode_Address {
 
 		// Get content from theme function.
 		$content = cacf_get_address_by_type_id(
-			$atts['location_type'], $atts['style'], $atts['field'], $atts['post_id']
+			$atts['location_type'], $atts['field'], $atts['post_id']
 		);
 
 		// --<
@@ -215,18 +214,6 @@ class CiviCRM_ACF_Integration_Shortcode_Address {
 			'description' => __( 'Please select a Location Type.', 'civicrm-acf-integration' ),
 		];
 
-		// Render style select.
-		$style = [
-			'label' => __( 'Style', 'civicrm-acf-integration' ),
-			'attr'  => 'style',
-			'type'  => 'select',
-			'options' => [
-				'list' => __( 'List', 'civicrm-acf-integration' ),
-				'commas' => __( 'Comma-separated', 'civicrm-acf-integration' ),
-			],
-			'description' => __( 'Please choose list or comma-separated output.', 'civicrm-acf-integration' ),
-		];
-
 		// Get all used Post Types.
 		$mapped_post_types = $this->plugin->mapping->mappings_get_all();
 
@@ -255,7 +242,6 @@ class CiviCRM_ACF_Integration_Shortcode_Address {
 			'attrs' => [
 				$field,
 				$location_types,
-				$style,
 				$post_id,
 			],
 
