@@ -1022,7 +1022,7 @@ function cacf_get_addresses( $selector, $post_id = null ) {
 		// Build "heading" from Location.
 		$heading = sprintf(
 			__( '%s Address', 'civicrm-acf-integration' ),
-			(string) $locations[$record['field_address_location_type']],
+			(string) $locations[$record['field_address_location_type']]
 		);
 
 		// Convert basic ACF data to template data.
