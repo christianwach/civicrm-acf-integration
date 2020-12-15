@@ -60,6 +60,33 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 		'civicrm_address',
 	];
 
+	/**
+	 * Address Shortcode object.
+	 *
+	 * @since 0.8.2
+	 * @access public
+	 * @var object $shortcode_address The Address Shortcode object.
+	 */
+	public $shortcode_address;
+
+	/**
+	 * State Shortcode object.
+	 *
+	 * @since 0.8.2
+	 * @access public
+	 * @var object $shortcode_state The State Shortcode object.
+	 */
+	public $shortcode_state;
+
+	/**
+	 * City Shortcode object.
+	 *
+	 * @since 0.8.2
+	 * @access public
+	 * @var object $shortcode_city The City Shortcode object.
+	 */
+	public $shortcode_city;
+
 
 
 	/**
@@ -94,8 +121,53 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 	 */
 	public function initialise() {
 
+		// Include files.
+		$this->include_files();
+
+		// Set up objects and references.
+		$this->setup_objects();
+
 		// Register hooks.
 		$this->register_hooks();
+
+		/**
+		 * Broadcast that this class is now loaded.
+		 *
+		 * @since 0.8.2
+		 */
+		do_action( 'civicrm_acf_integration_civicrm_addresses_loaded' );
+
+	}
+
+
+
+	/**
+	 * Include files.
+	 *
+	 * @since 0.8.2
+	 */
+	public function include_files() {
+
+		// Include Shortcode class files.
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/shortcodes/cai-shortcode-address.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/shortcodes/cai-shortcode-city.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/shortcodes/cai-shortcode-state.php';
+
+	}
+
+
+
+	/**
+	 * Set up the child objects.
+	 *
+	 * @since 0.8.2
+	 */
+	public function setup_objects() {
+
+		// Init Shortcode objects.
+		$this->shortcode_address = new CiviCRM_ACF_Integration_Shortcode_Address( $this );
+		$this->shortcode_city = new CiviCRM_ACF_Integration_Shortcode_City( $this );
+		$this->shortcode_state = new CiviCRM_ACF_Integration_Shortcode_State( $this );
 
 	}
 

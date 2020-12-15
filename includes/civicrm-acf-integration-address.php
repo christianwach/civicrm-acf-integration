@@ -194,6 +194,33 @@ class CiviCRM_ACF_Integration_CiviCRM_Address {
 	 *
 	 * @since 0.4.4
 	 *
+	 * @return array $state_provinces The array of State/Province data.
+	 */
+	public function state_provinces_get() {
+
+		// Init return.
+		$state_provinces = [];
+
+		// Try and init CiviCRM.
+		if ( ! $this->civicrm->is_initialised() ) {
+			return $state_provinces;
+		}
+
+		// Use CiviCRM Core method.
+		$state_provinces = CRM_Core_PseudoConstant::stateProvince();
+
+		// --<
+		return $state_provinces;
+
+	}
+
+
+
+	/**
+	 * Get a State/Province by its numeric ID.
+	 *
+	 * @since 0.4.4
+	 *
 	 * @param int $state_province_id The numeric ID of the State/Province.
 	 * @return array $state_province The array of State/Province data.
 	 */

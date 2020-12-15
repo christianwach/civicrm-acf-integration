@@ -976,3 +976,823 @@ function cacf_get_im_records( $selector, $post_id = null ) {
 
 
 
+// -----------------------------------------------------------------------------
+
+
+
+/**
+ * Get the Addresses from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return str $addresses The formatted Addresses.
+ */
+function cacf_get_addresses( $selector, $post_id = null ) {
+
+	// Init return.
+	$addresses = '';
+
+	// Get the Address Records.
+	$records = cacf_get_address_records( $selector, $post_id );
+
+	// Bail if we don't get any.
+	if ( empty( $records ) ) {
+		return $addresses;
+	}
+
+	// Get reference to plugin.
+	$cacf = civicrm_acf_integration();
+
+	// Get Location Types.
+	$location_types = $cacf->civicrm->address->location_types_get();
+
+	// Build Location Types array for reference.
+	$locations = [];
+	foreach( $location_types AS $location_type ) {
+		$locations[$location_type['id']] = esc_html( $location_type['display_name'] );
+	}
+
+	// Format them.
+	foreach( $records AS $record ) {
+
+		// Build "heading" from Location.
+		$heading = sprintf(
+			__( '%s Address', 'civicrm-acf-integration' ),
+			(string) $locations[$record['field_address_location_type']],
+		);
+
+		// Convert basic ACF data to template data.
+		$street_address = esc_html( trim( $record['field_address_street_address'] ) );
+		$supplemental_address_1 = esc_html( trim( $record['field_address_supplemental_address_1'] ) );
+		$supplemental_address_2 = esc_html( trim( $record['field_address_supplemental_address_2'] ) );
+		$supplemental_address_3 = esc_html( trim( $record['field_address_supplemental_address_3'] ) );
+		$city = esc_html( trim( $record['field_address_city'] ) );
+		$postal_code = esc_html( trim( $record['field_address_postal_code'] ) );
+
+		// Convert Country ACF data to template data.
+		$state_province_id = empty( $record['field_address_state_province_id'] ) ? '' : (int) $record['field_address_state_province_id'];
+		$state_province = $cacf->civicrm->address->state_province_get_by_id( $state_province_id );
+		if ( ! empty( $state_province ) ) {
+			$state = esc_html( $state_province['name'] );
+			$state_short = esc_html( $state_province['abbreviation'] );
+		}
+
+		// Convert Country ACF data to template data.
+		$country_id = empty( $record['field_address_country_id'] ) ? '' : (int) $record['field_address_country_id'];
+		$country_data = $cacf->civicrm->address->country_get_by_id( $country_id );
+		if ( ! empty( $country_data ) ) {
+			$country = esc_html( $country_data['name'] );
+			$country_short = esc_html( $country_data['iso_code'] );
+		}
+
+		// Build Address from template.
+		ob_start();
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/shortcode-address.php';;
+		$address = ob_get_contents();
+		ob_end_clean();
+
+		// Add to filtered array.
+		$filtered[] = $heading . "\n\n" . $address;
+
+	}
+
+	// Open the list.
+	$addresses .= '<ul><li>';
+
+	// Format the list.
+	$addresses .= implode( '</li><li>', $filtered );
+
+	// Close the list.
+	$addresses .= '</li></ul>';
+
+	/**
+	 * Allow the Addresses to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param str $addresses The existing Addresses.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return str $addresses The modified Addresses.
+	 */
+	$addresses = apply_filters( 'cacf_get_addresses', $addresses, $selector, $post_id );
+
+	// --<
+	return $addresses;
+
+}
+
+
+
+/**
+ * Get the Address for a Location Type from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param int $location_type_id The numeric ID of the CiviCRM Address Location Type.
+ * @param str $return Return an HTML list or comma-delimited string. Default 'list'.
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return str $address The formatted Address.
+ */
+function cacf_get_address_by_type_id( $location_type_id, $return = 'list', $selector, $post_id = null ) {
+
+	// Init return.
+	$address = '';
+
+	// Get the Address Records.
+	$records = cacf_get_address_records_by_type_id( $location_type_id, $selector, $post_id );
+
+	// Bail if we don't get any.
+	if ( empty( $records ) ) {
+		return $address;
+	}
+
+	// If we are looking for all records.
+	if ( empty( $location_type_id ) ) {
+		return cacf_get_addresses( $selector, $post_id );
+	}
+
+	// Get reference to plugin.
+	$cacf = civicrm_acf_integration();
+
+	// Init filtered array.
+	$filtered = [];
+
+	// Format them.
+	foreach( $records AS $record ) {
+
+		// Convert basic ACF data to template data.
+		$street_address = esc_html( trim( $record['field_address_street_address'] ) );
+		$supplemental_address_1 = esc_html( trim( $record['field_address_supplemental_address_1'] ) );
+		$supplemental_address_2 = esc_html( trim( $record['field_address_supplemental_address_2'] ) );
+		$supplemental_address_3 = esc_html( trim( $record['field_address_supplemental_address_3'] ) );
+		$city = esc_html( trim( $record['field_address_city'] ) );
+		$postal_code = esc_html( trim( $record['field_address_postal_code'] ) );
+
+		// Convert Country ACF data to template data.
+		$state_province_id = empty( $record['field_address_state_province_id'] ) ? '' : (int) $record['field_address_state_province_id'];
+		$state_province = $cacf->civicrm->address->state_province_get_by_id( $state_province_id );
+		if ( ! empty( $state_province ) ) {
+			$state = esc_html( $state_province['name'] );
+			$state_short = esc_html( $state_province['abbreviation'] );
+		}
+
+		// Convert Country ACF data to template data.
+		$country_id = empty( $record['field_address_country_id'] ) ? '' : (int) $record['field_address_country_id'];
+		$country_data = $cacf->civicrm->address->country_get_by_id( $country_id );
+		if ( ! empty( $country_data ) ) {
+			$country = esc_html( $country_data['name'] );
+			$country_short = esc_html( $country_data['iso_code'] );
+		}
+
+		// Build Address from template.
+		ob_start();
+		include CIVICRM_ACF_INTEGRATION_PATH . 'assets/templates/wordpress/shortcode-address.php';;
+		$filtered[] = ob_get_contents();
+		ob_end_clean();
+
+	}
+
+	// Bail if we don't get any Address Records.
+	if ( empty( $filtered ) ) {
+		return $address;
+	}
+
+	// Format the string.
+	$address = implode( ', ', $filtered );
+
+	/**
+	 * Allow the Addresses to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param str $address The existing Address.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return str $address The modified Address.
+	 */
+	$address = apply_filters( 'cacf_get_address_by_type_id', $address, $selector, $post_id );
+
+	// --<
+	return $address;
+
+}
+
+
+
+/**
+ * Get Address Records by Location Type from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param int $location_type_id The numeric ID of the CiviCRM Address Location Type.
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return array $addresses The array of Address Record data.
+ */
+function cacf_get_address_records_by_type_id( $location_type_id, $selector, $post_id = null ) {
+
+	// Init return.
+	$addresses = [];
+
+	// Get the Address Records.
+	$records = cacf_get_address_records( $selector, $post_id );
+
+	// Bail if we don't get any.
+	if ( empty( $records ) ) {
+		return $addresses;
+	}
+
+	// If we are looking for a Location Type ID.
+	if ( ! empty( $location_type_id ) ) {
+
+		// Try and find the Address Records that match the Location Type ID.
+		foreach( $records AS $record ) {
+			if ( $record['field_address_location_type'] == $location_type_id ) {
+				$addresses[] = $record;
+			}
+		}
+
+	}
+
+	// If we are not looking for a Location Type ID.
+	if ( empty( $location_type_id ) ) {
+		$addresses = $records;
+	}
+
+	/**
+	 * Allow the Address Records to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param array $addresses The existing Address Records.
+	 * @param int $location_type_id The numeric ID of the CiviCRM Address Location Type.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return array $addresses The modified Address Records.
+	 */
+	$addresses = apply_filters( 'cacf_get_address_records_by_type_id', $addresses, $location_type_id, $selector, $post_id );
+
+	// --<
+	return $addresses;
+
+}
+
+
+
+/**
+ * Get the "Primary" Address Record from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return array $address The array of Address Record data.
+ */
+function cacf_get_primary_address_record( $selector, $post_id = null ) {
+
+	// Init return.
+	$address = [];
+
+	// Get the Address Records.
+	$records = cacf_get_address_records( $selector, $post_id );
+
+	// Now try and find the Primary Address Record.
+	foreach( $records AS $record ) {
+		if ( $record['field_address_primary'] == '1' ) {
+			$address = $record;
+			break;
+		}
+	}
+
+	/**
+	 * Allow the Address Record to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param array $addresses The existing Primary Address data.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return array $addresses The modified Primary Address data.
+	 */
+	$address = apply_filters( 'cacf_get_primary_addresses_record', $address, $selector, $post_id );
+
+	// --<
+	return $address;
+
+}
+
+
+
+/**
+ * Get the Address Records from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return array $records The array of Address Record data.
+ */
+function cacf_get_address_records( $selector, $post_id = null ) {
+
+	// Init return.
+	$records = [];
+
+	// Try the global if no Post ID.
+	if ( empty( $post_id ) ) {
+		global $post;
+		if ( ! ( $post instanceof WP_Post ) ) {
+			return $records;
+		}
+		$post_id = $post->ID;
+	}
+
+	// Get field settings.
+	$acf_settings = get_field_object( $selector, $post_id );
+
+	// Bail if we don't get any settings.
+	if ( empty( $acf_settings ) ) {
+		return $records;
+	}
+
+	 // Bail if it's not a CiviCRM Address Field.
+	 if ( $acf_settings['type'] != 'civicrm_address' ) {
+		return $records;
+	 }
+
+	// Get Field value.
+	$records = get_field( $selector, $post_id );
+
+	/**
+	 * Allow the Address Record to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param array $records The existing Address Record data.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return array $records The modified Address Record data.
+	 */
+	$records = apply_filters( 'cacf_get_address_records', $records, $selector, $post_id );
+
+	// --<
+	return $records;
+
+}
+
+
+
+// -----------------------------------------------------------------------------
+
+
+
+/**
+ * Get the Cities from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return str $cities The formatted Cities.
+ */
+function cacf_get_cities( $selector, $post_id = null ) {
+
+	// Init return.
+	$cities = '';
+
+	// Get the Address Records.
+	$records = cacf_get_address_records( $selector, $post_id );
+
+	// Bail if we don't get any.
+	if ( empty( $records ) ) {
+		return $cities;
+	}
+
+	// Get reference to plugin.
+	$cacf = civicrm_acf_integration();
+
+	// Get Location Types.
+	$location_types = $cacf->civicrm->address->location_types_get();
+
+	// Build Location Types array for reference.
+	$locations = [];
+	foreach( $location_types AS $location_type ) {
+		$locations[$location_type['id']] = esc_html( $location_type['display_name'] );
+	}
+
+	// Format them.
+	foreach( $records AS $record ) {
+
+		// Skip if the City is empty.
+		if ( empty( $record['field_address_city'] ) ) {
+			continue;
+		}
+
+		// Build string from Location and City.
+		$addresses = sprintf(
+			__( '%1$s: %2$s', 'civicrm-acf-integration' ),
+			(string) $locations[$record['field_address_location_type']],
+			(string) $record['field_address_city']
+		);
+
+		// Add to filtered array.
+		$filtered[] = $addresses;
+
+	}
+
+	// Open the list.
+	$cities .= '<ul><li>';
+
+	// Format the list.
+	$cities .= implode( '</li><li>', $filtered );
+
+	// Close the list.
+	$cities .= '</li></ul>';
+
+	/**
+	 * Allow the Cities to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param str $cities The existing Cities.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return str $cities The modified Cities.
+	 */
+	$cities = apply_filters( 'cacf_get_cities', $cities, $selector, $post_id );
+
+	// --<
+	return $cities;
+
+}
+
+
+
+/**
+ * Get the City for a Location Type from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param int $location_type_id The numeric ID of the CiviCRM Address Location Type.
+ * @param str $return Return an HTML list or comma-delimited string. Default 'list'.
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return str $city The formatted City.
+ */
+function cacf_get_city_by_type_id( $location_type_id, $return = 'list', $selector, $post_id = null ) {
+
+	// Init return.
+	$city = '';
+
+	// Get the City Records.
+	$records = cacf_get_address_records_by_type_id( $location_type_id, $selector, $post_id );
+
+	// Bail if we don't get any.
+	if ( empty( $records ) ) {
+		return $city;
+	}
+
+	// If we are looking for all records.
+	if ( empty( $location_type_id ) ) {
+		return cacf_get_cities( $selector, $post_id );
+	}
+
+	// Init filtered array.
+	$filtered = [];
+
+	// Format them.
+	foreach( $records AS $record ) {
+
+		// Skip if the City is empty.
+		if ( empty( $record['field_address_city'] ) ) {
+			continue;
+		}
+
+		// Assign City to filter.
+		$filtered[] = (string) $record['field_address_city'];
+
+	}
+
+	// Bail if we don't get any City Records.
+	if ( empty( $filtered ) ) {
+		return $city;
+	}
+
+	// Format the string.
+	$city .= implode( ', ', $filtered );
+
+	/**
+	 * Allow the Cities to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param str $city The existing City.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return str $city The modified City.
+	 */
+	$city = apply_filters( 'cacf_get_city_by_type_id', $city, $selector, $post_id );
+
+	// --<
+	return $city;
+
+}
+
+
+
+/**
+ * Get the "Primary" City from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return str $city The formatted City.
+ */
+function cacf_get_primary_city( $selector, $post_id = null ) {
+
+	// Init return.
+	$city = '';
+
+	// Get the Primary Address Record.
+	$record = cacf_get_primary_address_record( $selector, $post_id );
+
+	// Bail if we don't get a City Record.
+	if ( empty( $record ) ) {
+		return $city;
+	}
+
+	// Bail if the City is empty.
+	if ( empty( $record['field_address_city'] ) ) {
+		return $city;
+	}
+
+	// Assign City to return.
+	$city = (string) $record['field_address_city'];
+
+	/**
+	 * Allow the City to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param str $city The existing Primary City.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return str $city The modified Primary City.
+	 */
+	$city = apply_filters( 'cacf_get_primary_city', $city, $selector, $post_id );
+
+	// --<
+	return $city;
+
+}
+
+
+
+// -----------------------------------------------------------------------------
+
+
+
+/**
+ * Get the States from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return str $states The formatted States.
+ */
+function cacf_get_states( $selector, $post_id = null ) {
+
+	// Init return.
+	$states = '';
+
+	// Get the Address Records.
+	$records = cacf_get_address_records( $selector, $post_id );
+
+	// Bail if we don't get any.
+	if ( empty( $records ) ) {
+		return $states;
+	}
+
+	// Get reference to plugin.
+	$cacf = civicrm_acf_integration();
+
+	// Get Location Types.
+	$location_types = $cacf->civicrm->address->location_types_get();
+
+	// Build Location Types array for reference.
+	$locations = [];
+	foreach( $location_types AS $location_type ) {
+		$locations[$location_type['id']] = esc_html( $location_type['display_name'] );
+	}
+
+	// Get States/Provinces.
+	$state_provinces = $cacf->civicrm->address->state_provinces_get();
+
+	// Format them.
+	foreach( $records AS $record ) {
+
+		// Skip if the State is empty.
+		if ( empty( $record['field_address_state_province_id'] ) ) {
+			continue;
+		}
+
+		// Build string from Location and State.
+		$addresses = sprintf(
+			__( '%1$s: %2$s', 'civicrm-acf-integration' ),
+			(string) $locations[$record['field_address_location_type']],
+			(string) $state_provinces[$record['field_address_state_province_id']]
+		);
+
+		// Add to filtered array.
+		$filtered[] = $addresses;
+
+	}
+
+	// Open the list.
+	$states .= '<ul><li>';
+
+	// Format the list.
+	$states .= implode( '</li><li>', $filtered );
+
+	// Close the list.
+	$states .= '</li></ul>';
+
+	/**
+	 * Allow the States to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param str $states The existing States.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return str $states The modified States.
+	 */
+	$states = apply_filters( 'cacf_get_states', $states, $selector, $post_id );
+
+	// --<
+	return $states;
+
+}
+
+
+
+/**
+ * Get the State for a Location Type from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param int $location_type_id The numeric ID of the CiviCRM Address Location Type.
+ * @param str $return Return an HTML list or comma-delimited string. Default 'list'.
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return str $state The formatted State.
+ */
+function cacf_get_state_by_type_id( $location_type_id, $return = 'list', $selector, $post_id = null ) {
+
+	// Init return.
+	$state = '';
+
+	// Get the State Records.
+	$records = cacf_get_address_records_by_type_id( $location_type_id, $selector, $post_id );
+
+	// Bail if we don't get any.
+	if ( empty( $records ) ) {
+		return $state;
+	}
+
+	// If we are looking for all records.
+	if ( empty( $location_type_id ) ) {
+		return cacf_get_states( $selector, $post_id );
+	}
+
+	// Get reference to plugin.
+	$cacf = civicrm_acf_integration();
+
+	// Get States/Provinces.
+	$states = $cacf->civicrm->address->state_provinces_get();
+
+	// Init filtered array.
+	$filtered = [];
+
+	// Format them.
+	foreach( $records AS $record ) {
+
+		// Skip if the State is empty.
+		if ( empty( $record['field_address_state_province_id'] ) ) {
+			continue;
+		}
+
+		// Assign State to filter.
+		$filtered[] = (string) $states[$record['field_address_state_province_id']];
+
+	}
+
+	// Bail if we don't get any State Records.
+	if ( empty( $filtered ) ) {
+		return $state;
+	}
+
+	// Format the string.
+	$state .= implode( ', ', $filtered );
+
+	/**
+	 * Allow the States to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param str $state The existing State.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return str $state The modified State.
+	 */
+	$state = apply_filters( 'cacf_get_state_by_type_id', $state, $selector, $post_id );
+
+	// --<
+	return $state;
+
+}
+
+
+
+/**
+ * Get the "Primary" State from a given ACF Field.
+ *
+ * If you are calling this from outside The Loop, pass a Post ID as well.
+ *
+ * @since 0.8.2
+ *
+ * @param str $selector The ACF field selector.
+ * @param int|str $post_id The ACF "Post ID".
+ * @return str $state The formatted State.
+ */
+function cacf_get_primary_state( $selector, $post_id = null ) {
+
+	// Init return.
+	$state = '';
+
+	// Get the Primary Address Record.
+	$record = cacf_get_primary_address_record( $selector, $post_id );
+
+	// Bail if we don't get a State Record.
+	if ( empty( $record ) ) {
+		return $state;
+	}
+
+	// Bail if the State is empty.
+	if ( empty( $record['field_address_state_province_id'] ) ) {
+		return $state;
+	}
+
+	// Get reference to plugin.
+	$cacf = civicrm_acf_integration();
+
+	// Get States/Provinces.
+	$states = $cacf->civicrm->address->state_provinces_get();
+
+	// Assign State to return.
+	$state = (string) $states[$record['field_address_state_province_id']];
+
+	/**
+	 * Allow the State to be filtered.
+	 *
+	 * @since 0.8.2
+	 *
+	 * @param str $state The existing Primary State.
+	 * @param str $selector The ACF field selector.
+	 * @param int|str $post_id The ACF "Post ID".
+	 * @return str $state The modified Primary State.
+	 */
+	$state = apply_filters( 'cacf_get_primary_state', $state, $selector, $post_id );
+
+	// --<
+	return $state;
+
+}
+
+
+
