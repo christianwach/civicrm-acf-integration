@@ -80,8 +80,8 @@ The following are the Contact Fields and the kind of ACF Field needed to map the
 * First Name, Middle Name, Last Name - ACF Text
 * Email - ACF Email
 * Website - ACF Link
-* Address - ACF Google Map (only available in ACF Pro)
-* Address - ACF Google Map (only available in ACF Pro)
+* Address - ACF CiviCRM Address (see "Custom ACF Fields" below)
+* Address as Map - ACF Google Map (only available in ACF Pro)
 * Gender - ACF Radio Button
 * Date of Birth & Date of Death - ACF Date Picker
 * Deceased - ACF True/False

@@ -91,7 +91,8 @@ The following are the Contact Fields and the kind of ACF Field needed to map the
 * First Name, Middle Name, Last Name - ACF Text
 * Email - ACF Email
 * Website - ACF Link
-* Address - ACF Google Map (only available in ACF Pro)
+* Address - ACF CiviCRM Address (see "Custom ACF Fields" below)
+* Address as Map - ACF Google Map (only available in ACF Pro)
 * Gender - ACF Radio Button
 * Date of Birth & Date of Death - ACF Date Picker
 * Deceased - ACF True/False
@@ -129,45 +130,107 @@ Syncs between the ACF Field and a CiviCRM Relationship.
 
 Syncs between the ACF Field and a CiviCRM Yes/No Custom Field. This Field Type is necessary because a CiviCRM Yes/No Custom Field is actually a Yes/No/Unknown field and the ACF True-False Field does not allow Unknown.
 
+##### CiviCRM Address
+
+**NOTE: Requires ACF Pro.** Syncs with all the CiviCRM "Address" Contact Fields. Use the supplied template functions to display particular Addresses in your templates. Here are some examples:
+
+`
+<p><strong><?php echo __( 'All Addresses as list:', 'your-slug' ); ?></strong>
+<?php echo cacf_get_addresses( 'address_field' ); ?></p>
+
+<p><strong><?php echo __( 'Primary Address:', 'your-slug' ); ?></strong>
+<?php echo cacf_get_primary_address( 'address_field' ); ?></p>
+
+<p><strong><?php echo __( 'Main Address:', 'your-slug' ); ?></strong>
+<?php echo cacf_get_address_by_type_id( 'address_field', 3 ); ?></p>
+`
+
+You can also display Addresses using the [Shortcake](https://en-gb.wordpress.org/plugins/shortcode-ui/)-compatible `[cai_address]` Shortcode. The available attributes are:
+
+* `field` (required) The ACF Field selector.
+* `location_type` (optional) The desired Addresses Location Type ID.
+* `post_id` (optional) If omitted, defaults to the current Post ID when used in The Loop. If `post_id` is specified, Addresses will be retrieved from the ACF Field attached to the Post with that ID.
+
+Some examples might be:
+
+* **All Addresses in the current Post:**
+`[cai_address field="addresses" /]`
+* **Home Address as `<address>` element from the Post with ID `2319`:**
+`[cai_address field="addresses" location_type="1" post_id="2319"]`
+
+You can narrow down what you display with two other Shortcodes: `[cai_city]` and `[cai_state]` both of which take the same attributes as `[cai_address]`. Some examples might be:
+
+* **Home City from the Post with ID `2319`:**
+`[cai_city field="addresses" location_type="1" post_id="2319"]`
+
+* **Home State from the current Post:**
+`[cai_state field="addresses" location_type="1"]`
+
 ##### CiviCRM Phone
 
 **NOTE: Requires ACF Pro.** Syncs with all the CiviCRM "Phone" Contact Fields. Use the supplied template functions to display particular Phone Numbers in your templates. Here are some examples:
 
-`<p><strong><?php echo __( 'Primary Phone Number: ', 'your-slug' ); ?></strong>
-<?php echo cacf_get_primary_phone_number( 'phone_field' ); ?></p>
+`
+<p><strong><?php echo __( 'Primary Phone Number:', 'your-slug' ); ?></strong> <?php echo cacf_get_primary_phone_number( 'phone_numbers' ); ?></p>
 
-<p><strong><?php _e( 'All Home Phone Numbers as list: ', 'your-slug' ). ' '; ?></strong></p>
-<?php echo cacf_get_phone_numbers_by_type_ids( 1, null, 'list', 'phone_field' ); ?>
+<p><strong><?php _e( 'All Numbers as list:', 'your-slug' ). ' '; ?></strong></p>
+<?php echo cacf_get_phone_numbers( 'phone_numbers' ); ?>
 
-<p><strong><?php echo __( 'All Home Phone Numbers as string: ', 'your-slug' ); ?></strong><br />
-<?php echo cacf_get_phone_numbers_by_type_ids( 1, null, 'commas', 'phone_field' );
-?></p>
+<p><strong><?php _e( 'All Home Phone Numbers as list:', 'your-slug' ). ' '; ?></strong></p>
+<?php echo cacf_get_phone_numbers_by_type_ids( 'phone_numbers', 1 ); ?>
 
-<p><strong><?php _e( 'All Home Mobile Numbers as list: ', 'your-slug' ). ' '; ?></strong></p>
-<?php echo cacf_get_phone_numbers_by_type_ids( 1, 2, 'list', 'phone_field' ); ?>
-
-<p><strong><?php echo __( 'All Home Mobile Numbers as string: ', 'your-slug' ); ?></strong><br />
-<?php echo cacf_get_phone_numbers_by_type_ids( 1, 2, null, 'phone_field' );
+<p><strong><?php echo __( 'All Home Phone Numbers as string:', 'your-slug' ); ?></strong><br />
+<?php echo cacf_get_phone_numbers_by_type_ids( 'phone_numbers', 1, null, 'commas' );
 ?></p>
 
 <p><strong><?php echo __( 'Voicemail:', 'your-slug' ). ' '; ?></strong>
-<?php echo cacf_get_phone_numbers_by_type_ids( 0, 5, null, 'phone_field' );
+<?php echo cacf_get_phone_numbers_by_type_ids( 'phone_numbers', 0, 5, 'commas' );
 ?></p>
-
-<p><strong><?php _e( 'All Numbers as list: ', 'your-slug' ). ' '; ?></strong></p>
-<?php echo cacf_get_phone_numbers( 'phone_field' ); ?>
 `
+
+You can also display Phone Numbers using the [Shortcake](https://en-gb.wordpress.org/plugins/shortcode-ui/)-compatible `[cai_phone]` Shortcode. The available attributes are:
+
+* `field` (required) The ACF Field selector.
+* `location_type` (optional) The desired Phone Location Type ID.
+* `phone_type` (optional) The desired Phone Type ID.
+* `style` (optional - default is `list`) Choosing `list` will display the Phone Numbers in an unordered list. Choosing `commas` will display the Phone Numbers as a comma-separated string, but when there is only one Phone Number it will not have a trailing comma.
+* `post_id` (optional) If omitted, defaults to the current Post ID when used in The Loop. If `post_id` is specified, Phone Records will be retrieved from the ACF Field attached to the Post with that ID.
+
+Some examples might be:
+
+* **All Phone Numbers in the current Post as list:**
+`[cai_phone field="phone_numbers" style="list" post_id="2319" /]`
+* **All Home Phone Numbers as string from the Post with ID `2319`:**
+`[cai_phone field="phone_numbers" location_type="1" style="commas" post_id="2319"]`
 
 ##### CiviCRM Instant Messenger
 
 **NOTE: Requires ACF Pro.** Syncs with all the CiviCRM "Instant Messenger" Contact Fields. As with the "CiviCRM Phone" Field, use the supplied template functions to display particular Instant Messenger Records in your templates. Here are some examples:
 
-`<p><strong><?php _e( 'All Skype IMs as list: ', 'your-slug' ). ' '; ?></strong></p>
-<?php echo cacf_get_ims_by_type_ids( null, 6, 'list', 'im_field' ); ?>
-
-<p><strong><?php _e( 'All IMs as list: ', 'your-slug' ). ' '; ?></strong></p>
-<?php echo cacf_get_ims( 'im_field' ); ?>
 `
+<p><strong><?php echo __( 'Primary IM:', 'your-slug' ); ?></strong> <?php echo cacf_get_primary_im( 'instant_messenger' ); ?></p>
+
+<p><strong><?php _e( 'All IMs as list:', 'your-slug' ). ' '; ?></strong></p>
+<?php echo cacf_get_ims( 'instant_messenger' ); ?>
+
+<p><strong><?php _e( 'All Skype IMs as list:', 'your-slug' ). ' '; ?></strong></p>
+<?php echo cacf_get_ims_by_type_ids( 'instant_messenger', null, 6, 'list' ); ?>
+`
+
+You can also display Instant Messenger Records using the [Shortcake](https://en-gb.wordpress.org/plugins/shortcode-ui/)-compatible `[cai_im]` Shortcode. The available attributes are:
+
+* `field` (required) The ACF Field selector.
+* `location_type` (optional) The desired Instant Messenger Location Type ID.
+* `im_type` (optional) The desired Instant Messenger Provider ID.
+* `style` (optional - default is `list`) Choosing `list` will display the Instant Messenger Records in an unordered list. Choosing `commas` will display the Instant Messenger Records as a comma-separated string, but when there is only one Record it will not have a trailing comma.
+* `post_id` (optional) If omitted, defaults to the current Post ID when used in The Loop. If `post_id` is specified, Instant Messenger Records will be retrieved from the ACF Field attached to the Post with that ID.
+
+Some examples might be:
+
+* **All Instant Messenger Records from the current Post as list:**
+`[cai_im field="instant_messenger" style="list" /]`
+* **All Home Instant Messenger Records as string from the Post with ID `2319`:**
+`[cai_im field="instant_messenger" location_type="1" style="commas" post_id="2319"]`
 
 #### CiviCRM Activity Creator
 
@@ -197,11 +260,6 @@ If you alter the settings of a CiviCRM Custom Field then the ACF Field(s) that a
 ##### File Field
 
 There is no mapping between the CiviCRM "File" and the ACF "File" Field Types yet.
-
-
-##### Address Field
-
-There is no "Address Field" in ACF or ACF Pro although there are some somewhat outdated plugins ([here](https://github.com/GCX/acf-address-field) and [here](https://github.com/strickdj/acf-field-address), plus [this article](https://acfextras.com/simple-address-with-schema-markup/)) that do offer this. A future version of this plugin could provide a Custom Field Type (with Sub-fields) that allows CiviCRM Addresses to be sync to ACF Fields. Its settings would allow the choice of which fields to render.
 
 
 ##### Current Employer
