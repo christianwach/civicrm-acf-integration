@@ -2,15 +2,177 @@
 # This file is distributed under the same license as the CiviCRM ACF Integration package.
 msgid ""
 msgstr ""
-"Project-Id-Version: CiviCRM ACF Integration 0.8.1\n"
+"Project-Id-Version: CiviCRM ACF Integration 0.8.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/civicrm-acf-integration\n"
-"POT-Creation-Date: 2020-12-08 12:06:01+00:00\n"
+"POT-Creation-Date: 2020-12-16 15:10:43+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "PO-Revision-Date: 2020-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+
+#: assets/shortcodes/cai-shortcode-address.php:151
+msgid "Visit the website to see the Address."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-address.php:166
+#: assets/shortcodes/cai-shortcode-city.php:167
+#: assets/shortcodes/cai-shortcode-im.php:168
+#: assets/shortcodes/cai-shortcode-phone.php:168
+#: assets/shortcodes/cai-shortcode-state.php:167
+msgid "Please include an ACF Field attribute."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-address.php:202
+#: assets/shortcodes/cai-shortcode-city.php:203
+#: assets/shortcodes/cai-shortcode-im.php:204
+#: assets/shortcodes/cai-shortcode-phone.php:204
+#: assets/shortcodes/cai-shortcode-state.php:203
+msgid "ACF Field"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-address.php:205
+#: assets/shortcodes/cai-shortcode-city.php:206
+#: assets/shortcodes/cai-shortcode-im.php:207
+#: assets/shortcodes/cai-shortcode-phone.php:207
+#: assets/shortcodes/cai-shortcode-state.php:206
+msgid "Please enter an ACF Field selector."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-address.php:210
+#: assets/shortcodes/cai-shortcode-city.php:211
+#: assets/shortcodes/cai-shortcode-im.php:212
+#: assets/shortcodes/cai-shortcode-phone.php:212
+#: assets/shortcodes/cai-shortcode-state.php:211
+#: fields/class-acf-field-civicrm-address.php:593
+msgid "Location Type"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-address.php:214
+#: assets/shortcodes/cai-shortcode-city.php:215
+#: assets/shortcodes/cai-shortcode-im.php:216
+#: assets/shortcodes/cai-shortcode-phone.php:216
+#: assets/shortcodes/cai-shortcode-state.php:215
+msgid "Please select a Location Type."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-address.php:222
+#: assets/shortcodes/cai-shortcode-city.php:235
+#: assets/shortcodes/cai-shortcode-im.php:245
+#: assets/shortcodes/cai-shortcode-phone.php:245
+#: assets/shortcodes/cai-shortcode-state.php:235
+msgid "Post (optional)"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-address.php:226
+#: assets/shortcodes/cai-shortcode-city.php:239
+#: assets/shortcodes/cai-shortcode-im.php:249
+#: assets/shortcodes/cai-shortcode-phone.php:249
+#: assets/shortcodes/cai-shortcode-state.php:239
+msgid "Please select a Post."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-address.php:233
+#: fields/class-acf-field-civicrm-address.php:152
+#: includes/civicrm-acf-integration-google-map.php:1278
+msgid "CiviCRM Address"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-address.php:287
+#: assets/shortcodes/cai-shortcode-city.php:301
+#: assets/shortcodes/cai-shortcode-im.php:312
+#: assets/shortcodes/cai-shortcode-phone.php:312
+#: assets/shortcodes/cai-shortcode-state.php:301
+msgid "Select a Location Type"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-city.php:151
+msgid "Visit the website to see the City."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-city.php:220
+#: assets/shortcodes/cai-shortcode-im.php:230
+#: assets/shortcodes/cai-shortcode-phone.php:230
+#: assets/shortcodes/cai-shortcode-state.php:220
+msgid "Style"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-city.php:224
+#: assets/shortcodes/cai-shortcode-im.php:234
+#: assets/shortcodes/cai-shortcode-phone.php:234
+#: assets/shortcodes/cai-shortcode-state.php:224
+msgid "List"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-city.php:225
+#: assets/shortcodes/cai-shortcode-im.php:235
+#: assets/shortcodes/cai-shortcode-phone.php:235
+#: assets/shortcodes/cai-shortcode-state.php:225
+msgid "Comma-separated"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-city.php:227
+#: assets/shortcodes/cai-shortcode-im.php:237
+#: assets/shortcodes/cai-shortcode-phone.php:237
+#: assets/shortcodes/cai-shortcode-state.php:227
+msgid "Please choose list or comma-separated output."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-city.php:246
+msgid "CiviCRM City"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-im.php:151
+msgid "Visit the website to see the Instant Messenger record."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-im.php:221
+msgid "Instant Messenger Type (optional)"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-im.php:225
+msgid "Please select an Instant Messenger Type."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-im.php:256
+#: fields/class-acf-field-civicrm-im.php:152
+msgid "CiviCRM Instant Messenger"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-im.php:339
+msgid "Select an Instant Messenger Type"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-phone.php:151
+msgid "Visit the website to see the Phone record."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-phone.php:221
+msgid "Phone Type (optional)"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-phone.php:225
+msgid "Please select a Phone Type."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-phone.php:256
+#: fields/class-acf-field-civicrm-phone.php:152
+#: includes/civicrm-acf-integration-acf-blocks.php:102
+msgid "CiviCRM Phone"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-phone.php:339
+msgid "Select a Phone Type"
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-state.php:151
+msgid "Visit the website to see the State."
+msgstr ""
+
+#: assets/shortcodes/cai-shortcode-state.php:246
+msgid "CiviCRM State"
+msgstr ""
 
 #: assets/templates/help/settings-help.php:12
 msgid "Settings: For further information about using this plugin, please refer to the readme.txt file that comes with this plugin."
@@ -128,6 +290,108 @@ msgstr ""
 msgid "CiviCRM Activity Target"
 msgstr ""
 
+#: fields/class-acf-field-civicrm-address.php:177
+msgid "CiviCRM Address ID"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:181
+#: fields/class-acf-field-civicrm-im.php:181
+#: fields/class-acf-field-civicrm-phone.php:181
+msgid "Show"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:182
+#: fields/class-acf-field-civicrm-im.php:182
+#: fields/class-acf-field-civicrm-phone.php:182
+msgid "Hide"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:435
+msgid "Please select a Primary Address"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:449
+msgid "You can only have one Address per Location Type"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:566
+msgid "Add Address"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:619
+#: fields/class-acf-field-civicrm-im.php:659
+#: fields/class-acf-field-civicrm-phone.php:685
+msgid "Is Primary"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:632
+#: fields/class-acf-field-civicrm-im.php:672
+#: fields/class-acf-field-civicrm-phone.php:698
+msgid "Primary"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:646
+msgid "Is Billing"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:659
+msgid "Billing"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:672
+msgid "Street Address"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:694
+msgid "Supplemental Address 1"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:716
+msgid "Supplemental Address 2"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:738
+msgid "Supplemental Address 3"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:760
+msgid "City"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:782
+msgid "Post Code"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:806
+msgid "Country"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:831
+msgid "State/Province"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:856
+msgid "Latitude"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:878
+msgid "Longitude"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:900
+msgid "Override automatic geocoding"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:913
+msgid "Override"
+msgstr ""
+
+#: fields/class-acf-field-civicrm-address.php:927
+#: fields/class-acf-field-civicrm-im.php:687
+#: fields/class-acf-field-civicrm-phone.php:713
+msgid "CiviCRM ID"
+msgstr ""
+
 #: fields/class-acf-field-civicrm-contact-id.php:141
 msgid "CiviCRM Contact ID"
 msgstr ""
@@ -136,48 +400,33 @@ msgstr ""
 msgid "CiviCRM Contact Reference"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-im.php:152
-msgid "CiviCRM Instant Messenger"
+#: fields/class-acf-field-civicrm-im.php:177
+msgid "CiviCRM Instant Messenger ID"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-im.php:395
+#: fields/class-acf-field-civicrm-im.php:434
 msgid "Please select a Primary Instant Messenger"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-im.php:409
+#: fields/class-acf-field-civicrm-im.php:448
 msgid "Please enter an Instant Messenger"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-im.php:526
+#: fields/class-acf-field-civicrm-im.php:565
 msgid "Add Instant Messenger"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-im.php:536
+#: fields/class-acf-field-civicrm-im.php:575
 msgid "Instant Messenger"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-im.php:568
-#: fields/class-acf-field-civicrm-phone.php:594
+#: fields/class-acf-field-civicrm-im.php:607
+#: fields/class-acf-field-civicrm-phone.php:633
 msgid "Location"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-im.php:594
-msgid "Provider"
-msgstr ""
-
-#: fields/class-acf-field-civicrm-im.php:620
-#: fields/class-acf-field-civicrm-phone.php:646
-msgid "Is Primary"
-msgstr ""
-
 #: fields/class-acf-field-civicrm-im.php:633
-#: fields/class-acf-field-civicrm-phone.php:659
-msgid "Primary"
-msgstr ""
-
-#: fields/class-acf-field-civicrm-im.php:648
-#: fields/class-acf-field-civicrm-phone.php:674
-msgid "CiviCRM ID"
+msgid "Provider"
 msgstr ""
 
 #: fields/class-acf-field-civicrm-multiset.php:152
@@ -188,37 +437,36 @@ msgstr ""
 msgid "Add Record Set"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-phone.php:152
-#: includes/civicrm-acf-integration-acf-blocks.php:102
-msgid "CiviCRM Phone"
+#: fields/class-acf-field-civicrm-phone.php:177
+msgid "CiviCRM Phone ID"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-phone.php:398
+#: fields/class-acf-field-civicrm-phone.php:437
 msgid "Please select a Primary Number"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-phone.php:412
+#: fields/class-acf-field-civicrm-phone.php:451
 msgid "Please enter a Phone Number"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-phone.php:529
+#: fields/class-acf-field-civicrm-phone.php:568
 msgid "Add Phone Number"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-phone.php:539
+#: fields/class-acf-field-civicrm-phone.php:578
 msgid "Phone Number"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-phone.php:562
+#: fields/class-acf-field-civicrm-phone.php:601
 msgid "Extension"
 msgstr ""
 
-#: fields/class-acf-field-civicrm-phone.php:620
+#: fields/class-acf-field-civicrm-phone.php:659
 msgid "Type"
 msgstr ""
 
 #: fields/class-acf-field-civicrm-relationship.php:153
-#: includes/civicrm-acf-integration-relationship.php:1282
+#: includes/civicrm-acf-integration-relationship.php:1295
 msgid "CiviCRM Relationship"
 msgstr ""
 
@@ -252,20 +500,20 @@ msgstr ""
 msgid "A custom phone block."
 msgstr ""
 
-#: includes/civicrm-acf-integration-acf-field.php:413
+#: includes/civicrm-acf-integration-acf-field.php:414
 #: includes/civicrm-acf-integration-activity-field.php:164
 msgid "Must be an integer."
 msgstr ""
 
-#: includes/civicrm-acf-integration-acf-field.php:420
+#: includes/civicrm-acf-integration-acf-field.php:421
 msgid "Must be a number."
 msgstr ""
 
-#: includes/civicrm-acf-integration-acf-field.php:428
+#: includes/civicrm-acf-integration-acf-field.php:429
 msgid "Must be a valid money format."
 msgstr ""
 
-#: includes/civicrm-acf-integration-acf-field.php:436
+#: includes/civicrm-acf-integration-acf-field.php:437
 msgid "Only two decimal places please."
 msgstr ""
 
@@ -294,39 +542,6 @@ msgstr ""
 #: includes/civicrm-acf-integration-custom-field.php:1401
 #: includes/civicrm-acf-integration-multiset.php:1053
 msgid "Choose the CiviCRM Field that this ACF Field should sync with. (Optional)"
-msgstr ""
-
-#: includes/civicrm-acf-integration-address.php:1706
-msgid "Specific Addresses"
-msgstr ""
-
-#: includes/civicrm-acf-integration-address.php:1707
-msgid "Primary Address"
-msgstr ""
-
-#: includes/civicrm-acf-integration-address.php:1708
-msgid "Billing Address"
-msgstr ""
-
-#: includes/civicrm-acf-integration-address.php:1711
-#: includes/civicrm-acf-integration-email.php:841
-msgid "Location Types"
-msgstr ""
-
-#: includes/civicrm-acf-integration-address.php:1719
-msgid "CiviCRM Address"
-msgstr ""
-
-#: includes/civicrm-acf-integration-address.php:1722
-msgid "Choose the CiviCRM Location Type that this ACF Field should sync with. (Optional)"
-msgstr ""
-
-#: includes/civicrm-acf-integration-address.php:1759
-msgid "Make Read Only"
-msgstr ""
-
-#: includes/civicrm-acf-integration-address.php:1763
-msgid "Only CiviCRM can set the Location in this Field."
 msgstr ""
 
 #: includes/civicrm-acf-integration-admin.php:195
@@ -418,19 +633,19 @@ msgstr ""
 msgid "CiviCRM Groups &rarr; WordPress Terms"
 msgstr ""
 
-#: includes/civicrm-acf-integration-admin.php:1815
+#: includes/civicrm-acf-integration-admin.php:1873
 msgid "You must supply an option to site_option_exists()"
 msgstr ""
 
-#: includes/civicrm-acf-integration-admin.php:1842
+#: includes/civicrm-acf-integration-admin.php:1900
 msgid "You must supply an option to site_option_get()"
 msgstr ""
 
-#: includes/civicrm-acf-integration-admin.php:1868
+#: includes/civicrm-acf-integration-admin.php:1926
 msgid "You must supply an option to site_option_set()"
 msgstr ""
 
-#: includes/civicrm-acf-integration-admin.php:1890
+#: includes/civicrm-acf-integration-admin.php:1948
 msgid "You must supply an option to site_option_delete()"
 msgstr ""
 
@@ -466,19 +681,24 @@ msgstr ""
 msgid "Contact Fields"
 msgstr ""
 
-#: includes/civicrm-acf-integration-email.php:837
+#: includes/civicrm-acf-integration-email.php:840
 msgid "Specific Emails"
 msgstr ""
 
-#: includes/civicrm-acf-integration-email.php:838
+#: includes/civicrm-acf-integration-email.php:841
 msgid "Primary Email"
 msgstr ""
 
-#: includes/civicrm-acf-integration-email.php:849
-msgid "CiviCRM Email"
+#: includes/civicrm-acf-integration-email.php:844
+#: includes/civicrm-acf-integration-google-map.php:1270
+msgid "Location Types"
 msgstr ""
 
 #: includes/civicrm-acf-integration-email.php:852
+msgid "CiviCRM Email"
+msgstr ""
+
+#: includes/civicrm-acf-integration-email.php:855
 msgid "Choose the CiviCRM Email that this ACF Field should sync with. (Optional)"
 msgstr ""
 
@@ -487,17 +707,47 @@ msgid "%1$s %2$s: %3$s"
 msgstr ""
 
 #: includes/civicrm-acf-integration-functions.php:136
-#: includes/civicrm-acf-integration-functions.php:219
-#: includes/civicrm-acf-integration-functions.php:395
+#: includes/civicrm-acf-integration-functions.php:224
+#: includes/civicrm-acf-integration-functions.php:405
 msgid "%1$s Ext. %2$s"
 msgstr ""
 
-#: includes/civicrm-acf-integration-functions.php:578
+#: includes/civicrm-acf-integration-functions.php:588
 msgid "%1$s (%2$s): %3$s"
 msgstr ""
 
-#: includes/civicrm-acf-integration-functions.php:830
+#: includes/civicrm-acf-integration-functions.php:850
+#: includes/civicrm-acf-integration-functions.php:1490
+#: includes/civicrm-acf-integration-functions.php:1706
 msgid "%1$s: %2$s"
+msgstr ""
+
+#: includes/civicrm-acf-integration-functions.php:1024
+msgid "%s Address"
+msgstr ""
+
+#: includes/civicrm-acf-integration-google-map.php:1265
+msgid "Specific Addresses"
+msgstr ""
+
+#: includes/civicrm-acf-integration-google-map.php:1266
+msgid "Primary Address"
+msgstr ""
+
+#: includes/civicrm-acf-integration-google-map.php:1267
+msgid "Billing Address"
+msgstr ""
+
+#: includes/civicrm-acf-integration-google-map.php:1281
+msgid "Choose the CiviCRM Location Type that this ACF Field should sync with. (Optional)"
+msgstr ""
+
+#: includes/civicrm-acf-integration-google-map.php:1318
+msgid "Make Read Only"
+msgstr ""
+
+#: includes/civicrm-acf-integration-google-map.php:1322
+msgid "Only CiviCRM can set the Location in this Field."
 msgstr ""
 
 #: includes/civicrm-acf-integration-mapping.php:278
@@ -542,15 +792,20 @@ msgstr ""
 msgid "Edit %s in WordPress"
 msgstr ""
 
-#: includes/civicrm-acf-integration-post.php:439
+#: includes/civicrm-acf-integration-post.php:446
+msgid "Edit in CiviCRM"
+msgstr ""
+
+#: includes/civicrm-acf-integration-post.php:454
+#: includes/civicrm-acf-integration-post.php:462
 msgid "View in CiviCRM"
 msgstr ""
 
-#: includes/civicrm-acf-integration-post.php:486
+#: includes/civicrm-acf-integration-post.php:509
 msgid "CiviCRM"
 msgstr ""
 
-#: includes/civicrm-acf-integration-relationship.php:1285
+#: includes/civicrm-acf-integration-relationship.php:1298
 msgid "Choose the CiviCRM Relationship that this ACF Field should sync with. (Optional)"
 msgstr ""
 
