@@ -245,10 +245,6 @@ If you alter the settings of a CiviCRM Custom Field then the ACF Field(s) that a
 
 There is no mapping between the CiviCRM "File" and the ACF "File" Field Types yet.
 
-### Address Field
-
-There is no "Address Field" in ACF or ACF Pro although there are some somewhat outdated plugins ([here](https://github.com/GCX/acf-address-field) and [here](https://github.com/strickdj/acf-field-address), plus [this article](https://acfextras.com/simple-address-with-schema-markup/)) that do offer this. A future version of this plugin could provide a Custom Field Type (with Sub-fields) that allows CiviCRM Addresses to be sync to ACF Fields. Its settings would allow the choice of which fields to render.
-
 ### Current Employer
 
 There are oddities in CiviCRM's relationships, particularly the "Employer Of" relationship - which is both a "Relationship" and a "Contact Field". The ID of a Contact's "Current Employer" may be present in the `current_employer` field when retrieved via the CiviCRM API and can be set by populating the `employer_id` field.
