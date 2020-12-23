@@ -1137,7 +1137,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 					// Query for the Base Page.
 					$pages = get_posts( [
 						'post_type' => 'page',
-						'name' => strtolower($basepage_slug),
+						'name' => strtolower( $basepage_slug ),
 						'post_status' => 'publish',
 						'posts_per_page' => 1,
 					] );
@@ -1426,7 +1426,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 		$this->plugin->mapper->contact_edited( 'edit', $contact['contact_type'], $objectRef->id, $object );
 
 	}
-
 
 
 
