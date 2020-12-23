@@ -1060,8 +1060,20 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 			// Get full Contact data.
 			$contact = $this->plugin->civicrm->contact->get_by_id( $contact_id );
 
-			// Overwrite value with current Image URL.
-			$url = $contact['image_URL'];
+			/*
+			 * Decode the current Image URL.
+			 *
+			 * We have to do this because Contact Images may have been uploaded
+			 * from a Profile embedded via a Shortcode. Since CiviCRM always runs
+			 * Contact Image URLs through htmlentities() before saving, the URLs
+			 * get "double-encoded" when they are parsed by `redirect_canonical()`
+			 * and result in 404s.
+			 *
+			 * This is only a problem when using Profiles via Shortcodes.
+			 *
+			 * @see CRM_Contact_BAO_Contact::processImageParams()
+			 */
+			$url = html_entity_decode( $contact['image_URL'] );
 
 			// Maybe fix the following function.
 			add_filter( 'attachment_url_to_postid', [ $this, 'image_url_to_post_id_helper' ], 10, 2 );
@@ -1097,22 +1109,79 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_Field {
 				// Transfer the CiviCRM Contact Image to WordPress and grab ID.
 				$id = media_sideload_image( $url, $target_post_id, $title, 'id' );
 
-				// Log as much as we can if there's an error.
+				// If there's an error.
 				if ( is_wp_error( $id ) ) {
-					$e = new \Exception();
-					$trace = $e->getTraceAsString();
-					error_log( print_r( [
-						'method' => __METHOD__,
-						'error' => $id,
-						'value' => $value,
-						'name' => $name,
-						'selector' => $selector,
-						'post_id' => $post_id,
-						'existing' => $existing,
-						'contact' => $contact,
-						//'backtrace' => $trace,
-					], true ) );
-					return '';
+
+					/*
+					 * It could be that the Contact Image URL is messed up because
+					 * it has been uploaded via a Profile form in a Shortcode.
+					 *
+					 * Reconstruct the URL via the Base Page if we can.
+					 */
+
+					// Bail if there is no filename to grab.
+					if ( false === strpos( $url, 'photo=' ) ) {
+						return '';
+					}
+
+					// Grab the filename.
+					$filename = explode( 'photo=', $url )[1];
+
+					// Retrieve the Base Page setting.
+					$basepage_slug = civicrm_api( 'Setting', 'getvalue', [
+						'version' => 3,
+						'name' => 'wpBasePage',
+						'group' => 'CiviCRM Preferences',
+					] );
+
+					// Query for the Base Page.
+					$pages = get_posts( [
+						'post_type' => 'page',
+						'name' => strtolower($basepage_slug),
+						'post_status' => 'publish',
+						'posts_per_page' => 1,
+					] );
+
+					// Bail if the Base Page was not found.
+					if ( empty( $pages ) OR ! is_array( $pages ) ) {
+						return '';
+					}
+
+					// Grab what should be the only item.
+					$basepage = array_pop( $pages );
+
+					// Get the Base Page URL.
+					$basepage_url = trailingslashit( get_permalink( $basepage ) );
+
+					// Build URL to Image file.
+					$url = $basepage_url . 'contact/imagefile/?photo=' . $filename;
+
+					// Transfer the CiviCRM Contact Image to WordPress and grab ID.
+					$id = media_sideload_image( $url, $target_post_id, $title, 'id' );
+
+					// If there's still an error.
+					if ( is_wp_error( $id ) ) {
+
+						// Log as much as we can.
+						$e = new \Exception();
+						$trace = $e->getTraceAsString();
+						error_log( print_r( [
+							'method' => __METHOD__,
+							'error' => $id,
+							'value' => $value,
+							'name' => $name,
+							'selector' => $selector,
+							'post_id' => $post_id,
+							'existing' => $existing,
+							'contact' => $contact,
+							//'backtrace' => $trace,
+						], true ) );
+
+						// Empty return.
+						return '';
+
+					}
+
 				}
 
 				// Grab the the full size Image data.
