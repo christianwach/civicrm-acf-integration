@@ -220,7 +220,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field extends acf_field {
 	public function prepare_field( $field ) {
 
 		// Bail when Phone ID should be shown.
-		if( ! empty( $field['show_phone_id'] ) ) {
+		if ( ! empty( $field['show_phone_id'] ) ) {
 			return $field;
 		}
 

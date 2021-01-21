@@ -220,7 +220,7 @@ class CiviCRM_ACF_Integration_Custom_CiviCRM_Instant_Messenger extends acf_field
 	public function prepare_field( $field ) {
 
 		// Bail when IM ID should be shown.
-		if( ! empty( $field['show_im_id'] ) ) {
+		if ( ! empty( $field['show_im_id'] ) ) {
 			return $field;
 		}
 
