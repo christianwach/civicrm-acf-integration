@@ -226,7 +226,6 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 		remove_action( 'civicrm_acf_integration_mapper_address_pre_delete', [ $this, 'address_pre_delete' ], 10 );
 		remove_action( 'civicrm_acf_integration_mapper_address_deleted', [ $this, 'address_deleted' ], 10 );
 
-
 	}
 
 
@@ -438,7 +437,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 		// If there are no existing Address Records.
 		if ( empty( $current ) ) {
 
-			// Create a Address Record from each value.
+			// Create an Address Record from each value.
 			foreach( $values AS $key => $value ) {
 
 				// Build required data.
@@ -460,7 +459,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 				];
 
 				/**
-				 * Broadcast that a Address Record has been created.
+				 * Broadcast that an Address Record has been created.
 				 *
 				 * We use this internally to update the ACF Field with the Address ID.
 				 *
@@ -494,7 +493,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 				continue;
 			}
 
-			// Records to update have a Address ID.
+			// Records to update have an Address ID.
 			if ( ! empty( $value['field_address_id'] ) ) {
 				$actions['update'][$key] = $value;
 				continue;
@@ -540,7 +539,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 			];
 
 			/**
-			 * Broadcast that a Address Record has been created.
+			 * Broadcast that an Address Record has been created.
 			 *
 			 * We use this internally to update the ACF Field with the Address ID.
 			 *
@@ -575,7 +574,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 			];
 
 			/**
-			 * Broadcast that a Address Record has been updated.
+			 * Broadcast that an Address Record has been updated.
 			 *
 			 * @since 0.8.2
 			 *
@@ -601,7 +600,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 			];
 
 			/**
-			 * Broadcast that a Address Record has been deleted.
+			 * Broadcast that an Address Record has been deleted.
 			 *
 			 * @since 0.8.2
 			 *
@@ -691,11 +690,11 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 	/**
 	 * A CiviCRM Contact's Address Record is about to be deleted.
 	 *
-	 * Before a Address Record is deleted, we need to retrieve the Address Record
+	 * Before an Address Record is deleted, we need to retrieve the Address Record
 	 * because the data passed via "civicrm_post" only contains the ID of the
 	 * Address Record.
 	 *
-	 * This is not required when creating or editing a Address Record.
+	 * This is not required when creating or editing an Address Record.
 	 *
 	 * @since 0.8.2
 	 *
@@ -806,7 +805,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 		}
 
 		/**
-		 * Broadcast that a Address ACF Field may have been edited.
+		 * Broadcast that an Address ACF Field may have been edited.
 		 *
 		 * @since 0.8.2
 		 *

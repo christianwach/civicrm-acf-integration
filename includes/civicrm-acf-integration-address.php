@@ -615,7 +615,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address {
 	/**
 	 * Update a CiviCRM Contact's Address Record.
 	 *
-	 * If you want to "create" a Address Record, do not pass $data['id'] in. The
+	 * If you want to "create" an Address Record, do not pass $data['id'] in. The
 	 * presence of an ID will cause an update to that Address Record.
 	 *
 	 * @since 0.8.2
@@ -664,7 +664,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Address {
 
 
 	/**
-	 * Delete a Address Record in CiviCRM.
+	 * Delete an Address Record in CiviCRM.
 	 *
 	 * @since 0.8.2
 	 *
