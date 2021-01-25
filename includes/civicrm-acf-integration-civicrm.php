@@ -149,6 +149,15 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	public $addresses;
 
 	/**
+	 * CiviCRM City object.
+	 *
+	 * @since 0.8.3
+	 * @access public
+	 * @var object $addresses The CiviCRM Address City object.
+	 */
+	public $address_city;
+
+	/**
 	 * CiviCRM Google Map object.
 	 *
 	 * @since 0.8.2
@@ -277,6 +286,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 		// Include Additional Entity class files.
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-civicrm-base.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-addresses.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-address-city.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-google-map.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-relationship.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-email.php';
@@ -313,6 +323,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 
 		// Init Additional Entity objects.
 		$this->addresses = new CiviCRM_ACF_Integration_CiviCRM_Addresses( $this );
+		$this->address_city = new CiviCRM_ACF_Integration_CiviCRM_Address_City( $this );
 		$this->google_map = new CiviCRM_ACF_Integration_CiviCRM_Google_Map( $this );
 		$this->relationship = new CiviCRM_ACF_Integration_CiviCRM_Relationship( $this );
 		$this->email = new CiviCRM_ACF_Integration_CiviCRM_Email( $this );
