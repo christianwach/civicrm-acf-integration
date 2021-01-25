@@ -95,6 +95,15 @@ class CiviCRM_ACF_Integration_CiviCRM {
 	public $im;
 
 	/**
+	 * CiviCRM Contact ID object.
+	 *
+	 * @since 0.8.3
+	 * @access public
+	 * @var object $contact The CiviCRM Contact ID object.
+	 */
+	public $contact_id;
+
+	/**
 	 * CiviCRM Contact Field object.
 	 *
 	 * @since 0.3
@@ -293,6 +302,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-website.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-phone.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-im.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'includes/civicrm-acf-integration-contact-id.php';
 
 	}
 
@@ -330,6 +340,7 @@ class CiviCRM_ACF_Integration_CiviCRM {
 		$this->website = new CiviCRM_ACF_Integration_CiviCRM_Website( $this );
 		$this->phone = new CiviCRM_ACF_Integration_CiviCRM_Phone( $this );
 		$this->im = new CiviCRM_ACF_Integration_CiviCRM_Instant_Messenger( $this );
+		$this->contact_id = new CiviCRM_ACF_Integration_CiviCRM_Contact_ID( $this );
 
 	}
 
