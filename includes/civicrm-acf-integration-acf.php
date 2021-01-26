@@ -176,6 +176,7 @@ class CiviCRM_ACF_Integration_ACF {
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-relationship.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-address.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-address-city.php';
+		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-address-state.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-phone.php';
 		include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-im.php';
 		//include CIVICRM_ACF_INTEGRATION_PATH . 'fields/class-acf-field-civicrm-multiset.php';
@@ -190,6 +191,7 @@ class CiviCRM_ACF_Integration_ACF {
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Relationship( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Address_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Address_City_Field( $this );
+		new CiviCRM_ACF_Integration_Custom_CiviCRM_Address_State_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Phone_Field( $this );
 		new CiviCRM_ACF_Integration_Custom_CiviCRM_Instant_Messenger( $this );
 		//new CiviCRM_ACF_Integration_Custom_CiviCRM_Multiple_Record_Set( $this );
