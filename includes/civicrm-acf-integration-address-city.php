@@ -240,6 +240,19 @@ class CiviCRM_ACF_Integration_CiviCRM_Address_City extends CiviCRM_ACF_Integrati
 		// Process the Address Record.
 		$this->address_process( $address, $args );
 
+		// If this address is a "Master Address" then it will return "Shared Addresses".
+		$addresses_shared = $this->civicrm->address->addresses_shared_get_by_id( $address->id );
+
+		// Bail if there are none.
+		if ( empty( $addresses_shared ) ) {
+			return;
+		}
+
+		// Update all of them.
+		foreach( $addresses_shared AS $address_shared ) {
+			$this->address_process( $address_shared, $args );
+		}
+
 	}
 
 
@@ -305,6 +318,19 @@ class CiviCRM_ACF_Integration_CiviCRM_Address_City extends CiviCRM_ACF_Integrati
 
 		// Process the Address Record.
 		$this->address_process( $this->address_pre, $args );
+
+		// If this address is a "Master Address" then it will return "Shared Addresses".
+		$addresses_shared = $this->civicrm->address->addresses_shared_get_by_id( $this->address_pre->id );
+
+		// Bail if there are none.
+		if ( empty( $addresses_shared ) ) {
+			return;
+		}
+
+		// Process all of them.
+		foreach( $addresses_shared AS $address_shared ) {
+			$this->address_process( $address_shared, $args );
+		}
 
 	}
 

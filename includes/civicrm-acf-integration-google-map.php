@@ -555,7 +555,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Google_Map extends CiviCRM_ACF_Integration
 				}
 
 				/*
-				// If this address has no "Master Address" then it might be one itself.
+				// If this address is a "Master Address" then it will return "Shared Addresses".
 				$addresses_shared = $this->civicrm->address->addresses_shared_get_by_id( $address->id );
 
 				// Bail if there are none.
@@ -610,7 +610,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Google_Map extends CiviCRM_ACF_Integration
 		// Do the Address update.
 		$this->address_fields_update( $address );
 
-		// If this address has no "Master Address" then it might be one itself.
+		// If this address is a "Master Address" then it will return "Shared Addresses".
 		$addresses_shared = $this->civicrm->address->addresses_shared_get_by_id( $address->id );
 
 		// Bail if there are none.
@@ -685,7 +685,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Google_Map extends CiviCRM_ACF_Integration
 		// Do the Address update.
 		$this->address_fields_update( $address, $this->address_pre );
 
-		// If this address has no "Master Address" then it might be one itself.
+		// If this address is a "Master Address" then it will return "Shared Addresses".
 		$addresses_shared = $this->civicrm->address->addresses_shared_get_by_id( $address->id );
 
 		// Bail if there are none.
@@ -725,7 +725,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Google_Map extends CiviCRM_ACF_Integration
 		// Clear the Address.
 		$this->address_fields_update( $address );
 
-		// If this address has no "Master Address" then it might be one itself.
+		// If this address is a "Master Address" then it will return "Shared Addresses".
 		$addresses_shared = $this->civicrm->address->addresses_shared_get_by_id( $address->id );
 
 		// Bail if there are none.
