@@ -197,7 +197,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Contact_ID extends CiviCRM_ACF_Integration
 		$entity = $this->plugin->mapper->entity_get();
 
 		// Test if any of this Contact's Contact Types is mapped to a Post Type.
-		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact, 'create' );
+		$post_types = $this->plugin->civicrm->contact->is_mapped( $contact );
 		if ( $post_types !== false ) {
 
 			// Handle each Post Type in turn.
