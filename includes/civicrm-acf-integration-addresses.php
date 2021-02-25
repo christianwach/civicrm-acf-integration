@@ -444,7 +444,7 @@ class CiviCRM_ACF_Integration_CiviCRM_Addresses extends CiviCRM_ACF_Integration_
 				$address_data = $this->prepare_from_field( $value );
 
 				// Okay, let's do it.
-				$address = $this->update( $contact_id, $address_data );
+				$address = $this->civicrm->address->update( $contact_id, $address_data );
 
 				// Add to return array.
 				$addresses[] = $address;
