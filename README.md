@@ -10,6 +10,8 @@ CiviCRM ACF Integration
 **License:** GPLv2 or later<br/>
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html
 
+This plugin is now discontinued. Please use [CiviCRM Profile Sync](https://github.com/christianwach/civicrm-wp-profile-sync) instead.
+
 Enables integration between CiviCRM Entities and WordPress Entities with data synced via Advanced Custom Fields.
 
 ## Description
